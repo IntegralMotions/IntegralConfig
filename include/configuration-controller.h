@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mpack/mpack.h>
-#include "configuration/communication.h"
+#include "communication.h"
 
 class ConfigurationController {
 public:
