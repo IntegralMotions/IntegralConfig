@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/jos/ws/IntegralConfig/build/cmake_install.cmake",
+		"/Users/jos/ws/IntegralConfig/build/_deps/googletest-build/cmake_install.cmake",
+		"/Users/jos/ws/IntegralConfig/build/_deps/googletest-build/googletest/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

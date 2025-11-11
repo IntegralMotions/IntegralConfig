@@ -1,0 +1,5 @@
+if(EXISTS "/Users/jos/ws/IntegralConfig/build/IntegralConfigTests[1]_tests.cmake")
+  include("/Users/jos/ws/IntegralConfig/build/IntegralConfigTests[1]_tests.cmake")
+else()
+  add_test(IntegralConfigTests_NOT_BUILT IntegralConfigTests_NOT_BUILT)
+endif()

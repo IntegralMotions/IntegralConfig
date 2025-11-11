@@ -94,4 +94,3 @@ MIT License © 2025 Integral Motion
 
 ## 🧠 About
 Created by **Integral Motion** to unify configuration handling across embedded platforms and browser-based configuration tools.
-# IntegralConfig

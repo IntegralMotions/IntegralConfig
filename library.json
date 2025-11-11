@@ -1,0 +1,34 @@
+{
+    "name": "IntegralConfig",
+    "version": "0.1.0",
+    "description": "Cross-platform C++ library for encoding, decoding, and managing embedded device configurations. Compatible with STM32, Arduino, and desktop systems. Includes browser-based configuration via configurator.integralmotions.com.",
+    "keywords": [
+        "configuration",
+        "communication",
+        "serialization",
+        "embedded"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/IntegralMotions/IntegralConfig"
+    },
+    "authors": [
+        {
+            "name": "Integral Motions",
+            "maintainer": true
+        }
+    ],
+    "frameworks": [
+        "arduino"
+    ],
+    "platforms": [
+        "ststm32",
+        "atmelavr",
+        "espressif32"
+    ],
+    "build": {
+        "includeDir": "include",
+        "srcDir": "src"
+    },
+    "license": "MIT"
+}
