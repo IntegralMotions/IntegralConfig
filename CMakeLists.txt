@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+cmake_policy(SET CMP0135 NEW)
 project(IntegralConfig LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -26,9 +27,13 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(IntegralConfigTests
-    tests/hello_test.cpp
+# --- Collect all test files automatically ---
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
 )
+
+add_executable(IntegralConfigTests ${TEST_SOURCES})
+
 target_link_libraries(IntegralConfigTests
     PRIVATE IntegralConfig
     GTest::gtest_main

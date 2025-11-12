@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mpack-header.h"
+#include "mpack/mpack-common.h"
 
 enum class CppType : uint8_t {
   I8,
@@ -31,11 +32,12 @@ private:
                  const CppType &type, void *array, const size_t &size);
 
 private:
-  virtual bool isObject(const char *name) = 0;
-  virtual bool isArray(const char *name) = 0;
+  virtual bool isObject(const char *name);
+  virtual bool isArray(const char *name);
 
-  virtual MPackObject *getObject(const char *name) = 0;
-  virtual void *getArray(const char *name, size_t count, CppType &outType) = 0;
+  virtual MPackObject *getObject(const char *name);
+  virtual void *getArray(const char *name, size_t count, CppType &outType);
 
-  virtual bool setMPackValue(const char *name, void *value) = 0;
+  virtual bool setMPackValue(const char *name, void *value,
+                             const mpack_type_t &type) = 0;
 };
