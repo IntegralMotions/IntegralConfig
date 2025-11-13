@@ -144,7 +144,7 @@ INSTANTIATE_TEST_SUITE_P(
                                     /* v8  */ -8000000000LL,
                                     /* v9  */ 90000u,
                                     /* v10 */ -100000},
-                      MPackTestCase{bytes_case1,
+                      MPackTestCase{bytes_case2,
                                     /* v1  */ 3,
                                     /* v2  */ -5,
                                     /* v3  */ 6234,

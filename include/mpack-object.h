@@ -16,12 +16,14 @@ enum class CppType : uint8_t {
   F64,
   Bool,
   Object,
-  ObjectPtr,
-  NestedArray
+  NestedArray,
+  String,
+
 };
 
 class MPackObject {
 public:
+  virtual ~MPackObject() = default;
   void read(mpack_reader_t &reader, int depth = 0);
   virtual void write(mpack_writer_t &writer, int depth = 0) = 0;
 
