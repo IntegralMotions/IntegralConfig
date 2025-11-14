@@ -15,6 +15,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Release]
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,4 +28,18 @@ jobs:
         run: cmake --build build --config ${{ matrix.build_type }}
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure -C ${{ matrix.build_type }}
+        env:
+          GTEST_COLOR: 1
+        run: |
+          ctest --test-dir build \
+                --output-on-failure \
+                -C ${{ matrix.build_type }} \
+                --output-junit test-results.xml
+
+      - name: Publish test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: GoogleTest (${{ matrix.os }} / ${{ matrix.build_type }})
+          path: build/test-results.xml
+          reporter: java-junit
