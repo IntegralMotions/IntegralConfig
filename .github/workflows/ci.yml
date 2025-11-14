@@ -25,9 +25,10 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
       - name: Build
-        run: cmake --build build --config ${{ matrix.build_type }}
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
       - name: Test
+        id: test
         env:
           GTEST_COLOR: 1
         run: |
@@ -37,7 +38,8 @@ jobs:
                 --output-junit test-results.xml
 
       - name: Publish test report
-        if: always()
+        # run only if the Test step actually ran (not skipped by build/configure failure)
+        if: ${{ always() && steps.test.outcome != 'skipped' }}
         uses: dorny/test-reporter@v1
         with:
           name: GoogleTest (${{ matrix.os }} / ${{ matrix.build_type }})
