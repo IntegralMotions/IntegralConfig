@@ -42,10 +42,10 @@ jobs:
                 --output-junit test-results.xml
 
       - name: Publish test report
-        # run only if the Test step actually ran (not skipped by build/configure failure)
         if: ${{ always() && steps.test.outcome != 'skipped' }}
         uses: dorny/test-reporter@v1
         with:
           name: GoogleTest (${{ matrix.os }} / ${{ matrix.build_type }})
           path: build/test-results.xml
           reporter: java-junit
+          fail-on-error: false
