@@ -210,6 +210,11 @@ static ObjectWithArrays parseArrays(const uint8_t *data, size_t len)
     ObjectWithArrays obj;
     obj.read(r, 0);
     EXPECT_EQ(mpack_reader_destroy(&r), mpack_ok);
+    auto err = mpack_reader_error(&r);
+    std::cout << "mpack_reader_error = "
+              << mpack_error_to_string(err)
+              << " (" << err << ")"
+              << std::endl;
     return obj;
 }
 
@@ -225,10 +230,11 @@ struct ArrayCase
     std::vector<std::vector<int32_t>> aa;
 };
 
-class ArraysTest : public ::testing::TestWithParam<ArrayCase>
+class ObjectWithArraysTest : public ::testing::TestWithParam<ArrayCase>
 {
 };
-TEST_P(ArraysTest, DecodesAllArrays)
+
+TEST_P(ObjectWithArraysTest, DecodesAllArrays)
 {
     const auto &tc = GetParam();
     auto obj = parseArrays(tc.bytes.data(), tc.bytes.size());
@@ -294,7 +300,7 @@ static std::vector<uint8_t> bytes_arrays_case2 = {
     0x1E};
 
 INSTANTIATE_TEST_SUITE_P(
-    MPackAllArrays, ArraysTest,
+    MPackAllArrays, ObjectWithArraysTest,
     ::testing::Values(ArrayCase{bytes_arrays_case1,
                                 {1, -2, 300},
                                 {0ULL, 90000ULL, 7000000000ULL},
