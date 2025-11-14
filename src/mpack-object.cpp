@@ -92,7 +92,7 @@ bool MPackObject::readArray(mpack_reader_t &reader, int depth, const char *name,
       obj->read(reader, depth + 1);
       arr[i] = obj;
     } break;
-    case CppType::NestedArray:
+    case CppType::Array:
       return false;
     default:
       mpack_reader_flag_error(&reader, mpack_error_type);

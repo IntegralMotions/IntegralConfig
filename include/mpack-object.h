@@ -16,9 +16,8 @@ enum class CppType : uint8_t {
   F64,
   Bool,
   Object,
-  NestedArray,
+  Array,
   String,
-
 };
 
 class MPackObject {
