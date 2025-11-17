@@ -1,28 +1,18 @@
-#include "mpack-object.h"
+#include "mpack-object.hpp"
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
 
-class ObjectWithStrings : public MPackObject {
+class ObjectWithStrings : public MPackObject<ObjectWithStrings> {
 public:
-  std::string s1, s2, s3;
+  const char *s1, *s2, *s3;
 
-private:
-  bool setMPackValue(const char *name, void *value,
-                     const mpack_type_t &type) override {
-    if (type != mpack_type_str || !name || !value)
-      return false;
-    if (strcmp(name, "s1") == 0)
-      s1 = reinterpret_cast<char *>(value);
-    else if (strcmp(name, "s2") == 0)
-      s2 = reinterpret_cast<char *>(value);
-    else if (strcmp(name, "s3") == 0)
-      s3 = reinterpret_cast<char *>(value);
-    else
-      return false;
-    return true;
+public:
+  void registerMembers() {
+    registerMember("s1", CppType::String, &s1);
+    registerMember("s2", CppType::String, &s2);
+    registerMember("s3", CppType::String, &s3);
   }
-  void write(mpack_writer_t &, int) override {}
 };
 
 static ObjectWithStrings parseStrings(const uint8_t *data, size_t len) {

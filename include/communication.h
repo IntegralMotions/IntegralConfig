@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inttypes.h>
+#include <cstdint>
 
 class Communication {
 public:

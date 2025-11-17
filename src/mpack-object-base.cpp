@@ -1,0 +1,739 @@
+#include "mpack-object-base.h"
+#include "mpack-array.h"
+#include "mpack/mpack-common.h"
+#include "mpack/mpack-expect.h"
+#include "mpack/mpack-reader.h"
+#include "mpack/mpack-writer.h"
+#include <cstddef>
+#include <cstdint>
+
+void MPackObjectBase::read(mpack_reader_t &reader, int depth) {
+  if (depth > 32) {
+    mpack_reader_flag_error(&reader, mpack_error_too_big);
+    return;
+  }
+
+  MPackHeader header{};
+  if (!readHeader(reader, header) || header.type != mpack_type_map) {
+    mpack_reader_flag_error(&reader, mpack_error_type);
+    return;
+  }
+
+  for (size_t i = 0; i < header.countOrLength; i++) {
+    MPackHeader keyHeader{};
+    if (!readHeader(reader, keyHeader) || keyHeader.type != mpack_type_str) {
+      mpack_reader_flag_error(&reader, mpack_error_type);
+      return;
+    }
+
+    char *key = new char[keyHeader.countOrLength + 1];
+    if (keyHeader.countOrLength)
+      mpack_read_bytes(&reader, key, keyHeader.countOrLength);
+    key[keyHeader.countOrLength] = '\0';
+    mpack_done_str(&reader);
+
+    readValue(reader, key, depth);
+
+    delete[] key;
+    if (!ok(reader))
+      return;
+  }
+
+  mpack_done_map(&reader);
+}
+
+void MPackObjectBase::write(mpack_writer_t &writer, int depth) {
+  if (depth > 32) {
+    mpack_writer_flag_error(&writer, mpack_error_too_big);
+    return;
+  }
+
+  mpack_start_map(&writer, _membersCount);
+
+  for (size_t i = 0; i < _membersCount; i++) {
+    writeMember(writer, _members[i]);
+  }
+
+  mpack_finish_map(&writer);
+}
+
+void MPackObjectBase::registerMember(const char *name,
+                                     const MPackObjectType &type,
+                                     void *address) {
+  _members[_membersCount++] = {name, type, address};
+}
+
+bool MPackObjectBase::getMember(const char *name, MPackObjectMember &member) {
+  for (size_t i = 0; i < _membersCount; i++) {
+    if (strcmp(_members[i].name, name) == 0) {
+      member = _members[i];
+      return true;
+    }
+  }
+  return false;
+}
+
+bool MPackObjectBase::nextIsNil(mpack_reader_t &reader) {
+  mpack_tag_t tag = mpack_peek_tag(&reader);
+  if (mpack_reader_error(&reader) != mpack_ok)
+    return false;
+  return tag.type == mpack_type_nil;
+}
+
+void *MPackObjectBase::createArray(const CppType &type, size_t length) {
+  void *array;
+
+  switch (type) {
+  case CppType::I8:
+    array = new int8_t[length];
+    break;
+  case CppType::U8:
+    array = new uint8_t[length];
+    break;
+  case CppType::I16:
+    array = new int16_t[length];
+    break;
+  case CppType::U16:
+    array = new uint16_t[length];
+    break;
+  case CppType::I32:
+    array = new int32_t[length];
+    break;
+  case CppType::U32:
+    array = new uint32_t[length];
+    break;
+  case CppType::I64:
+    array = new int64_t[length];
+    break;
+  case CppType::U64:
+    array = new uint64_t[length];
+    break;
+  case CppType::F32:
+    array = new float[length];
+    break;
+  case CppType::F64:
+    array = new double[length];
+    break;
+  case CppType::Bool:
+    array = new bool[length];
+    break;
+  case CppType::String:
+    array = new const char *[length];
+    break;
+  case CppType::ObjectPtr:
+  case CppType::Array:
+    array = new void *[length];
+    break;
+  default:
+    array = nullptr;
+  }
+
+  return array;
+}
+
+inline bool MPackObjectBase::ok(mpack_reader_t &reader) {
+  return mpack_reader_error(&reader) == mpack_ok;
+}
+
+inline bool MPackObjectBase::ok(mpack_writer_t &writer) {
+  return mpack_writer_error(&writer) == mpack_ok;
+}
+
+bool MPackObjectBase::readHeader(mpack_reader_t &reader, MPackHeader &header) {
+  header.tag = mpack_read_tag(&reader);
+  if (!ok(reader))
+    return false;
+
+  header.type = mpack_tag_type(&header.tag);
+  header.countOrLength = 0;
+  header.extType = 0;
+
+  switch (header.type) {
+  case mpack_type_map:
+    header.countOrLength = mpack_tag_map_count(&header.tag);
+    break;
+  case mpack_type_array:
+    header.countOrLength = mpack_tag_array_count(&header.tag);
+    break;
+  case mpack_type_str:
+    header.countOrLength = mpack_tag_str_length(&header.tag);
+    break;
+  case mpack_type_bin:
+    header.countOrLength = mpack_tag_bin_length(&header.tag);
+    break;
+  default:
+    break;
+  }
+  return true;
+}
+
+bool MPackObjectBase::readValue(mpack_reader_t &reader, const char *name,
+                                int depth) {
+  MPackObjectMember member;
+  if (!getMember(name, member))
+    return false;
+
+  switch (member.type.type) {
+  case CppType::I8:
+    return readNumeric<int8_t>(reader, *static_cast<int8_t *>(member.address));
+  case CppType::U8:
+    return readNumeric<uint8_t>(reader,
+                                *static_cast<uint8_t *>(member.address));
+  case CppType::I16:
+    return readNumeric<int16_t>(reader,
+                                *static_cast<int16_t *>(member.address));
+  case CppType::U16:
+    return readNumeric<uint16_t>(reader,
+                                 *static_cast<uint16_t *>(member.address));
+  case CppType::I32:
+    return readNumeric<int32_t>(reader,
+                                *static_cast<int32_t *>(member.address));
+  case CppType::U32:
+    return readNumeric<uint32_t>(reader,
+                                 *static_cast<uint32_t *>(member.address));
+  case CppType::I64:
+    return readNumeric<int64_t>(reader,
+                                *static_cast<int64_t *>(member.address));
+  case CppType::U64:
+    return readNumeric<uint64_t>(reader,
+                                 *static_cast<uint64_t *>(member.address));
+  case CppType::F32:
+    return readNumeric<float>(reader, *static_cast<float *>(member.address));
+  case CppType::F64:
+    return readNumeric<double>(reader, *static_cast<double *>(member.address));
+  case CppType::Bool:
+    return readBool(reader, *static_cast<bool *>(member.address));
+  case CppType::String:
+    return readString(reader, *static_cast<char **>(member.address));
+  case CppType::Object: {
+    if (nextIsNil(reader)) {
+      mpack_expect_nil(&reader);
+      return ok(reader);
+    }
+
+    MPackObjectBase *obj = static_cast<MPackObjectBase *>(member.address);
+    if (!obj) {
+      mpack_reader_flag_error(&reader, mpack_error_data);
+      return false;
+    }
+
+    obj->read(reader, depth + 1);
+    return ok(reader);
+  }
+  case CppType::ObjectPtr: {
+    MPackObjectBase **obj = static_cast<MPackObjectBase **>(member.address);
+    if (nextIsNil(reader)) {
+      mpack_expect_nil(&reader);
+      *obj = nullptr;
+      return ok(reader);
+    }
+
+    if (!*obj)
+      *obj = createObject(name);
+    if (!*obj) {
+      mpack_reader_flag_error(&reader, mpack_error_data);
+      return false;
+    }
+
+    (*obj)->read(reader, depth + 1);
+    return ok(reader);
+  }
+  case CppType::Array:
+    return readArray(reader, member, depth + 1);
+  default:
+    mpack_reader_flag_error(&reader, mpack_error_type);
+    return false;
+  }
+}
+
+bool MPackObjectBase::readBool(mpack_reader_t &reader, bool &value) {
+  value = false;
+  MPackHeader header;
+  readHeader(reader, header);
+  if (!ok(reader)) {
+    return false;
+  }
+
+  if (header.type != mpack_type_bool) {
+    mpack_reader_flag_error(&reader, mpack_error_type);
+    return false;
+  }
+
+  value = mpack_tag_bool_value(&header.tag);
+  return true;
+}
+
+bool MPackObjectBase::readString(mpack_reader_t &reader, char *&value) {
+  value = nullptr;
+  MPackHeader header;
+  readHeader(reader, header);
+  if (!ok(reader)) {
+    return false;
+  }
+
+  if (header.type != mpack_type_str) {
+    mpack_reader_flag_error(&reader, mpack_error_type);
+    return false;
+  }
+
+  if (header.countOrLength > (MPACK_MAX_STRING - 1)) {
+    mpack_reader_flag_error(&reader, mpack_error_memory);
+    return false;
+  }
+
+  value = new char[header.countOrLength + 1];
+  if (header.countOrLength)
+    mpack_read_bytes(&reader, value, header.countOrLength);
+  value[header.countOrLength] = '\0';
+  mpack_done_str(&reader);
+
+  return true;
+}
+
+bool MPackObjectBase::readArray(mpack_reader_t &reader,
+                                const MPackObjectMember &member, int depth) {
+  if (nextIsNil(reader)) {
+    mpack_expect_nil(&reader);
+    return ok(reader);
+  }
+
+  MPackHeader header{};
+  if (!readHeader(reader, header) || header.type != mpack_type_array) {
+    mpack_reader_flag_error(&reader, mpack_error_type);
+    return false;
+  }
+
+  MPackObjectType *innerType = member.type.innerType.get();
+  if (!innerType) {
+    mpack_reader_flag_error(&reader, mpack_error_type);
+    return false;
+  }
+
+  size_t count = header.countOrLength;
+
+  switch (innerType->type) {
+  case CppType::I8: {
+    auto *arr = static_cast<MPackArray<int8_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new int8_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<int8_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::U8: {
+    auto *arr = static_cast<MPackArray<uint8_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new uint8_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<uint8_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::I16: {
+    auto *arr = static_cast<MPackArray<int16_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new int16_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<int16_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::U16: {
+    auto *arr = static_cast<MPackArray<uint16_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new uint16_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<uint16_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::I32: {
+    auto *arr = static_cast<MPackArray<int32_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new int32_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<int32_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::U32: {
+    auto *arr = static_cast<MPackArray<uint32_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new uint32_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<uint32_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::I64: {
+    auto *arr = static_cast<MPackArray<int64_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new int64_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<int64_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::U64: {
+    auto *arr = static_cast<MPackArray<uint64_t> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new uint64_t[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<uint64_t>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::F32: {
+    auto *arr = static_cast<MPackArray<float> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new float[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<float>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::F64: {
+    auto *arr = static_cast<MPackArray<double> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new double[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readNumeric<double>(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::Bool: {
+    auto *arr = static_cast<MPackArray<bool> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new bool[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readBool(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::String: {
+    auto *arr = static_cast<MPackArray<char *> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new char *[count] : nullptr;
+    for (size_t i = 0; i < count; ++i)
+      if (!readString(reader, arr->p[i]))
+        return false;
+  } break;
+
+  case CppType::ObjectPtr: {
+    auto *arr = static_cast<MPackArray<MPackObjectBase *> *>(member.address);
+    arr->size = count;
+    arr->p = count ? new MPackObjectBase *[count] : nullptr;
+    for (size_t i = 0; i < count; ++i) {
+      MPackObjectBase *obj = createObject(member.name);
+      obj->read(reader, depth + 1);
+      if (!ok(reader)) {
+        return false;
+      }
+      arr->p[i] = obj;
+    }
+  } break;
+
+  case CppType::Array: {
+    if (!innerType->innerType) {
+      mpack_reader_flag_error(&reader, mpack_error_type);
+      return false;
+    }
+
+    if (innerType->innerType->type == CppType::I32) {
+      auto *outer =
+          static_cast<MPackArray<MPackArray<int32_t>> *>(member.address);
+      outer->size = count;
+      outer->p = count ? new MPackArray<int32_t>[count] : nullptr;
+
+      for (size_t i = 0; i < count; ++i) {
+        MPackObjectMember innerMember{member.name, *innerType, &outer->p[i]};
+        if (!readArray(reader, innerMember, depth + 1))
+          return false;
+      }
+    } else {
+      mpack_reader_flag_error(&reader, mpack_error_invalid);
+      return false;
+    }
+  } break;
+
+  default:
+    mpack_reader_flag_error(&reader, mpack_error_invalid);
+    return false;
+  }
+
+  mpack_done_array(&reader);
+  return ok(reader);
+}
+
+bool MPackObjectBase::writeMember(mpack_writer_t &writer,
+                                  const MPackObjectMember &member, int depth) {
+  mpack_write_cstr(&writer, member.name);
+
+  switch (member.type.type) {
+  case CppType::I8:
+    mpack_write_i8(&writer, *static_cast<int8_t *>(member.address));
+    break;
+  case CppType::U8:
+    mpack_write_u8(&writer, *static_cast<uint8_t *>(member.address));
+    break;
+  case CppType::I16:
+    mpack_write_i16(&writer, *static_cast<int16_t *>(member.address));
+    break;
+  case CppType::U16:
+    mpack_write_u16(&writer, *static_cast<uint16_t *>(member.address));
+    break;
+  case CppType::I32:
+    mpack_write_i32(&writer, *static_cast<int32_t *>(member.address));
+    break;
+  case CppType::U32:
+    mpack_write_u32(&writer, *static_cast<uint32_t *>(member.address));
+    break;
+  case CppType::I64:
+    mpack_write_i64(&writer, *static_cast<int64_t *>(member.address));
+    break;
+  case CppType::U64:
+    mpack_write_u64(&writer, *static_cast<uint64_t *>(member.address));
+    break;
+  case CppType::F32:
+    mpack_write_float(&writer, *static_cast<uint64_t *>(member.address));
+    break;
+  case CppType::F64:
+    mpack_write_double(&writer, *static_cast<uint64_t *>(member.address));
+    break;
+  case CppType::Bool:
+    mpack_write_double(&writer, *static_cast<bool *>(member.address));
+    break;
+  case CppType::String: {
+    const char *s = *static_cast<const char *const *>(member.address);
+    if (!s)
+      mpack_write_nil(&writer);
+    else
+      mpack_write_cstr(&writer, s);
+  } break;
+  case CppType::Object: {
+    auto *obj = static_cast<MPackObjectBase *>(member.address);
+    obj->write(writer, depth + 1);
+    return ok(writer);
+  } break;
+  case CppType::Object: {
+    auto **obj = static_cast<MPackObjectBase **>(member.address);
+    if (!*obj)
+      mpack_write_nil(&writer);
+    else
+      (*obj)->write(writer, depth + 1);
+    return ok(writer);
+  } break;
+  case CppType::Array:
+    return writeArray(writer, member, depth + 1);
+  default:
+    mpack_writer_flag_error(&writer, mpack_error_invalid);
+    return false;
+  }
+
+  return mpack_writer_error(&writer) == mpack_ok;
+}
+
+bool MPackObjectBase::writeArray(mpack_writer_t &writer,
+                                 const MPackObjectMember &member, int depth) {
+  MPackObjectType *innerType = member.type.innerType.get();
+  if (!innerType) {
+    mpack_writer_flag_error(&writer, mpack_error_type);
+    return false;
+  }
+
+  switch (innerType->type) {
+  case CppType::I8: {
+    auto *arr = static_cast<MPackArray<int8_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_i8(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::U8: {
+    auto *arr = static_cast<MPackArray<uint8_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_u8(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::I16: {
+    auto *arr = static_cast<MPackArray<int16_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_i16(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::U16: {
+    auto *arr = static_cast<MPackArray<uint16_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_u16(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::I32: {
+    auto *arr = static_cast<MPackArray<int32_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_i32(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::U32: {
+    auto *arr = static_cast<MPackArray<uint32_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_u32(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::I64: {
+    auto *arr = static_cast<MPackArray<int64_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_i64(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::U64: {
+    auto *arr = static_cast<MPackArray<uint64_t> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_u64(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::F32: {
+    auto *arr = static_cast<MPackArray<float> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_float(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::F64: {
+    auto *arr = static_cast<MPackArray<double> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_double(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::Bool: {
+    auto *arr = static_cast<MPackArray<bool> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++)
+      mpack_write_bool(&writer, arr->p[i]);
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::String: {
+    auto *arr = static_cast<MPackArray<char *> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++) {
+      if (!arr->p[i])
+        mpack_write_nil(&writer);
+      else
+        mpack_write_cstr(&writer, arr->p[i]);
+    }
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::ObjectPtr: {
+    auto *arr = static_cast<MPackArray<MPackObjectBase *> *>(member.address);
+    if (!arr->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+    mpack_start_array(&writer, arr->size);
+    for (size_t i = 0; i < arr->size; i++) {
+      if (!arr->p[i])
+        mpack_write_nil(&writer);
+      else {
+        arr->p[i]->write(writer, depth + 1);
+        return ok(writer);
+      }
+    }
+    mpack_finish_array(&writer);
+  } break;
+
+  case CppType::Array: {
+    auto *outer = static_cast<MPackArray<MPackArray<void *>> *>(member.address);
+    if (!outer->p) {
+      mpack_write_nil(&writer);
+      return ok(writer);
+    }
+
+    mpack_start_array(&writer, outer->size);
+    for (size_t i = 0; i < outer->size; i++) {
+      MPackObjectMember innerMember{member.name, *innerType, &outer->p[i]};
+      if (!writeArray(writer, innerMember)) {
+        return false;
+      }
+    }
+    mpack_finish_array(&writer);
+  } break;
+
+  default:
+    mpack_writer_flag_error(&writer, mpack_error_invalid);
+    return false;
+  }
+
+  return ok(writer);
+}
+
+MPackObjectBase *MPackObjectBase::createObject(const char *name) {
+  return nullptr;
+}

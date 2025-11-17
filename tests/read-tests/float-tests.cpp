@@ -1,56 +1,16 @@
-#include "mpack-object.h"
+#include "mpack-object.hpp"
 #include <gtest/gtest.h>
 
-class ObjectWithFloats : public MPackObject {
+class ObjectWithFloats : public MPackObject<ObjectWithFloats> {
 public:
   float f32{};
   double f64{};
 
-private:
-  bool setMPackValue(const char *name, void *value,
-                     const mpack_type_t &type) override {
-    if (!name || !value)
-      return false;
-
-    if (strcmp(name, "f32") == 0) {
-      switch (type) {
-      case mpack_type_float:
-        f32 = *reinterpret_cast<float *>(value);
-        return true;
-      case mpack_type_double:
-        f32 = static_cast<float>(*reinterpret_cast<double *>(value));
-        return true;
-      case mpack_type_int:
-        f32 = static_cast<float>(*reinterpret_cast<int64_t *>(value));
-        return true;
-      case mpack_type_uint:
-        f32 = static_cast<float>(*reinterpret_cast<uint64_t *>(value));
-        return true;
-      default:
-        return false;
-      }
-    }
-    if (strcmp(name, "f64") == 0) {
-      switch (type) {
-      case mpack_type_float:
-        f64 = static_cast<double>(*reinterpret_cast<float *>(value));
-        return true;
-      case mpack_type_double:
-        f64 = *reinterpret_cast<double *>(value);
-        return true;
-      case mpack_type_int:
-        f64 = static_cast<double>(*reinterpret_cast<int64_t *>(value));
-        return true;
-      case mpack_type_uint:
-        f64 = static_cast<double>(*reinterpret_cast<uint64_t *>(value));
-        return true;
-      default:
-        return false;
-      }
-    }
-    return false;
+public:
+  void registerMembers() {
+    registerMember("f32", CppType::F32, &f32);
+    registerMember("f64", CppType::F64, &f64);
   }
-  void write(mpack_writer_t &, int) override {}
 };
 
 static ObjectWithFloats parseFloats(const uint8_t *data, size_t len) {

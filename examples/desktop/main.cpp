@@ -1,6 +1,2 @@
-#include "integral_config.h"
 
-int main() {
-    IntegralConfig::hello();
-    return 0;
-}
+int main() { return 0; }

@@ -1,272 +1,123 @@
 // tests/array-tests.cpp
-#include "mpack-object.h"
+#include "mpack-array.h"
+#include "mpack-object-base.h"
+#include "mpack-object.hpp"
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <string>
 
-struct Elem : MPackObject
-{
-    int32_t a{};
-    uint32_t b{};
-    bool setMPackValue(const char *n, void *v, const mpack_type_t &t) override
-    {
-        if (!n)
-            return false;
-        if (strcmp(n, "a") == 0)
-        {
-            if (t == mpack_type_nil)
-            {
-                a = 0;
-                return true;
-            }
-            if (t == mpack_type_int)
-            {
-                a = (int32_t)*reinterpret_cast<int64_t *>(v);
-                return true;
-            }
-            if (t == mpack_type_uint)
-            {
-                a = (int32_t)*reinterpret_cast<uint64_t *>(v);
-                return true;
-            }
-            if (t == mpack_type_float)
-            {
-                a = (int32_t)*reinterpret_cast<float *>(v);
-                return true;
-            }
-            if (t == mpack_type_double)
-            {
-                a = (int32_t)*reinterpret_cast<double *>(v);
-                return true;
-            }
-            return false;
-        }
-        if (strcmp(n, "b") == 0)
-        {
-            if (t == mpack_type_nil)
-            {
-                b = 0;
-                return true;
-            }
-            if (t == mpack_type_uint)
-            {
-                b = (uint32_t)*reinterpret_cast<uint64_t *>(v);
-                return true;
-            }
-            if (t == mpack_type_int)
-            {
-                b = (uint32_t)*reinterpret_cast<int64_t *>(v);
-                return true;
-            }
-            if (t == mpack_type_float)
-            {
-                b = (uint32_t)*reinterpret_cast<float *>(v);
-                return true;
-            }
-            if (t == mpack_type_double)
-            {
-                b = (uint32_t)*reinterpret_cast<double *>(v);
-                return true;
-            }
-            return false;
-        }
-        return false;
-    }
-    void write(mpack_writer_t &, int) override {}
+struct Elem : MPackObject<Elem> {
+public:
+  int32_t a{};
+  uint32_t b{};
+
+public:
+  void registerMembers() {
+    registerMember("a", CppType::I32, &a);
+    registerMember("b", CppType::U32, &b);
+  }
 };
 
-class ObjectWithArrays : public MPackObject
-{
+class ObjectWithArrays : public MPackObject<ObjectWithArrays> {
 public:
-    int64_t *i64 = nullptr;
-    size_t i64n = 0;
-    uint64_t *u64 = nullptr;
-    size_t u64n = 0;
-    float *f32 = nullptr;
-    size_t f32n = 0;
-    double *f64 = nullptr;
-    size_t f64n = 0;
-    std::string *ss = nullptr;
-    size_t ssn = 0;
-    Elem **objs = nullptr;
-    size_t objn = 0;
-    int32_t **aa = nullptr;
-    size_t aan = 0;
-    size_t *aalen = nullptr;
+  MPackArray<int64_t> i64;
+  MPackArray<uint64_t> u64;
+  MPackArray<float> f32;
+  MPackArray<double> f64;
+  MPackArray<const char *> ss;
+  MPackArray<Elem *> objs;
+  MPackArray<MPackArray<int32_t>> aa;
 
-    ~ObjectWithArrays() override
-    {
-        delete[] i64;
-        delete[] u64;
-        delete[] f32;
-        delete[] f64;
-        delete[] ss;
-        if (objs)
-        {
-            for (size_t i = 0; i < objn; ++i)
-                delete objs[i];
-            delete[] objs;
-        }
-        if (aa)
-        {
-            for (size_t i = 0; i < aan; ++i)
-                delete[] aa[i];
-            delete[] aa;
-        }
-        delete[] aalen;
+  ~ObjectWithArrays() override {
+    delete[] i64.p;
+    delete[] u64.p;
+    delete[] f32.p;
+    delete[] f64.p;
+    delete[] ss.p;
+    if (objs) {
+      for (size_t i = 0; i < objs.size; ++i)
+        delete objs[i];
+      delete[] objs.p;
     }
+    if (aa) {
+      for (size_t i = 0; i < aa.size; ++i)
+        delete[] aa[i].p;
+      delete[] aa.p;
+    }
+  }
+
+public:
+  void registerMembers() {
+    registerMember("i64", {CppType::Array, CppType::I64}, &i64);
+    registerMember("u64", {CppType::Array, CppType::U64}, &u64);
+    registerMember("f32", {CppType::Array, CppType::F32}, &f32);
+    registerMember("f64", {CppType::Array, CppType::F64}, &f64);
+    registerMember("ss", {CppType::Array, CppType::String}, &ss);
+    registerMember("objs", {CppType::Array, CppType::ObjectPtr}, &objs);
+    registerMember("aa", {CppType::Array, {CppType::Array, CppType::I32}}, &aa);
+  }
 
 private:
-    bool setMPackValue(const char *, void *, const mpack_type_t &) override
-    {
-        return false;
-    }
-    void write(mpack_writer_t &, int) override {}
-    bool isArray(const char *n) override
-    {
-        return !strcmp(n, "i64") || !strcmp(n, "u64") || !strcmp(n, "f32") ||
-               !strcmp(n, "f64") || !strcmp(n, "ss") || !strcmp(n, "objs") ||
-               !strcmp(n, "aa");
-    }
-    void *getArray(const char *n, size_t count, CppType &outType) override
-    {
-        if (!strcmp(n, "i64"))
-        {
-            delete[] i64;
-            i64n = count;
-            i64 = new int64_t[count]{};
-            outType = CppType::I64;
-            return i64;
-        }
-        if (!strcmp(n, "u64"))
-        {
-            delete[] u64;
-            u64n = count;
-            u64 = new uint64_t[count]{};
-            outType = CppType::U64;
-            return u64;
-        }
-        if (!strcmp(n, "f32"))
-        {
-            delete[] f32;
-            f32n = count;
-            f32 = new float[count]{};
-            outType = CppType::F32;
-            return f32;
-        }
-        if (!strcmp(n, "f64"))
-        {
-            delete[] f64;
-            f64n = count;
-            f64 = new double[count]{};
-            outType = CppType::F64;
-            return f64;
-        }
-        if (!strcmp(n, "ss"))
-        {
-            delete[] ss;
-            ssn = count;
-            ss = new std::string[count];
-            outType = CppType::String;
-            return ss;
-        }
-        if (!strcmp(n, "objs"))
-        {
-            if (objs)
-            {
-                for (size_t i = 0; i < objn; ++i)
-                    delete objs[i];
-                delete[] objs;
-            }
-            objn = count;
-            objs = new Elem *[count]{};
-            outType = CppType::Object;
-            return objs;
-        }
-        if (!strcmp(n, "aa"))
-        {
-            delete[] aalen;
-            if (aa)
-            {
-                for (size_t i = 0; i < aan; ++i)
-                    delete[] aa[i];
-                delete[] aa;
-            }
-            aan = count;
-            aa = new int32_t *[count]{};
-            aalen = new size_t[count]{};
-            outType = CppType::Array;
-            return aa;
-        }
-        return nullptr;
-    }
-    MPackObject *getObject(const char *) override { return new Elem(); }
+  MPackObjectBase *createObject(const char *) override { return new Elem(); }
 };
 
 // --- harness
-static ObjectWithArrays parseArrays(const uint8_t *data, size_t len)
-{
-    mpack_reader_t r;
-    mpack_reader_init_data(&r, (const char *)data, len);
-    ObjectWithArrays obj;
-    obj.read(r, 0);
-    EXPECT_EQ(mpack_reader_destroy(&r), mpack_ok);
-    auto err = mpack_reader_error(&r);
-    std::cout << "mpack_reader_error = "
-              << mpack_error_to_string(err)
-              << " (" << err << ")"
-              << std::endl;
-    return obj;
+static ObjectWithArrays parseArrays(const uint8_t *data, size_t len) {
+  mpack_reader_t r;
+  mpack_reader_init_data(&r, (const char *)data, len);
+  ObjectWithArrays obj;
+  obj.read(r, 0);
+  EXPECT_EQ(mpack_reader_destroy(&r), mpack_ok);
+  auto err = mpack_reader_error(&r);
+  std::cout << "mpack_reader_error = " << mpack_error_to_string(err) << " ("
+            << err << ")" << std::endl;
+  return obj;
 }
 
-struct ArrayCase
-{
-    std::vector<uint8_t> bytes;
-    std::vector<int64_t> i64;
-    std::vector<uint64_t> u64;
-    std::vector<float> f32;
-    std::vector<double> f64;
-    std::vector<std::string> ss;
-    std::vector<std::pair<int32_t, uint32_t>> objs;
-    std::vector<std::vector<int32_t>> aa;
+struct ArrayCase {
+  std::string name;
+  std::vector<uint8_t> bytes;
+  std::vector<int64_t> i64;
+  std::vector<uint64_t> u64;
+  std::vector<float> f32;
+  std::vector<double> f64;
+  std::vector<std::string> ss;
+  std::vector<std::pair<int32_t, uint32_t>> objs;
+  std::vector<std::vector<int32_t>> aa;
 };
 
-class ObjectWithArraysTest : public ::testing::TestWithParam<ArrayCase>
-{
-};
+class ObjectWithArraysTest : public ::testing::TestWithParam<ArrayCase> {};
 
-TEST_P(ObjectWithArraysTest, DecodesAllArrays)
-{
-    const auto &tc = GetParam();
-    auto obj = parseArrays(tc.bytes.data(), tc.bytes.size());
-    ASSERT_EQ(obj.i64n, tc.i64.size());
-    ASSERT_EQ(obj.u64n, tc.u64.size());
-    ASSERT_EQ(obj.f32n, tc.f32.size());
-    ASSERT_EQ(obj.f64n, tc.f64.size());
-    ASSERT_EQ(obj.ssn, tc.ss.size());
-    ASSERT_EQ(obj.objn, tc.objs.size());
-    ASSERT_EQ(obj.aan, tc.aa.size());
-    for (size_t i = 0; i < tc.i64.size(); ++i)
-        EXPECT_EQ(obj.i64[i], tc.i64[i]);
-    for (size_t i = 0; i < tc.u64.size(); ++i)
-        EXPECT_EQ(obj.u64[i], tc.u64[i]);
-    for (size_t i = 0; i < tc.f32.size(); ++i)
-        EXPECT_FLOAT_EQ(obj.f32[i], tc.f32[i]);
-    for (size_t i = 0; i < tc.f64.size(); ++i)
-        EXPECT_DOUBLE_EQ(obj.f64[i], tc.f64[i]);
-    for (size_t i = 0; i < tc.ss.size(); ++i)
-        EXPECT_EQ(obj.ss[i], tc.ss[i]);
-    for (size_t i = 0; i < tc.objs.size(); ++i)
-    {
-        ASSERT_NE(obj.objs[i], nullptr);
-        EXPECT_EQ(obj.objs[i]->a, tc.objs[i].first);
-        EXPECT_EQ(obj.objs[i]->b, (uint32_t)tc.objs[i].second);
-    }
-    for (size_t i = 0; i < tc.aa.size(); ++i)
-    {
-        ASSERT_EQ(obj.aalen[i], tc.aa[i].size());
-        for (size_t j = 0; j < tc.aa[i].size(); ++j)
-            EXPECT_EQ(obj.aa[i][j], tc.aa[i][j]);
-    }
+TEST_P(ObjectWithArraysTest, DecodesAllArrays) {
+  const auto &tc = GetParam();
+  auto obj = parseArrays(tc.bytes.data(), tc.bytes.size());
+  ASSERT_EQ(obj.i64.size, tc.i64.size());
+  ASSERT_EQ(obj.u64.size, tc.u64.size());
+  ASSERT_EQ(obj.f32.size, tc.f32.size());
+  ASSERT_EQ(obj.f64.size, tc.f64.size());
+  ASSERT_EQ(obj.ss.size, tc.ss.size());
+  ASSERT_EQ(obj.objs.size, tc.objs.size());
+  ASSERT_EQ(obj.aa.size, tc.aa.size());
+  for (size_t i = 0; i < tc.i64.size(); ++i)
+    EXPECT_EQ(obj.i64[i], tc.i64[i]);
+  for (size_t i = 0; i < tc.u64.size(); ++i)
+    EXPECT_EQ(obj.u64[i], tc.u64[i]);
+  for (size_t i = 0; i < tc.f32.size(); ++i)
+    EXPECT_FLOAT_EQ(obj.f32[i], tc.f32[i]);
+  for (size_t i = 0; i < tc.f64.size(); ++i)
+    EXPECT_DOUBLE_EQ(obj.f64[i], tc.f64[i]);
+  for (size_t i = 0; i < tc.ss.size(); ++i)
+    EXPECT_EQ(obj.ss[i], tc.ss[i]);
+  for (size_t i = 0; i < tc.objs.size(); ++i) {
+    ASSERT_NE(obj.objs[i], nullptr);
+    EXPECT_EQ(obj.objs[i]->a, tc.objs[i].first);
+    EXPECT_EQ(obj.objs[i]->b, (uint32_t)tc.objs[i].second);
+  }
+  for (size_t i = 0; i < tc.aa.size(); ++i) {
+    ASSERT_EQ(obj.aa[i].size, tc.aa[i].size());
+    for (size_t j = 0; j < tc.aa[i].size(); ++j)
+      EXPECT_EQ(obj.aa[i][j], tc.aa[i][j]);
+  }
 }
 
 // --- your exact hex ---
@@ -299,17 +150,81 @@ static std::vector<uint8_t> bytes_arrays_case2 = {
     0xCD, 0x01, 0xC8, 0xA2, 0x61, 0x61, 0x93, 0x90, 0x91, 0x0A, 0x92, 0x14,
     0x1E};
 
+// case3: only i64 filled
+static std::vector<uint8_t> bytes_arrays_case3 = {
+    0x87, 0xA3, 0x69, 0x36, 0x34, 0x93, 0x01, 0xFE, 0x03, 0xA3,
+    0x75, 0x36, 0x34, 0x90, 0xA3, 0x66, 0x33, 0x32, 0x90, 0xA3,
+    0x66, 0x36, 0x34, 0x90, 0xA2, 0x73, 0x73, 0x90, 0xA4, 0x6F,
+    0x62, 0x6A, 0x73, 0x90, 0xA2, 0x61, 0x61, 0x90};
+
+// case4: only u64 filled
+static std::vector<uint8_t> bytes_arrays_case4 = {
+    0x87, 0xA3, 0x69, 0x36, 0x34, 0x90, 0xA3, 0x75, 0x36, 0x34, 0x92, 0x00,
+    0xCF, 0x11, 0x22, 0x10, 0xF4, 0x7D, 0xE9, 0x81, 0x15, 0xA3, 0x66, 0x33,
+    0x32, 0x90, 0xA3, 0x66, 0x36, 0x34, 0x90, 0xA2, 0x73, 0x73, 0x90, 0xA4,
+    0x6F, 0x62, 0x6A, 0x73, 0x90, 0xA2, 0x61, 0x61, 0x90};
+
+// case5: only f32 filled
+static std::vector<uint8_t> bytes_arrays_case5 = {
+    0x87, 0xA3, 0x69, 0x36, 0x34, 0x90, 0xA3, 0x75, 0x36, 0x34, 0x90,
+    0xA3, 0x66, 0x33, 0x32, 0x93, 0xCB, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0xCB, 0x3F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0xCB, 0xC0, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA3,
+    0x66, 0x36, 0x34, 0x90, 0xA2, 0x73, 0x73, 0x90, 0xA4, 0x6F, 0x62,
+    0x6A, 0x73, 0x90, 0xA2, 0x61, 0x61, 0x90};
+
+// case6: only f64 filled
+static std::vector<uint8_t> bytes_arrays_case6 = {
+    0x87, 0xA3, 0x69, 0x36, 0x34, 0x90, 0xA3, 0x75, 0x36, 0x34, 0x90,
+    0xA3, 0x66, 0x33, 0x32, 0x90, 0xA3, 0x66, 0x36, 0x34, 0x92, 0xCB,
+    0x2B, 0x2B, 0xFF, 0x2E, 0xE4, 0x8E, 0x05, 0x30, 0xCB, 0xD4, 0xB2,
+    0x49, 0xAD, 0x25, 0x94, 0xC3, 0x7D, 0xA2, 0x73, 0x73, 0x90, 0xA4,
+    0x6F, 0x62, 0x6A, 0x73, 0x90, 0xA2, 0x61, 0x61, 0x90};
+
+// case7: only ss filled
+static std::vector<uint8_t> bytes_arrays_case7 = {
+    0x87, 0xA3, 0x69, 0x36, 0x34, 0x90, 0xA3, 0x75, 0x36, 0x34, 0x90, 0xA3,
+    0x66, 0x33, 0x32, 0x90, 0xA3, 0x66, 0x36, 0x34, 0x90, 0xA2, 0x73, 0x73,
+    0x92, 0xA8, 0x6F, 0x6E, 0x6C, 0x79, 0x2D, 0x6F, 0x6E, 0x65, 0xA0, 0xA4,
+    0x6F, 0x62, 0x6A, 0x73, 0x90, 0xA2, 0x61, 0x61, 0x90};
+
+// case8: only objs filled
+static std::vector<uint8_t> bytes_arrays_case8 = {
+    0x87, 0xA3, 0x69, 0x36, 0x34, 0x90, 0xA3, 0x75, 0x36, 0x34,
+    0x90, 0xA3, 0x66, 0x33, 0x32, 0x90, 0xA3, 0x66, 0x36, 0x34,
+    0x90, 0xA2, 0x73, 0x73, 0x90, 0xA4, 0x6F, 0x62, 0x6A, 0x73,
+    0x92, 0x82, 0xA1, 0x61, 0x01, 0xA1, 0x62, 0x02, 0x82, 0xA1,
+    0x61, 0xFD, 0xA1, 0x62, 0x04, 0xA2, 0x61, 0x61, 0x90};
+
+// case9: only aa filled
+static std::vector<uint8_t> bytes_arrays_case9 = {
+    0x87, 0xA3, 0x69, 0x36, 0x34, 0x90, 0xA3, 0x75, 0x36, 0x34, 0x90,
+    0xA3, 0x66, 0x33, 0x32, 0x90, 0xA3, 0x66, 0x36, 0x34, 0x90, 0xA2,
+    0x73, 0x73, 0x90, 0xA4, 0x6F, 0x62, 0x6A, 0x73, 0x90, 0xA2, 0x61,
+    0x61, 0x93, 0x93, 0x01, 0x02, 0x03, 0x90, 0x91, 0xFF};
+
+struct ArrayCaseName {
+  template <class ParamType>
+  std::string
+  operator()(const ::testing::TestParamInfo<ParamType> &info) const {
+    // Give each case a readable name
+    return info.param.name;
+  }
+};
+
 INSTANTIATE_TEST_SUITE_P(
     MPackAllArrays, ObjectWithArraysTest,
-    ::testing::Values(ArrayCase{bytes_arrays_case1,
+    ::testing::Values(ArrayCase{"MixOfAllArrays1",
+                                bytes_arrays_case1,
                                 {1, -2, 300},
                                 {0ULL, 90000ULL, 7000000000ULL},
                                 {3.25f, -0.5f},
                                 {-1230000000.0, 6.02214076e23},
                                 {"hello", "UTF-8 ✓", ""},
-                                {{0, 20u}, {0, 42u}},
+                                {{-10, 20u}, {0, 42u}},
                                 {{1, 2, 3}, {-4, -5}}},
-                      ArrayCase{bytes_arrays_case2,
+                      ArrayCase{"MixOfAllArrays2",
+                                bytes_arrays_case2,
                                 {-1, 2, -3, 4, -5},
                                 {1ULL, 2ULL, 3ULL, 4ULL, 5ULL},
                                 {1.0f, -1.0f, 1.5f, -2.75f},
@@ -317,4 +232,75 @@ INSTANTIATE_TEST_SUITE_P(
                                 {"symbols !@#$ \"quote\" \\ backslash",
                                  "multiline\ntext"},
                                 {{123, 456u}},
-                                {{}, {10}, {20, 30}}}));
+                                {{}, {10}, {20, 30}}},
+                      // case3: only i64
+                      ArrayCase{"ArrayOfI64",
+                                bytes_arrays_case3,
+                                {1, -2, 3},
+                                {},
+                                {},
+                                {},
+                                {},
+                                {},
+                                {}},
+                      // case4: only u64
+                      ArrayCase{"ArrayOfU64",
+                                bytes_arrays_case4,
+                                {},
+                                {0ULL, 1234567890123456789ULL},
+                                {},
+                                {},
+                                {},
+                                {},
+                                {}},
+                      // case5: only f32
+                      ArrayCase{"ArrayOfFloats",
+                                bytes_arrays_case5,
+                                {},
+                                {},
+                                {0.0f, 1.0f, -2.5f},
+                                {},
+                                {},
+                                {},
+                                {}},
+                      // case6: only f64
+                      ArrayCase{"ArrayOfDoubles",
+                                bytes_arrays_case6,
+                                {},
+                                {},
+                                {},
+                                {1.0e-100, -1.0e100},
+                                {},
+                                {},
+                                {}},
+                      // case7: only ss
+                      ArrayCase{"ArrayOfStrings",
+                                bytes_arrays_case7,
+                                {},
+                                {},
+                                {},
+                                {},
+                                {"only-one", ""},
+                                {},
+                                {}},
+                      // case8: only objs
+                      ArrayCase{"ArrayOfObjects",
+                                bytes_arrays_case8,
+                                {},
+                                {},
+                                {},
+                                {},
+                                {},
+                                {{1, 2u}, {-3, 4u}},
+                                {}},
+                      // case9: only aa
+                      ArrayCase{"ArrayOfArrays",
+                                bytes_arrays_case9,
+                                {},
+                                {},
+                                {},
+                                {},
+                                {},
+                                {},
+                                {{1, 2, 3}, {}, {-1}}}),
+    ArrayCaseName());

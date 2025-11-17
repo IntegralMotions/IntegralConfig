@@ -38,8 +38,8 @@ enable_testing()
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
 )
-add_executable(IntegralConfigTests ${TEST_SOURCES})
-target_link_libraries(IntegralConfigTests PRIVATE IntegralConfig GTest::gtest_main)
+add_executable(TESTS ${TEST_SOURCES})
+target_link_libraries(TESTS PRIVATE IntegralConfig GTest::gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(IntegralConfigTests)
+gtest_discover_tests(TESTS)
