@@ -516,7 +516,7 @@ bool MPackObjectBase::writeMember(mpack_writer_t &writer,
     obj->write(writer, depth + 1);
     return ok(writer);
   } break;
-  case CppType::Object: {
+  case CppType::ObjectPtr: {
     auto **obj = static_cast<MPackObjectBase **>(member.address);
     if (!*obj)
       mpack_write_nil(&writer);
