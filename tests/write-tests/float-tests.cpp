@@ -73,5 +73,5 @@ INSTANTIATE_TEST_SUITE_P(
     MPackFloatsWrite, ObjectWithFloatsWriteTest,
     ::testing::Values(
         FloatWriteCase{"FloatCase1", bytes_float_case1, 3.14159f, -1.23e9},
-        FloatWriteCase{"FloatCase2", bytes_float_case2, -0.5f, 6.02214076e23}),
+        FloatWriteCase{"FloatCase2", bytes_float_case2, -1.75f, 6.02214076e23}),
     FloatWriteCaseName());

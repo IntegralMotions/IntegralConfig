@@ -4,19 +4,19 @@
 
 struct MPackArrayBase {
   size_t size = 0;
+  void *p = nullptr;
 };
 
 template <typename T> struct MPackArray : MPackArrayBase {
-  T *p = nullptr;
+  operator T *() { return static_cast<T *>(p); }
+  operator const T *() const { return static_cast<const T *>(p); }
 
-  operator T *() { return p; }
-  operator const T *() const { return p; }
+  T &operator[](size_t i) { return static_cast<T *>(p)[i]; }
+  const T &operator[](size_t i) const { return static_cast<const T *>(p)[i]; }
 
-  T &operator[](size_t i) { return p[i]; }
-  const T &operator[](size_t i) const { return p[i]; }
+  T *begin() { return static_cast<T *>(p); }
+  T *end() { return static_cast<T *>(p) + size; }
 
-  T *begin() { return p; }
-  T *end() { return p + size; }
-  const T *begin() const { return p; }
-  const T *end() const { return p + size; }
+  const T *begin() const { return static_cast<const T *>(p); }
+  const T *end() const { return static_cast<const T *>(p) + size; }
 };

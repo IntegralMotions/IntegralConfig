@@ -317,7 +317,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new int8_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<int8_t>(reader, arr->p[i]))
+      if (!readNumeric<int8_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -326,7 +326,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new uint8_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<uint8_t>(reader, arr->p[i]))
+      if (!readNumeric<uint8_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -335,7 +335,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new int16_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<int16_t>(reader, arr->p[i]))
+      if (!readNumeric<int16_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -344,7 +344,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new uint16_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<uint16_t>(reader, arr->p[i]))
+      if (!readNumeric<uint16_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -353,7 +353,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new int32_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<int32_t>(reader, arr->p[i]))
+      if (!readNumeric<int32_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -362,7 +362,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new uint32_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<uint32_t>(reader, arr->p[i]))
+      if (!readNumeric<uint32_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -371,7 +371,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new int64_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<int64_t>(reader, arr->p[i]))
+      if (!readNumeric<int64_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -380,7 +380,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new uint64_t[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<uint64_t>(reader, arr->p[i]))
+      if (!readNumeric<uint64_t>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -389,7 +389,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new float[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<float>(reader, arr->p[i]))
+      if (!readNumeric<float>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -398,7 +398,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new double[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readNumeric<double>(reader, arr->p[i]))
+      if (!readNumeric<double>(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -407,7 +407,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new bool[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readBool(reader, arr->p[i]))
+      if (!readBool(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -416,7 +416,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
     arr->size = count;
     arr->p = count ? new char *[count] : nullptr;
     for (size_t i = 0; i < count; ++i)
-      if (!readString(reader, arr->p[i]))
+      if (!readString(reader, (*arr)[i]))
         return false;
   } break;
 
@@ -430,7 +430,7 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
       if (!ok(reader)) {
         return false;
       }
-      arr->p[i] = obj;
+      (*arr)[i] = obj;
     }
   } break;
 
@@ -440,20 +440,14 @@ bool MPackObjectBase::readArray(mpack_reader_t &reader,
       return false;
     }
 
-    if (innerType->innerType->type == CppType::I32) {
-      auto *outer =
-          static_cast<MPackArray<MPackArray<int32_t>> *>(member.address);
-      outer->size = count;
-      outer->p = count ? new MPackArray<int32_t>[count] : nullptr;
+    auto *outer = static_cast<MPackArray<MPackArrayBase> *>(member.address);
+    outer->size = count;
+    outer->p = count ? new MPackArrayBase[count] : nullptr;
 
-      for (size_t i = 0; i < count; ++i) {
-        MPackObjectMember innerMember{member.name, *innerType, &outer->p[i]};
-        if (!readArray(reader, innerMember, depth + 1))
-          return false;
-      }
-    } else {
-      mpack_reader_flag_error(&reader, mpack_error_invalid);
-      return false;
+    for (size_t i = 0; i < count; ++i) {
+      MPackObjectMember innerMember{member.name, *innerType, &(*outer)[i]};
+      if (!readArray(reader, innerMember, depth + 1))
+        return false;
     }
   } break;
 
@@ -496,13 +490,13 @@ bool MPackObjectBase::writeMember(mpack_writer_t &writer,
     mpack_write_u64(&writer, *static_cast<uint64_t *>(member.address));
     break;
   case CppType::F32:
-    mpack_write_float(&writer, *static_cast<uint64_t *>(member.address));
+    mpack_write_float(&writer, *static_cast<float *>(member.address));
     break;
   case CppType::F64:
-    mpack_write_double(&writer, *static_cast<uint64_t *>(member.address));
+    mpack_write_double(&writer, *static_cast<double *>(member.address));
     break;
   case CppType::Bool:
-    mpack_write_double(&writer, *static_cast<bool *>(member.address));
+    mpack_write_bool(&writer, *static_cast<bool *>(member.address));
     break;
   case CppType::String: {
     const char *s = *static_cast<const char *const *>(member.address);
@@ -551,7 +545,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_i8(&writer, arr->p[i]);
+      mpack_write_i8(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -563,7 +557,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_u8(&writer, arr->p[i]);
+      mpack_write_u8(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -575,7 +569,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_i16(&writer, arr->p[i]);
+      mpack_write_i16(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -587,7 +581,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_u16(&writer, arr->p[i]);
+      mpack_write_u16(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -599,7 +593,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_i32(&writer, arr->p[i]);
+      mpack_write_i32(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -611,7 +605,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_u32(&writer, arr->p[i]);
+      mpack_write_u32(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -623,7 +617,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_i64(&writer, arr->p[i]);
+      mpack_write_i64(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -635,7 +629,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_u64(&writer, arr->p[i]);
+      mpack_write_u64(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -647,7 +641,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_float(&writer, arr->p[i]);
+      mpack_write_float(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -659,7 +653,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_double(&writer, arr->p[i]);
+      mpack_write_double(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
@@ -671,22 +665,22 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++)
-      mpack_write_bool(&writer, arr->p[i]);
+      mpack_write_bool(&writer, (*arr)[i]);
     mpack_finish_array(&writer);
   } break;
 
   case CppType::String: {
-    auto *arr = static_cast<MPackArray<char *> *>(member.address);
+    auto *arr = static_cast<MPackArray<const char *> *>(member.address);
     if (!arr->p) {
       mpack_write_nil(&writer);
       return ok(writer);
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++) {
-      if (!arr->p[i])
+      if (!(*arr)[i])
         mpack_write_nil(&writer);
       else
-        mpack_write_cstr(&writer, arr->p[i]);
+        mpack_write_cstr(&writer, (*arr)[i]);
     }
     mpack_finish_array(&writer);
   } break;
@@ -699,18 +693,20 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
     }
     mpack_start_array(&writer, arr->size);
     for (size_t i = 0; i < arr->size; i++) {
-      if (!arr->p[i])
+      if (!(*arr)[i])
         mpack_write_nil(&writer);
       else {
-        arr->p[i]->write(writer, depth + 1);
-        return ok(writer);
+        (*arr)[i]->write(writer, depth + 1);
+        if (!ok(writer)) {
+          return false;
+        }
       }
     }
     mpack_finish_array(&writer);
   } break;
 
   case CppType::Array: {
-    auto *outer = static_cast<MPackArray<MPackArray<void *>> *>(member.address);
+    auto *outer = static_cast<MPackArray<MPackArrayBase> *>(member.address);
     if (!outer->p) {
       mpack_write_nil(&writer);
       return ok(writer);
@@ -718,8 +714,8 @@ bool MPackObjectBase::writeArray(mpack_writer_t &writer,
 
     mpack_start_array(&writer, outer->size);
     for (size_t i = 0; i < outer->size; i++) {
-      MPackObjectMember innerMember{member.name, *innerType, &outer->p[i]};
-      if (!writeArray(writer, innerMember)) {
+      MPackObjectMember innerMember{member.name, *innerType, &(*outer)[i]};
+      if (!writeArray(writer, innerMember, depth + 1)) {
         return false;
       }
     }

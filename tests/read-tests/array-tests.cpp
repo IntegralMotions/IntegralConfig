@@ -1,65 +1,9 @@
 // tests/array-tests.cpp
 #include "mpack-array.h"
-#include "mpack-object-base.h"
-#include "mpack-object.hpp"
+#include "objects/array-objects.h"
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <string>
-
-struct Elem : MPackObject<Elem> {
-public:
-  int32_t a{};
-  uint32_t b{};
-
-public:
-  void registerMembers() {
-    registerMember("a", CppType::I32, &a);
-    registerMember("b", CppType::U32, &b);
-  }
-};
-
-class ObjectWithArrays : public MPackObject<ObjectWithArrays> {
-public:
-  MPackArray<int64_t> i64;
-  MPackArray<uint64_t> u64;
-  MPackArray<float> f32;
-  MPackArray<double> f64;
-  MPackArray<const char *> ss;
-  MPackArray<Elem *> objs;
-  MPackArray<MPackArray<int32_t>> aa;
-
-  ~ObjectWithArrays() override {
-    delete[] i64.p;
-    delete[] u64.p;
-    delete[] f32.p;
-    delete[] f64.p;
-    delete[] ss.p;
-    if (objs) {
-      for (size_t i = 0; i < objs.size; ++i)
-        delete objs[i];
-      delete[] objs.p;
-    }
-    if (aa) {
-      for (size_t i = 0; i < aa.size; ++i)
-        delete[] aa[i].p;
-      delete[] aa.p;
-    }
-  }
-
-public:
-  void registerMembers() {
-    registerMember("i64", {CppType::Array, CppType::I64}, &i64);
-    registerMember("u64", {CppType::Array, CppType::U64}, &u64);
-    registerMember("f32", {CppType::Array, CppType::F32}, &f32);
-    registerMember("f64", {CppType::Array, CppType::F64}, &f64);
-    registerMember("ss", {CppType::Array, CppType::String}, &ss);
-    registerMember("objs", {CppType::Array, CppType::ObjectPtr}, &objs);
-    registerMember("aa", {CppType::Array, {CppType::Array, CppType::I32}}, &aa);
-  }
-
-private:
-  MPackObjectBase *createObject(const char *) override { return new Elem(); }
-};
 
 // --- harness
 static ObjectWithArrays parseArrays(const uint8_t *data, size_t len) {

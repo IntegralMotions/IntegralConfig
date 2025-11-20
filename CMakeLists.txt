@@ -39,6 +39,11 @@ file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
 )
 add_executable(TESTS ${TEST_SOURCES})
+
+target_include_directories(TESTS PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+
 target_link_libraries(TESTS PRIVATE IntegralConfig GTest::gtest_main)
 
 include(GoogleTest)
