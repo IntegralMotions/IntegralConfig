@@ -1,0 +1,126 @@
+// tests/object-with-ints-write-tests.cpp
+#include "mpack-object.hpp"
+#include <cstdint>
+#include <gtest/gtest.h>
+#include <vector>
+
+class ObjectWithInts : public MPackObject<ObjectWithInts> {
+public:
+  uint8_t value1;
+  int8_t value2;
+  uint16_t value3;
+  int16_t value4;
+  uint32_t value5;
+  int32_t value6;
+  uint64_t value7;
+  int64_t value8;
+  unsigned int value9;
+  int value10;
+
+  void registerMembers() {
+    registerMember("value1", CppType::U8, &value1);
+    registerMember("value2", CppType::I8, &value2);
+    registerMember("value3", CppType::U16, &value3);
+    registerMember("value4", CppType::I16, &value4);
+    registerMember("value5", CppType::U32, &value5);
+    registerMember("value6", CppType::I32, &value6);
+    registerMember("value7", CppType::U64, &value7);
+    registerMember("value8", CppType::I64, &value8);
+    registerMember("value9", CppType::U32, &value9);
+    registerMember("value10", CppType::I32, &value10);
+  }
+};
+
+static std::vector<uint8_t> writeObject(const ObjectWithInts &objIn) {
+  mpack_writer_t writer;
+  char *data = nullptr;
+  size_t size = 0;
+
+  mpack_writer_init_growable(&writer, &data, &size);
+
+  ObjectWithInts obj = objIn; // write takes non-const
+  obj.write(writer, 0);
+  EXPECT_EQ(mpack_writer_destroy(&writer), mpack_ok);
+
+  std::vector<uint8_t> out(reinterpret_cast<uint8_t *>(data),
+                           reinterpret_cast<uint8_t *>(data) + size);
+  MPACK_FREE(data); // or free(data) depending on your setup
+  return out;
+}
+
+struct MPackWriteCase {
+  std::string name;
+  uint8_t v1;
+  int8_t v2;
+  uint16_t v3;
+  int16_t v4;
+  uint32_t v5;
+  int32_t v6;
+  uint64_t v7;
+  int64_t v8;
+  unsigned v9;
+  int v10;
+  std::vector<uint8_t> expected;
+};
+
+class ObjectWithIntsWriteTest
+    : public ::testing::TestWithParam<MPackWriteCase> {};
+
+TEST_P(ObjectWithIntsWriteTest, EncodesValues) {
+  const auto &tc = GetParam();
+  ObjectWithInts obj;
+  obj.value1 = tc.v1;
+  obj.value2 = tc.v2;
+  obj.value3 = tc.v3;
+  obj.value4 = tc.v4;
+  obj.value5 = tc.v5;
+  obj.value6 = tc.v6;
+  obj.value7 = tc.v7;
+  obj.value8 = tc.v8;
+  obj.value9 = tc.v9;
+  obj.value10 = tc.v10;
+
+  auto bytes = writeObject(obj);
+  EXPECT_EQ(bytes, tc.expected);
+}
+
+static std::vector<uint8_t> bytes_case1 = {
+    0x8A, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x31, 0x01, 0xA6, 0x76, 0x61,
+    0x6C, 0x75, 0x65, 0x32, 0xFE, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x33,
+    0xCD, 0x01, 0x2C, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x34, 0xD1, 0xFE,
+    0x70, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x35, 0xCD, 0xC3, 0x50, 0xA6,
+    0x76, 0x61, 0x6C, 0x75, 0x65, 0x36, 0xD2, 0xFF, 0xFF, 0x15, 0xA0, 0xA6,
+    0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0xCF, 0x00, 0x00, 0x00, 0x01, 0xA1,
+    0x3B, 0x86, 0x00, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x38, 0xD3, 0xFF,
+    0xFF, 0xFF, 0xFE, 0x23, 0x29, 0xB0, 0x00, 0xA6, 0x76, 0x61, 0x6C, 0x75,
+    0x65, 0x39, 0xCE, 0x00, 0x01, 0x5F, 0x90, 0xA7, 0x76, 0x61, 0x6C, 0x75,
+    0x65, 0x31, 0x30, 0xD2, 0xFF, 0xFE, 0x79, 0x60};
+
+static std::vector<uint8_t> bytes_case2 = {
+    0x8A, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x31, 0x03, 0xA6, 0x76, 0x61,
+    0x6C, 0x75, 0x65, 0x32, 0xFB, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x33,
+    0xCD, 0x18, 0x5A, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x34, 0xD1, 0xFF,
+    0x16, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x35, 0xCE, 0x00, 0x01, 0x26,
+    0x4F, 0xA6, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x36, 0xD1, 0xE6, 0xE0, 0xA6,
+    0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0xCE, 0x00, 0xBC, 0x84, 0x3F, 0xA6,
+    0x76, 0x61, 0x6C, 0x75, 0x65, 0x38, 0xD2, 0xCC, 0x6A, 0xAF, 0x4B, 0xA6,
+    0x76, 0x61, 0x6C, 0x75, 0x65, 0x39, 0xCD, 0x09, 0x83, 0xA7, 0x76, 0x61,
+    0x6C, 0x75, 0x65, 0x31, 0x30, 0xD2, 0xFF, 0xF6, 0x59, 0x7B};
+
+struct MPackWriteCaseName {
+  template <class ParamType>
+  std::string
+  operator()(const ::testing::TestParamInfo<ParamType> &info) const {
+    return info.param.name;
+  }
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    MPackObjectIntsWrite, ObjectWithIntsWriteTest,
+    ::testing::Values(MPackWriteCase{"Case1", 1, -2, 300, -400, 50000u, -60000,
+                                     7000000000ULL, -8000000000LL, 90000u,
+                                     -100000, bytes_case1},
+                      MPackWriteCase{"Case2", 3, -5, 6234, -234, 75343u, -6432,
+                                     12354623ULL, -865423541LL, 2435u, -632453,
+                                     bytes_case2}),
+    MPackWriteCaseName());

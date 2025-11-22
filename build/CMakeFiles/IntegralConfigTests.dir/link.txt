@@ -1,1 +1,0 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/IntegralConfigTests.dir/tests/hello_test.cpp.o -o IntegralConfigTests  libIntegralConfig.a lib/libgtest_main.a lib/libgtest.a

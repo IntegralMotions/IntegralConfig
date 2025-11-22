@@ -1,2 +1,0 @@
-IntegralConfig.HelloFunction 2 0.00361208
----

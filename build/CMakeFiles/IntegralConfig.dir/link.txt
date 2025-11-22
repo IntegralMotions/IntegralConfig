@@ -1,2 +1,0 @@
-/usr/bin/ar qc libIntegralConfig.a CMakeFiles/IntegralConfig.dir/src/integral_config.cpp.o
-/usr/bin/ranlib libIntegralConfig.a

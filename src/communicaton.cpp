@@ -1,4 +1,4 @@
-#include "configuration/Communication.h"
+#include "communication.h"
 
 Communication::Communication() = default;
 
