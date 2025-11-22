@@ -231,7 +231,7 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
   obj.ss.p = obj.ss.size ? new const char *[obj.ss.size] : new const char *[0];
   for (size_t i = 0; i < tc.ss.size(); ++i) {
     char *buf = new char[tc.ss[i].size() + 1];
-    std::memcpy(buf, tc.ss[i].c_str(), tc.ss[i].size() + 1); // copies '\0' too
+    memcpy(buf, tc.ss[i].c_str(), tc.ss[i].size() + 1); // copies '\0' too
     obj.ss[i] = buf;
   }
 
@@ -301,7 +301,7 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
     inner.p = inner.size ? new const char *[inner.size] : new const char *[0];
     for (size_t j = 0; j < tc.aa_ss[i].size(); ++j) {
       char *buf = new char[tc.ss[i].size() + 1];
-      std::memcpy(buf, tc.ss[i].c_str(), tc.ss[i].size() + 1);
+      memcpy(buf, tc.ss[i].c_str(), tc.ss[i].size() + 1);
       inner[j] = buf;
     }
   }
