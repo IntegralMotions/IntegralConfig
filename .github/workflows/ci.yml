@@ -25,13 +25,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Debug Makefile
-        run: |
-          pwd
-          ls
-          echo "===== Makefile ====="
-          cat Makefile || echo "No Makefile"
-
       - name: Configure
         run: make configure
 
