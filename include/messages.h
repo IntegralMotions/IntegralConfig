@@ -1,46 +1,32 @@
 #pragma once
 
-#include "mpack-object.h"
+#include "mpack-object.hpp"
+#include <cstdint>
 #include <mpack/mpack.h>
 
-enum class MsgType { Request, Response, Event, Unknown };
+enum class MsgType : uint8_t { Request, Response, Event, Unknown };
 
-inline MsgType toType(const char *s) {
-  if (s == "request")
-    return MsgType::Request;
-  if (s == "response")
-    return MsgType::Response;
-  if (s == "event")
-    return MsgType::Event;
-  return MsgType::Unknown;
-}
+class Payload : public MPackObject<Payload> {};
 
-inline const char *fromType(MsgType t) {
-  switch (t) {
-  case MsgType::Request:
-    return "request";
-  case MsgType::Response:
-    return "response";
-  case MsgType::Event:
-    return "event";
-  default:
-    return "unknown";
-  }
-}
+class Message : public MPackObject<Message> {
+  public:
+    [[nodiscard]] MsgType getMsgType() const {
+        if (strcmp(msgType, "request") == 0) {
+            return MsgType::Request;
+        }
+        if (strcmp(msgType, "response") == 0) {
+            return MsgType::Response;
+        }
+        if (strcmp(msgType, "event") == 0) {
+            return MsgType::Event;
+        }
+        return MsgType::Unknown;
+    }
 
-class Payload : public MPackObject {};
+  private:
+    void registerMembers() {}
 
-class Message : public MPackObject {
-private:
-  // Message read(mpack_reader_t &reader)
-  // {
-  // 	MPackHeader header;
-  // 	readHeader(reader, header);
-
-  // }
-
-public:
-  MsgType msgType;
-  char *opCode;
-  Payload *payload = nullptr;
+    char* msgType;
+    char* opCode;
+    Payload* payload = nullptr;
 };

@@ -4,49 +4,49 @@
 #include <memory>
 
 enum class CppType : uint8_t {
-  None,
-  I8,
-  U8,
-  I16,
-  U16,
-  I32,
-  U32,
-  I64,
-  U64,
-  F32,
-  F64,
-  Bool,
-  String,
-  Object,
-  ObjectPtr,
-  Array,
+    None,
+    I8,
+    U8,
+    I16,
+    U16,
+    I32,
+    U32,
+    I64,
+    U64,
+    F32,
+    F64,
+    Bool,
+    String,
+    Object,
+    ObjectPtr,
+    Array,
 };
 
 struct MPackObjectType {
-  CppType type = CppType::None;
-  std::unique_ptr<MPackObjectType> innerType;
+    CppType type = CppType::None;
+    std::unique_ptr<MPackObjectType> innerType;
 
-  MPackObjectType() = default;
+    MPackObjectType() = default;
 
-  MPackObjectType(CppType t) : type(t) {}
+    MPackObjectType(CppType type) : type(type) {}
 
-  MPackObjectType(CppType t, CppType inner)
-      : type(t), innerType(std::make_unique<MPackObjectType>(inner)) {}
+    MPackObjectType(CppType type, CppType inner) : type(type), innerType(std::make_unique<MPackObjectType>(inner)) {}
 
-  MPackObjectType(CppType t, MPackObjectType inner)
-      : type(t),
-        innerType(std::make_unique<MPackObjectType>(std::move(inner))) {}
+    MPackObjectType(CppType type, const MPackObjectType& inner)
+        : type(type), innerType(std::make_unique<MPackObjectType>(inner)) {}
 
-  MPackObjectType(const MPackObjectType &o) : type(o.type) {
-    if (o.innerType)
-      innerType = std::make_unique<MPackObjectType>(*o.innerType);
-  }
+    MPackObjectType(const MPackObjectType& objectType) : type(objectType.type) {
+        if (objectType.innerType) {
+            innerType = std::make_unique<MPackObjectType>(*objectType.innerType);
+        }
+    }
 
-  MPackObjectType &operator=(const MPackObjectType &o) {
-    if (this == &o)
-      return *this;
-    type = o.type;
-    innerType.reset(o.innerType ? new MPackObjectType(*o.innerType) : nullptr);
-    return *this;
-  }
+    MPackObjectType& operator=(const MPackObjectType& objectType) {
+        if (this == &objectType) {
+            return *this;
+        }
+        type = objectType.type;
+        innerType.reset(objectType.innerType ? new MPackObjectType(*objectType.innerType) : nullptr);
+        return *this;
+    }
 };

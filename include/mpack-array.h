@@ -11,8 +11,8 @@ template <typename T> struct MPackArray : MPackArrayBase {
   operator T *() { return static_cast<T *>(p); }
   operator const T *() const { return static_cast<const T *>(p); }
 
-  T &operator[](size_t i) { return static_cast<T *>(p)[i]; }
-  const T &operator[](size_t i) const { return static_cast<const T *>(p)[i]; }
+  T &operator[](size_t index) { return static_cast<T *>(p)[index]; }
+  const T &operator[](size_t index) const { return static_cast<const T *>(p)[index]; }
 
   T *begin() { return static_cast<T *>(p); }
   T *end() { return static_cast<T *>(p) + size; }
