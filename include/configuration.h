@@ -9,8 +9,8 @@
 class Setting : public MPackObject<Setting> {
   public:
     void registerMembers() {
-        this->registerMember("type", MPackObjectType{CppType::String, CppType::None}, static_cast<void*>(&type));
-        this->registerMember("value", MPackObjectType{CppType::ObjectPtr, CppType::None}, static_cast<void*>(&value));
+        this->registerMember("type", MPackObjectType{CppType::String, CppType::None}, &type);
+        this->registerMember("value", MPackObjectType{CppType::ObjectPtr, CppType::None}, &value);
     }
 
   protected:
@@ -41,9 +41,9 @@ class Setting : public MPackObject<Setting> {
 class Group : public MPackObject<Group> {
   public:
     void registerMembers() {
-        this->registerMember("id", CppType::String, static_cast<void*>(&id));
-        this->registerMember("label", CppType::String, static_cast<void*>(&label));
-        this->registerMember("settings", {CppType::Array, CppType::ObjectPtr}, static_cast<void*>(&settings));
+        this->registerMember("id", CppType::String, &id);
+        this->registerMember("label", CppType::String, &label);
+        this->registerMember("settings", {CppType::Array, CppType::ObjectPtr}, &settings);
     }
 
   protected:
@@ -63,9 +63,9 @@ class Group : public MPackObject<Group> {
 class Module : public MPackObject<Module> {
   public:
     void registerMembers() {
-        this->registerMember("id", CppType::String, static_cast<void*>(&id));
-        this->registerMember("label", CppType::String, static_cast<void*>(&label));
-        this->registerMember("groups", {CppType::Array, CppType::ObjectPtr}, static_cast<void*>(&groups));
+        this->registerMember("id", CppType::String, &id);
+        this->registerMember("label", CppType::String, &label);
+        this->registerMember("groups", {CppType::Array, CppType::ObjectPtr}, &groups);
     }
 
   protected:
@@ -82,8 +82,8 @@ class Module : public MPackObject<Module> {
 class DeviceInfo : public MPackObject<DeviceInfo> {
   public:
     void registerMembers() {
-        this->registerMember("model", CppType::String, static_cast<void*>(&model));
-        this->registerMember("firwareVersion", CppType::String, static_cast<void*>(&firwareVersion));
+        this->registerMember("model", CppType::String, &model);
+        this->registerMember("firwareVersion", CppType::String, &firwareVersion);
     }
 
   private:
@@ -94,9 +94,9 @@ class DeviceInfo : public MPackObject<DeviceInfo> {
 class Device : public MPackObject<Device> {
   public:
     void registerMembers() {
-        this->registerMember("deviceInfo", CppType::ObjectPtr, static_cast<void*>(&deviceInfo));
+        this->registerMember("deviceInfo", CppType::ObjectPtr, &deviceInfo);
 
-        this->registerMember("modules", {CppType::Array, CppType::ObjectPtr}, static_cast<void*>(&modules));
+        this->registerMember("modules", {CppType::Array, CppType::ObjectPtr}, &modules);
     }
 
   protected:
