@@ -428,7 +428,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     case CppType::String: {
         auto* arr = reinterpret_cast<MPackArray<char*>*>(member.address);
         arr->size = count;
-        arr->p = (count != 0U) ? new char*[count] : nullptr;
+        arr->p = (count != 0U) ? reinterpret_cast<void*>(new char*[count]) : nullptr;
         for (size_t i = 0; i < count; ++i) {
             if (!readString(reader, (*arr)[i])) {
                 return false;
@@ -515,11 +515,11 @@ bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMembe
         mpack_write_bool(&writer, *static_cast<bool*>(member.address));
         break;
     case CppType::String: {
-        const char* s = *static_cast<const char* const*>(member.address);
-        if (s == nullptr) {
+        const char* str = *static_cast<const char* const*>(member.address);
+        if (str == nullptr) {
             mpack_write_nil(&writer);
         } else {
-            mpack_write_cstr(&writer, s);
+            mpack_write_cstr(&writer, str);
         }
     } break;
     case CppType::Object: {
@@ -722,7 +722,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
         }
         mpack_start_array(&writer, arr->size);
         for (size_t i = 0; i < arr->size; i++) {
-            if (!(*arr)[i]) {
+            if ((*arr)[i] == nullptr) {
                 mpack_write_nil(&writer);
             } else {
                 (*arr)[i]->write(writer, depth + 1);
