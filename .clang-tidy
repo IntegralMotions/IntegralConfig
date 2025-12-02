@@ -11,6 +11,7 @@ Checks: >
   -modernize-use-trailing-return-type,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-owning-memory
+  -readability-function-cognitive-complexity
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'

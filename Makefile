@@ -6,7 +6,10 @@ BUILD_TYPE ?= Debug  # default if not overridden
 
 configure:
 	mkdir -p $(BUILD_DIR)
-	cmake -S . -B $(BUILD_DIR) -G "$(GENERATOR)" -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
+	cmake -S . -B $(BUILD_DIR) -G "$(GENERATOR)" \
+	      -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
+	      -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+	      -DCMAKE_CXX_STANDARD=17 \
 
 build: configure
 	cmake --build $(BUILD_DIR) --parallel

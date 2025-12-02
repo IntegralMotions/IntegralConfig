@@ -5,6 +5,7 @@
 #include "mpack/mpack-common.h"
 #include "mpack/mpack-reader.h"
 #include "mpack/mpack-writer.h"
+#include <array>
 #include <cstddef>
 
 #ifndef MPACK_MAX_STRING
@@ -33,21 +34,21 @@ class MPackObjectBase {
     void write(mpack_writer_t& writer, int depth = 0) const;
 
   protected:
-    void registerMember(const char* name, const MPackObjectType& type, void* address);
+    template <typename T> void registerMember(const char* name, const MPackObjectType& type, T* address);
 
   private:
-    bool getMember(const char* name, MPackObjectMember& member);
-    bool nextIsNil(mpack_reader_t& reader);
-    void* createArray(const CppType& type, size_t length);
+    bool getMember(const char* name, MPackObjectMember& member) const;
+    static bool nextIsNil(mpack_reader_t& reader);
+    static void* createArray(const CppType& type, size_t length);
 
-    inline bool ok(mpack_reader_t& reader) const;
-    inline bool ok(mpack_writer_t& writer) const;
-    bool readHeader(mpack_reader_t& reader, MPackHeader& header);
+    static inline bool ok(mpack_reader_t& reader);
+    static inline bool ok(mpack_writer_t& writer);
+    static bool readHeader(mpack_reader_t& reader, MPackHeader& header);
     bool readValue(mpack_reader_t& reader, const char* name, int depth = 0);
 
-    template <typename T> bool readNumeric(mpack_reader_t& reader, T& value);
-    bool readBool(mpack_reader_t& reader, bool& value);
-    bool readString(mpack_reader_t& reader, char*& value);
+    template <typename T> static bool readNumeric(mpack_reader_t& reader, T& value);
+    static bool readBool(mpack_reader_t& reader, bool& value);
+    static bool readString(mpack_reader_t& reader, char*& value);
     bool readArray(mpack_reader_t& reader, const MPackObjectMember& member, int depth = 0);
 
     bool writeMember(mpack_writer_t& writer, const MPackObjectMember& member, int depth = 0) const;
@@ -56,8 +57,12 @@ class MPackObjectBase {
     virtual MPackObjectBase* createObject(const char* name);
 
     size_t _membersCount = 0;
-    MPackObjectMember _members[MPACK_MAX_MEMBERS];
+    std::array<MPackObjectMember, MPACK_MAX_MEMBERS> _members;
 };
+
+template <typename T> void MPackObjectBase::registerMember(const char* name, const MPackObjectType& type, T* address) {
+    _members[_membersCount++] = {name, type, reinterpret_cast<void*>(address)};
+}
 
 template <typename T> bool MPackObjectBase::readNumeric(mpack_reader_t& reader, T& value) {
     value = static_cast<T>(0);
