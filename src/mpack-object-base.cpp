@@ -115,11 +115,11 @@ void* MPackObjectBase::createArray(const CppType& type, size_t length) {
         array = new bool[length];
         break;
     case CppType::String:
-        array = static_cast<void*>(new const char*[length]);
+        array = reinterpret_cast<void*>(new const char*[length]);
         break;
     case CppType::ObjectPtr:
     case CppType::Array:
-        array = static_cast<void*>(new void*[length]);
+        array = reinterpret_cast<void*>(new void*[length]);
         break;
     default:
         array = nullptr;

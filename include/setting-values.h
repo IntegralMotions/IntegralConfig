@@ -10,12 +10,12 @@ template <typename TDerived, typename TValue> class SettingValue : public MPackO
 
   public:
     virtual void registerMembers() {
-        this->registerMember("address", CppType::U32, static_cast<void*>(&address));
-        this->registerMember("id", CppType::String, static_cast<void*>(&id));
-        this->registerMember("label", CppType::String, static_cast<void*>(&label));
-        this->registerMember("unit", CppType::String, static_cast<void*>(&unit));
-        this->registerMember("value", getType<TValue>(), static_cast<void*>(&value));
-        this->registerMember("readonly", CppType::Bool, static_cast<void*>(&readonly));
+        this->registerMember("address", CppType::U32, &address);
+        this->registerMember("id", CppType::String, &id);
+        this->registerMember("label", CppType::String, &label);
+        this->registerMember("unit", CppType::String, &unit);
+        this->registerMember("value", getType<TValue>(), &value);
+        this->registerMember("readonly", CppType::Bool, &readonly);
     }
 
   protected:
@@ -64,7 +64,7 @@ class StringSetting : public SettingValue<StringSetting, const char*> {
   public:
     void registerMembers() override {
         SettingValue<StringSetting, const char*>::registerMembers();
-        this->registerMember("options", {CppType::Array, CppType::String}, static_cast<void*>(&options));
+        this->registerMember("options", {CppType::Array, CppType::String}, &options);
     }
 
   private:
