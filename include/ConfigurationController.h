@@ -2,8 +2,8 @@
 
 #include "IntegralCommunication/Communication.h"
 #include "IntegralCommunication/SevenBitEncodedCommunication.h"
-#include "messages.h"
-#include "mpack-object-base.h"
+#include "MPackObjectBase.h"
+#include "Messages.h"
 #include "mpack/mpack-writer.h"
 #include <array>
 #include <cstddef>

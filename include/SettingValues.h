@@ -1,8 +1,7 @@
 #pragma once
 
-#include "mpack-object-type.h"
-#include "mpack-object.hpp"
-
+#include "MPackObject.hpp"
+#include <cstdint>
 template <typename TDerived, typename TValue> class SettingValue : public MPackObject<TDerived> {
   private:
     SettingValue() = default;

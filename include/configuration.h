@@ -1,16 +1,14 @@
 #pragma once
 
-#include "mpack-object-base.h"
-#include "mpack-object-type.h"
-#include "mpack-object.hpp"
+#include "MPackObject.hpp"
 #include "setting-values.h"
 #include <cstring>
 
 class Setting : public MPackObject<Setting> {
   public:
     void registerMembers() {
-        this->registerMember("type", MPackObjectType{CppType::String, CppType::None}, &type);
-        this->registerMember("value", MPackObjectType{CppType::ObjectPtr, CppType::None}, &value);
+        this->registerMember("type", {CppType::String, CppType::None}, &type);
+        this->registerMember("value", {CppType::ObjectPtr, CppType::None}, &value);
     }
 
   protected:

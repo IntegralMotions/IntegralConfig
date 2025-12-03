@@ -1,5 +1,5 @@
 // tests/object-with-ints-write-tests.cpp
-#include "mpack-object.hpp"
+#include "MPackObject.hpp"
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <vector>

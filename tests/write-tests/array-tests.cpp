@@ -1,4 +1,4 @@
-#include "mpack-array.h"
+#include "MPackArray.h"
 #include "objects/array-objects.h"
 #include <cstdint>
 #include <gtest/gtest.h>

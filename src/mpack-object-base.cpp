@@ -1,5 +1,5 @@
-#include "mpack-object-base.h"
-#include "mpack-array.h"
+#include "MPackArray.h"
+#include "MPackObjectBase.h"
 #include "mpack/mpack-common.h"
 #include "mpack/mpack-expect.h"
 #include "mpack/mpack-reader.h"

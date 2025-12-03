@@ -1,8 +1,7 @@
 #pragma once
 
-#include "configuration.h"
-#include "mpack-object-base.h"
-#include "mpack-object.hpp"
+#include "Configuration.h"
+#include "MPackObject.hpp"
 #include <cstdint>
 #include <cstring>
 #include <mpack/mpack.h>

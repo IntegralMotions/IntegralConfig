@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mpack-header.h"
-#include "mpack-object-type.h"
+#include "MPackHeader.h"
+#include "MPackObjectType.h"
 #include "mpack/mpack-common.h"
 #include "mpack/mpack-reader.h"
 #include "mpack/mpack-writer.h"
