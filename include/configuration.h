@@ -95,7 +95,6 @@ class Device : public MPackObject<Device> {
   public:
     void registerMembers() {
         this->registerMember("deviceInfo", CppType::ObjectPtr, &deviceInfo);
-
         this->registerMember("modules", {CppType::Array, CppType::ObjectPtr}, &modules);
     }
 
