@@ -1,35 +1,7 @@
-#include "MPackObject.hpp"
+#include "objects/IntObjects.h"
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <sys/types.h>
-
-class ObjectWithInts : public MPackObject<ObjectWithInts> {
-  public:
-    uint8_t value1;
-    int8_t value2;
-    uint16_t value3;
-    int16_t value4;
-    uint32_t value5;
-    int32_t value6;
-    uint64_t value7;
-    int64_t value8;
-    unsigned int value9;
-    int value10;
-
-  public:
-    void registerMembers() {
-        registerMember("value1", CppType::U8, &value1);
-        registerMember("value2", CppType::I8, &value2);
-        registerMember("value3", CppType::U16, &value3);
-        registerMember("value4", CppType::I16, &value4);
-        registerMember("value5", CppType::U32, &value5);
-        registerMember("value6", CppType::I32, &value6);
-        registerMember("value7", CppType::U64, &value7);
-        registerMember("value8", CppType::I64, &value8);
-        registerMember("value9", CppType::U32, &value9);
-        registerMember("value10", CppType::I32, &value10);
-    }
-};
 
 static ObjectWithInts parseObject(const uint8_t* data, size_t len) {
     mpack_reader_t reader;

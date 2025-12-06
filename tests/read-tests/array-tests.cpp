@@ -1,6 +1,6 @@
 // tests/array-tests.cpp
 #include "MPackArray.h"
-#include "objects/array-objects.h"
+#include "objects/ArrayObjects.h"
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <string>

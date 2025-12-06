@@ -1,19 +1,7 @@
-#include "MPackObject.hpp"
+#include "objects/StringObjects.h"
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
-
-class ObjectWithStrings : public MPackObject<ObjectWithStrings> {
-  public:
-    const char *s1, *s2, *s3;
-
-  public:
-    void registerMembers() {
-        registerMember("s1", CppType::String, &s1);
-        registerMember("s2", CppType::String, &s2);
-        registerMember("s3", CppType::String, &s3);
-    }
-};
 
 static ObjectWithStrings parseStrings(const uint8_t* data, size_t len) {
     mpack_reader_t r;

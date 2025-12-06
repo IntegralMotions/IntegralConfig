@@ -1,17 +1,6 @@
 #include "MPackObject.hpp"
+#include "objects/FloatObjects.h"
 #include <gtest/gtest.h>
-
-class ObjectWithFloats : public MPackObject<ObjectWithFloats> {
-  public:
-    float f32{};
-    double f64{};
-
-  public:
-    void registerMembers() {
-        registerMember("f32", CppType::F32, &f32);
-        registerMember("f64", CppType::F64, &f64);
-    }
-};
 
 static ObjectWithFloats parseFloats(const uint8_t* data, size_t len) {
     mpack_reader_t r;

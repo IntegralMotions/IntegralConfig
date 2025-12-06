@@ -1,18 +1,18 @@
 #pragma once
 
 #include "MPackObject.hpp"
-#include "setting-values.h"
+#include "SettingValues.h"
 #include <cstring>
 
-class Setting : public MPackObject<Setting> {
+class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-numbers)
   public:
-    void registerMembers() {
-        this->registerMember("type", {CppType::String, CppType::None}, &type);
-        this->registerMember("value", {CppType::ObjectPtr, CppType::None}, &value);
+    static void registerMembers() {
+        registerMember("type", CppType::String, &Setting::type);
+        registerMember("value", CppType::ObjectPtr, &Setting::value);
     }
 
   protected:
-    MPackObjectBase* createObject(const char* name) override {
+    MPackObjectBase* createObject(const char* /*name*/) override {
         if (std::strcmp(type, "bool") == 0) {
             return new BoolSetting();
         }
@@ -32,16 +32,16 @@ class Setting : public MPackObject<Setting> {
     }
 
   private:
-    const char* type;
-    MPackObjectBase* value;
+    const char* type{};
+    MPackObjectBase* value{};
 };
 
-class Group : public MPackObject<Group> {
+class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers)
   public:
-    void registerMembers() {
-        this->registerMember("id", CppType::String, &id);
-        this->registerMember("label", CppType::String, &label);
-        this->registerMember("settings", {CppType::Array, CppType::ObjectPtr}, &settings);
+    static void registerMembers() {
+        registerMember("id", CppType::String, &Group::id);
+        registerMember("label", CppType::String, &Group::label);
+        registerMember("settings", {CppType::Array, CppType::ObjectPtr}, &Group::settings);
     }
 
   protected:
@@ -53,47 +53,47 @@ class Group : public MPackObject<Group> {
     }
 
   private:
-    const char* id;
-    const char* label;
-    Setting** settings;
+    const char* id{};
+    const char* label{};
+    Setting** settings{};
 };
 
-class Module : public MPackObject<Module> {
+class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbers)
   public:
-    void registerMembers() {
-        this->registerMember("id", CppType::String, &id);
-        this->registerMember("label", CppType::String, &label);
-        this->registerMember("groups", {CppType::Array, CppType::ObjectPtr}, &groups);
+    static void registerMembers() {
+        registerMember("id", CppType::String, &Module::id);
+        registerMember("label", CppType::String, &Module::label);
+        registerMember("groups", {CppType::Array, CppType::ObjectPtr}, &Module::groups);
     }
 
   protected:
-    MPackObjectBase* createObject(const char* name) override {
+    MPackObjectBase* createObject(const char* /*name*/) override {
         return new Group();
     }
 
   private:
-    const char* id;
-    const char* label;
-    Group** groups;
+    const char* id{};
+    const char* label{};
+    Group** groups{};
 };
 
-class DeviceInfo : public MPackObject<DeviceInfo> {
+class DeviceInfo : public MPackObject<DeviceInfo, 2> { // NOLINT(readability-magic-numbers)
   public:
-    void registerMembers() {
-        this->registerMember("model", CppType::String, &model);
-        this->registerMember("firwareVersion", CppType::String, &firwareVersion);
+    static void registerMembers() {
+        registerMember("model", CppType::String, &DeviceInfo::model);
+        registerMember("firmwareVersion", {CppType::String, CppType::None}, &DeviceInfo::firmwareVersion);
     }
 
   private:
-    const char* model;
-    const char* firwareVersion;
+    const char* model{};
+    const char* firmwareVersion{};
 };
 
-class Device : public MPackObject<Device> {
+class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbers)
   public:
-    void registerMembers() {
-        this->registerMember("deviceInfo", CppType::ObjectPtr, &deviceInfo);
-        this->registerMember("modules", {CppType::Array, CppType::ObjectPtr}, &modules);
+    static void registerMembers() {
+        registerMember("deviceInfo", CppType::ObjectPtr, &Device::deviceInfo);
+        registerMember("modules", {CppType::Array, CppType::ObjectPtr}, &Device::modules);
     }
 
   protected:
@@ -108,6 +108,6 @@ class Device : public MPackObject<Device> {
     }
 
   private:
-    DeviceInfo* deviceInfo;
-    Module** modules;
+    DeviceInfo* deviceInfo{};
+    Module** modules{};
 };

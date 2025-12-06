@@ -2,6 +2,7 @@
 
 #include "Configuration.h"
 #include "MPackObject.hpp"
+#include "MPackObjectBase.h"
 #include <cstdint>
 #include <cstring>
 #include <mpack/mpack.h>
@@ -12,14 +13,18 @@ struct ReadKeys {
     static constexpr const char* ReadDevice = "read.device";
     static constexpr const char* WriteDevice = "write.device";
 };
-class Payload : public MPackObject<Payload> {};
 
-class Message : public MPackObject<Message> {
+class Payload : public MPackObject<Payload, 0> {
   public:
-    void registerMembers() {
-        this->registerMember("msgType", CppType::String, &msgType);
-        this->registerMember("opCode", CppType::String, &opCode);
-        this->registerMember("payload", CppType::ObjectPtr, &payload);
+    static void registerMembers() {}
+};
+
+class Message : public MPackObject<Message, 3> {
+  public:
+    static void registerMembers() {
+        registerMember("msgType", CppType::String, &Message::msgType);
+        registerMember("opCode", CppType::String, &Message::opCode);
+        registerMember("payload", CppType::ObjectPtr, &Message::payload);
     }
 
     [[nodiscard]] MsgType getMsgType() const {
@@ -36,15 +41,14 @@ class Message : public MPackObject<Message> {
     }
 
   private:
-    MPackObjectBase* createObject(const char* name) override {
-        if (std::strcmp(opCode, "read.device") == 0) {
-            return new Device();
+    MPackObjectBase* createObject(const char* /*name*/) override {
+        if (std::strcmp(opCode, ReadKeys::ReadDevice) == 0) {
+            return reinterpret_cast<MPackObjectBase*>(new Device());
         }
-
         return nullptr;
     }
 
-    char* msgType;
-    char* opCode;
-    MPackObjectBase* payload = nullptr;
+    char* msgType{};
+    char* opCode{};
+    MPackObjectBase* payload{nullptr};
 };

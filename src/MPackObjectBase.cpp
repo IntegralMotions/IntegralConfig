@@ -1,5 +1,5 @@
-#include "MPackArray.h"
 #include "MPackObjectBase.h"
+#include "MPackArray.h"
 #include "mpack/mpack-common.h"
 #include "mpack/mpack-expect.h"
 #include "mpack/mpack-reader.h"
@@ -50,19 +50,24 @@ void MPackObjectBase::write(mpack_writer_t& writer, int depth) const {
         return;
     }
 
-    mpack_start_map(&writer, _membersCount);
+    const MPackObjectMember* members = this->members();
+    const size_t memberCount = this->memberCount();
+    mpack_start_map(&writer, memberCount);
 
-    for (size_t i = 0; i < _membersCount; i++) {
-        writeMember(writer, _members[i]);
+    for (size_t i = 0; i < memberCount; i++) {
+        writeMember(writer, members[i].name, members[i].type, getMemberAddress(members[i]));
     }
 
     mpack_finish_map(&writer);
 }
 
 bool MPackObjectBase::getMember(const char* name, MPackObjectMember& member) const {
-    for (size_t i = 0; i < _membersCount; i++) {
-        if (strcmp(_members[i].name, name) == 0) {
-            member = _members[i];
+    const MPackObjectMember* members = this->members();
+    const size_t memberCount = this->memberCount();
+
+    for (size_t i = 0; i < memberCount; i++) {
+        if (strcmp(members[i].name, name) == 0) {
+            member = members[i];
             return true;
         }
     }
@@ -173,36 +178,36 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
 
     switch (member.type.type) {
     case CppType::I8:
-        return readNumeric<int8_t>(reader, *static_cast<int8_t*>(member.address));
+        return readNumeric<int8_t>(reader, *static_cast<int8_t*>(this->getMemberAddress(member)));
     case CppType::U8:
-        return readNumeric<uint8_t>(reader, *static_cast<uint8_t*>(member.address));
+        return readNumeric<uint8_t>(reader, *static_cast<uint8_t*>(this->getMemberAddress(member)));
     case CppType::I16:
-        return readNumeric<int16_t>(reader, *static_cast<int16_t*>(member.address));
+        return readNumeric<int16_t>(reader, *static_cast<int16_t*>(this->getMemberAddress(member)));
     case CppType::U16:
-        return readNumeric<uint16_t>(reader, *static_cast<uint16_t*>(member.address));
+        return readNumeric<uint16_t>(reader, *static_cast<uint16_t*>(this->getMemberAddress(member)));
     case CppType::I32:
-        return readNumeric<int32_t>(reader, *static_cast<int32_t*>(member.address));
+        return readNumeric<int32_t>(reader, *static_cast<int32_t*>(this->getMemberAddress(member)));
     case CppType::U32:
-        return readNumeric<uint32_t>(reader, *static_cast<uint32_t*>(member.address));
+        return readNumeric<uint32_t>(reader, *static_cast<uint32_t*>(this->getMemberAddress(member)));
     case CppType::I64:
-        return readNumeric<int64_t>(reader, *static_cast<int64_t*>(member.address));
+        return readNumeric<int64_t>(reader, *static_cast<int64_t*>(this->getMemberAddress(member)));
     case CppType::U64:
-        return readNumeric<uint64_t>(reader, *static_cast<uint64_t*>(member.address));
+        return readNumeric<uint64_t>(reader, *static_cast<uint64_t*>(this->getMemberAddress(member)));
     case CppType::F32:
-        return readNumeric<float>(reader, *static_cast<float*>(member.address));
+        return readNumeric<float>(reader, *static_cast<float*>(this->getMemberAddress(member)));
     case CppType::F64:
-        return readNumeric<double>(reader, *static_cast<double*>(member.address));
+        return readNumeric<double>(reader, *static_cast<double*>(this->getMemberAddress(member)));
     case CppType::Bool:
-        return readBool(reader, *static_cast<bool*>(member.address));
+        return readBool(reader, *static_cast<bool*>(this->getMemberAddress(member)));
     case CppType::String:
-        return readString(reader, *static_cast<char**>(member.address));
+        return readString(reader, *static_cast<char**>(this->getMemberAddress(member)));
     case CppType::Object: {
         if (nextIsNil(reader)) {
             mpack_expect_nil(&reader);
             return ok(reader);
         }
 
-        auto* obj = static_cast<MPackObjectBase*>(member.address);
+        auto* obj = static_cast<MPackObjectBase*>(this->getMemberAddress(member));
         if (obj == nullptr) {
             mpack_reader_flag_error(&reader, mpack_error_data);
             return false;
@@ -212,7 +217,7 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
         return ok(reader);
     }
     case CppType::ObjectPtr: {
-        auto** obj = static_cast<MPackObjectBase**>(member.address);
+        auto** obj = static_cast<MPackObjectBase**>(this->getMemberAddress(member));
         if (nextIsNil(reader)) {
             mpack_expect_nil(&reader);
             *obj = nullptr;
@@ -231,7 +236,7 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
         return ok(reader);
     }
     case CppType::Array:
-        return readArray(reader, member, depth + 1);
+        return readArray(reader, member.name, member.type, getMemberAddress(member), depth + 1);
     default:
         mpack_reader_flag_error(&reader, mpack_error_type);
         return false;
@@ -283,7 +288,8 @@ bool MPackObjectBase::readString(mpack_reader_t& reader, char*& value) {
     return true;
 }
 
-bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember& member, int depth) {
+bool MPackObjectBase::readArray(mpack_reader_t& reader, const char* name, const MPackObjectType& type, void* address,
+                                int depth) {
     if (nextIsNil(reader)) {
         mpack_expect_nil(&reader);
         return ok(reader);
@@ -295,7 +301,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
         return false;
     }
 
-    MPackObjectType* innerType = member.type.innerType.get();
+    MPackObjectType* innerType = type.innerType.get();
     if (innerType == nullptr) {
         mpack_reader_flag_error(&reader, mpack_error_type);
         return false;
@@ -305,7 +311,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
 
     switch (innerType->type) {
     case CppType::I8: {
-        auto* arr = reinterpret_cast<MPackArray<int8_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<int8_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new int8_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -316,7 +322,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::U8: {
-        auto* arr = reinterpret_cast<MPackArray<uint8_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<uint8_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new uint8_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -327,7 +333,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::I16: {
-        auto* arr = reinterpret_cast<MPackArray<int16_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<int16_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new int16_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -338,7 +344,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::U16: {
-        auto* arr = reinterpret_cast<MPackArray<uint16_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<uint16_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new uint16_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -349,7 +355,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::I32: {
-        auto* arr = reinterpret_cast<MPackArray<int32_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<int32_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new int32_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -360,7 +366,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::U32: {
-        auto* arr = reinterpret_cast<MPackArray<uint32_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<uint32_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new uint32_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -371,7 +377,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::I64: {
-        auto* arr = reinterpret_cast<MPackArray<int64_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<int64_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new int64_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -382,7 +388,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::U64: {
-        auto* arr = reinterpret_cast<MPackArray<uint64_t>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<uint64_t>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new uint64_t[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -393,7 +399,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::F32: {
-        auto* arr = reinterpret_cast<MPackArray<float>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<float>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new float[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -404,7 +410,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::F64: {
-        auto* arr = reinterpret_cast<MPackArray<double>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<double>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new double[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -415,7 +421,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::Bool: {
-        auto* arr = reinterpret_cast<MPackArray<bool>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<bool>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? new bool[count] : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -426,7 +432,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::String: {
-        auto* arr = reinterpret_cast<MPackArray<char*>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<char*>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? reinterpret_cast<void*>(new char*[count]) : nullptr;
         for (size_t i = 0; i < count; ++i) {
@@ -437,11 +443,11 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     } break;
 
     case CppType::ObjectPtr: {
-        auto* arr = reinterpret_cast<MPackArray<MPackObjectBase*>*>(member.address);
+        auto* arr = reinterpret_cast<MPackArray<MPackObjectBase*>*>(address);
         arr->size = count;
         arr->p = (count != 0U) ? reinterpret_cast<void*>(new MPackObjectBase*[count]) : nullptr;
         for (size_t i = 0; i < count; ++i) {
-            MPackObjectBase* obj = createObject(member.name);
+            MPackObjectBase* obj = createObject(name);
             obj->read(reader, depth + 1);
             if (!ok(reader)) {
                 return false;
@@ -456,13 +462,12 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
             return false;
         }
 
-        auto* outer = reinterpret_cast<MPackArray<MPackArrayBase>*>(member.address);
+        auto* outer = reinterpret_cast<MPackArray<MPackArrayBase>*>(address);
         outer->size = count;
         outer->p = (count != 0U) ? new MPackArrayBase[count] : nullptr;
 
         for (size_t i = 0; i < count; ++i) {
-            MPackObjectMember innerMember{member.name, *innerType, &(*outer)[i]};
-            if (!readArray(reader, innerMember, depth + 1)) {
+            if (!readArray(reader, name, *innerType, &(*outer)[i], depth + 1)) {
                 return false;
             }
         }
@@ -477,45 +482,46 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const MPackObjectMember&
     return ok(reader);
 }
 
-bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMember& member, int depth) const {
-    mpack_write_cstr(&writer, member.name);
+bool MPackObjectBase::writeMember(mpack_writer_t& writer, const char* name, const MPackObjectType& type, void* address,
+                                  int depth) const {
+    mpack_write_cstr(&writer, name);
 
-    switch (member.type.type) {
+    switch (type.type) {
     case CppType::I8:
-        mpack_write_i8(&writer, *static_cast<int8_t*>(member.address));
+        mpack_write_i8(&writer, *static_cast<int8_t*>(address));
         break;
     case CppType::U8:
-        mpack_write_u8(&writer, *static_cast<uint8_t*>(member.address));
+        mpack_write_u8(&writer, *static_cast<uint8_t*>(address));
         break;
     case CppType::I16:
-        mpack_write_i16(&writer, *static_cast<int16_t*>(member.address));
+        mpack_write_i16(&writer, *static_cast<int16_t*>(address));
         break;
     case CppType::U16:
-        mpack_write_u16(&writer, *static_cast<uint16_t*>(member.address));
+        mpack_write_u16(&writer, *static_cast<uint16_t*>(address));
         break;
     case CppType::I32:
-        mpack_write_i32(&writer, *static_cast<int32_t*>(member.address));
+        mpack_write_i32(&writer, *static_cast<int32_t*>(address));
         break;
     case CppType::U32:
-        mpack_write_u32(&writer, *static_cast<uint32_t*>(member.address));
+        mpack_write_u32(&writer, *static_cast<uint32_t*>(address));
         break;
     case CppType::I64:
-        mpack_write_i64(&writer, *static_cast<int64_t*>(member.address));
+        mpack_write_i64(&writer, *static_cast<int64_t*>(address));
         break;
     case CppType::U64:
-        mpack_write_u64(&writer, *static_cast<uint64_t*>(member.address));
+        mpack_write_u64(&writer, *static_cast<uint64_t*>(address));
         break;
     case CppType::F32:
-        mpack_write_float(&writer, *static_cast<float*>(member.address));
+        mpack_write_float(&writer, *static_cast<float*>(address));
         break;
     case CppType::F64:
-        mpack_write_double(&writer, *static_cast<double*>(member.address));
+        mpack_write_double(&writer, *static_cast<double*>(address));
         break;
     case CppType::Bool:
-        mpack_write_bool(&writer, *static_cast<bool*>(member.address));
+        mpack_write_bool(&writer, *static_cast<bool*>(address));
         break;
     case CppType::String: {
-        const char* str = *static_cast<const char* const*>(member.address);
+        const char* str = *static_cast<const char* const*>(address);
         if (str == nullptr) {
             mpack_write_nil(&writer);
         } else {
@@ -523,12 +529,12 @@ bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMembe
         }
     } break;
     case CppType::Object: {
-        auto* obj = static_cast<MPackObjectBase*>(member.address);
+        auto* obj = static_cast<MPackObjectBase*>(address);
         obj->write(writer, depth + 1);
         return ok(writer);
     } break;
     case CppType::ObjectPtr: {
-        auto** obj = static_cast<MPackObjectBase**>(member.address);
+        auto** obj = static_cast<MPackObjectBase**>(address);
         if (*obj == nullptr) {
             mpack_write_nil(&writer);
         } else {
@@ -537,7 +543,7 @@ bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMembe
         return ok(writer);
     } break;
     case CppType::Array:
-        return writeArray(writer, member, depth + 1);
+        return writeArray(writer, name, type, address, depth + 1);
     default:
         mpack_writer_flag_error(&writer, mpack_error_invalid);
         return false;
@@ -546,8 +552,9 @@ bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMembe
     return mpack_writer_error(&writer) == mpack_ok;
 }
 
-bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember& member, int depth) const {
-    MPackObjectType* innerType = member.type.innerType.get();
+bool MPackObjectBase::writeArray(mpack_writer_t& writer, const char* name, const MPackObjectType& type, void* address,
+                                 int depth) const {
+    MPackObjectType* innerType = type.innerType.get();
     if (innerType == nullptr) {
         mpack_writer_flag_error(&writer, mpack_error_type);
         return false;
@@ -555,7 +562,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
 
     switch (innerType->type) {
     case CppType::I8: {
-        auto* arr = static_cast<MPackArray<int8_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<int8_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -568,7 +575,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::U8: {
-        auto* arr = static_cast<MPackArray<uint8_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<uint8_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -581,7 +588,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::I16: {
-        auto* arr = static_cast<MPackArray<int16_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<int16_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -594,7 +601,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::U16: {
-        auto* arr = static_cast<MPackArray<uint16_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<uint16_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -607,7 +614,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::I32: {
-        auto* arr = static_cast<MPackArray<int32_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<int32_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -620,7 +627,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::U32: {
-        auto* arr = static_cast<MPackArray<uint32_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<uint32_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -633,7 +640,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::I64: {
-        auto* arr = static_cast<MPackArray<int64_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<int64_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -646,7 +653,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::U64: {
-        auto* arr = static_cast<MPackArray<uint64_t>*>(member.address);
+        auto* arr = static_cast<MPackArray<uint64_t>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -659,7 +666,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::F32: {
-        auto* arr = static_cast<MPackArray<float>*>(member.address);
+        auto* arr = static_cast<MPackArray<float>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -672,7 +679,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::F64: {
-        auto* arr = static_cast<MPackArray<double>*>(member.address);
+        auto* arr = static_cast<MPackArray<double>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -685,7 +692,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::Bool: {
-        auto* arr = static_cast<MPackArray<bool>*>(member.address);
+        auto* arr = static_cast<MPackArray<bool>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -698,7 +705,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::String: {
-        auto* arr = static_cast<MPackArray<const char*>*>(member.address);
+        auto* arr = static_cast<MPackArray<const char*>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -715,7 +722,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::ObjectPtr: {
-        auto* arr = static_cast<MPackArray<MPackObjectBase*>*>(member.address);
+        auto* arr = static_cast<MPackArray<MPackObjectBase*>*>(address);
         if (arr->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -735,7 +742,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
     } break;
 
     case CppType::Array: {
-        auto* outer = static_cast<MPackArray<MPackArrayBase>*>(member.address);
+        auto* outer = static_cast<MPackArray<MPackArrayBase>*>(address);
         if (outer->p == nullptr) {
             mpack_write_nil(&writer);
             return ok(writer);
@@ -743,8 +750,7 @@ bool MPackObjectBase::writeArray(mpack_writer_t& writer, const MPackObjectMember
 
         mpack_start_array(&writer, outer->size);
         for (size_t i = 0; i < outer->size; i++) {
-            MPackObjectMember innerMember{member.name, *innerType, &(*outer)[i]};
-            if (!writeArray(writer, innerMember, depth + 1)) {
+            if (!writeArray(writer, name, *innerType, &(*outer)[i], depth + 1)) {
                 return false;
             }
         }

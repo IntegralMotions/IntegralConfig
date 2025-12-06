@@ -1,20 +1,7 @@
-#include "MPackObject.hpp"
+#include "objects/StringObjects.h"
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
-
-class ObjectWithStrings : public MPackObject<ObjectWithStrings> {
-  public:
-    const char* s1{};
-    const char* s2{};
-    const char* s3{};
-
-    void registerMembers() {
-        registerMember("s1", CppType::String, &s1);
-        registerMember("s2", CppType::String, &s2);
-        registerMember("s3", CppType::String, &s3);
-    }
-};
 
 static std::vector<uint8_t> writeStrings(const ObjectWithStrings& inObj) {
     mpack_writer_t w;

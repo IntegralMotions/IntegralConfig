@@ -1,59 +1,11 @@
-// tests/mixed-object-tests.cpp
-#include "MPackObject.hpp"
+#include "objects/MixedObjects.h"
 #include <cstdint>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
 
-// --- types -----------------------------------------------------------
-
-struct MixedInner : MPackObject<MixedInner> {
-  public:
-    int32_t a{};
-    const char* label{};
-
-    void registerMembers() {
-        registerMember("a", CppType::I32, &a);
-        registerMember("label", CppType::String, &label);
-    }
-};
-
-class MixedObject : public MPackObject<MixedObject> {
-  public:
-    int8_t i8{};
-    uint8_t u8{};
-    int16_t i16{};
-    uint16_t u16{};
-    int32_t i32{};
-    uint32_t u32{};
-    int64_t i64{};
-    uint64_t u64{};
-    float f32{};
-    double f64{};
-    bool flag{};
-    const char* name{};
-    MixedInner child{};
-
-    void registerMembers() {
-        registerMember("i8", CppType::I8, &i8);
-        registerMember("u8", CppType::U8, &u8);
-        registerMember("i16", CppType::I16, &i16);
-        registerMember("u16", CppType::U16, &u16);
-        registerMember("i32", CppType::I32, &i32);
-        registerMember("u32", CppType::U32, &u32);
-        registerMember("i64", CppType::I64, &i64);
-        registerMember("u64", CppType::U64, &u64);
-        registerMember("f32", CppType::F32, &f32);
-        registerMember("f64", CppType::F64, &f64);
-        registerMember("flag", CppType::Bool, &flag);
-        registerMember("name", CppType::String, &name);
-        registerMember("child", CppType::Object, &child);
-    }
-};
-
 // --- harness ---------------------------------------------------------
-
 static MixedObject parseMixed(const uint8_t* data, size_t len) {
     mpack_reader_t r;
     mpack_reader_init_data(&r, reinterpret_cast<const char*>(data), len);

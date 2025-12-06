@@ -1,36 +1,11 @@
 // tests/object-tests.cpp
-#include "MPackObject.hpp"
+#include "objects/ObjectObjects.h"
 #include <cstdint>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <vector>
 
-// --- test types ------------------------------------------------------
-
-struct Inner : MPackObject<Inner> {
-  public:
-    int32_t a{};
-    uint32_t b{};
-
-    void registerMembers() {
-        registerMember("a", CppType::I32, &a);
-        registerMember("b", CppType::U32, &b);
-    }
-};
-
-class ObjectWithObjects : public MPackObject<ObjectWithObjects> {
-  public:
-    Inner left{};
-    Inner right{};
-
-    void registerMembers() {
-        registerMember("left", CppType::Object, &left);
-        registerMember("right", CppType::Object, &right);
-    }
-};
-
 // --- harness ---------------------------------------------------------
-
 static ObjectWithObjects parseObjects(const uint8_t* data, size_t len) {
     mpack_reader_t r;
     mpack_reader_init_data(&r, reinterpret_cast<const char*>(data), len);
