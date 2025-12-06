@@ -89,10 +89,10 @@ template <typename TValue> class NumberSetting : public SettingValue<NumberSetti
     static void registerMembers() {
         using Base = SettingValue<NumberSetting<TValue>, TValue, 4>;
         Base::registerMembers();
-        registerMember("min", Base::template getType<TValue>(), &NumberSetting::min);
-        registerMember("max", Base::template getType<TValue>(), &NumberSetting::max);
-        registerMember("isRange", CppType::Bool, &NumberSetting::isRange);
-        registerMember("options", {CppType::Array, Base::template getType<TValue>()}, &NumberSetting::options);
+        Base::registerMember("min", Base::template getType<TValue>(), &NumberSetting::min);
+        Base::registerMember("max", Base::template getType<TValue>(), &NumberSetting::max);
+        Base::registerMember("isRange", CppType::Bool, &NumberSetting::isRange);
+        Base::registerMember("options", {CppType::Array, Base::template getType<TValue>()}, &NumberSetting::options);
     }
 
   private:

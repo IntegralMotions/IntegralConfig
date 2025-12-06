@@ -14,11 +14,6 @@ struct ReadKeys {
     static constexpr const char* WriteDevice = "write.device";
 };
 
-class Payload : public MPackObject<Payload, 0> {
-  public:
-    static void registerMembers() {}
-};
-
 class Message : public MPackObject<Message, 3> {
   public:
     static void registerMembers() {
@@ -42,8 +37,11 @@ class Message : public MPackObject<Message, 3> {
 
   private:
     MPackObjectBase* createObject(const char* /*name*/) override {
-        if (std::strcmp(opCode, ReadKeys::ReadDevice) == 0) {
+        if (std::strcmp(opCode, ReadKeys::WriteDevice) == 0) {
             return reinterpret_cast<MPackObjectBase*>(new Device());
+        }
+        if (std::strcmp(opCode, ReadKeys::ReadDevice) == 0) {
+            return nullptr;
         }
         return nullptr;
     }

@@ -4,19 +4,23 @@
 #include "IntegralCommunication/SevenBitEncodedCommunication.h"
 #include "MPackObjectBase.h"
 #include "Messages.h"
-#include "mpack/mpack-writer.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <mpack/mpack.h>
 
 template <size_t TxSize, size_t RxSize> class ConfigurationController {
   public:
+    using ReceiveCallback = std::function<void(const Message&)>;
+
     ConfigurationController(const ConfigurationController&) = delete;
     ConfigurationController& operator=(const ConfigurationController&) = delete;
 
     static void init(Communication& comm);
     static ConfigurationController& get();
+
+    void setOnReceived(ReceiveCallback cb);
 
     bool write(const MPackObjectBase& object);
     void loop();
@@ -27,9 +31,14 @@ template <size_t TxSize, size_t RxSize> class ConfigurationController {
 
     SevenBitEncodedCommunication<TxSize, RxSize> _communication;
     mpack_reader_t _reader{};
+    ReceiveCallback _onReceived;
 
-    static ConfigurationController* _instance = nullptr;
+    static ConfigurationController* _instance;
 };
+
+// static member definition (important in a header for templates)
+template <size_t TxSize, size_t RxSize>
+ConfigurationController<TxSize, RxSize>* ConfigurationController<TxSize, RxSize>::_instance = nullptr;
 
 template <size_t TxSize, size_t RxSize> void ConfigurationController<TxSize, RxSize>::init(Communication& comm) {
     if (_instance == nullptr) {
@@ -43,8 +52,11 @@ ConfigurationController<TxSize, RxSize>& ConfigurationController<TxSize, RxSize>
 }
 
 template <size_t TxSize, size_t RxSize>
-ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication& comm) : _communication(comm) {
-    mpack_reader_init(&_reader, nullptr, 0, 0);
+ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication& comm) : _communication(comm) {}
+
+template <size_t TxSize, size_t RxSize>
+void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback cb) {
+    _onReceived = std::move(cb);
 }
 
 template <size_t TxSize, size_t RxSize>
@@ -52,15 +64,15 @@ bool ConfigurationController<TxSize, RxSize>::write(const MPackObjectBase& objec
     mpack_writer_t writer;
     std::array<uint8_t, TxSize> buffer;
 
-    mpack_writer_init_buffer(&writer, buffer.data(), buffer.size());
+    mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
 
     object.write(writer);
+    size_t len = mpack_writer_buffer_used(&writer);
     mpack_error_t err = mpack_writer_destroy(&writer);
     if (err != mpack_ok) {
         return false;
     }
 
-    size_t len = mpack_writer_buffer_used(&writer);
     return _communication.writeMessage(buffer.data(), len);
 }
 
@@ -69,7 +81,6 @@ template <size_t TxSize, size_t RxSize> void ConfigurationController<TxSize, RxS
     size_t messageLength;
 
     if (!_communication.readMessage(messageBytes.data(), messageBytes.size(), messageLength)) {
-        // handle error if you want
         return;
     }
 
@@ -81,6 +92,10 @@ template <size_t TxSize, size_t RxSize> void ConfigurationController<TxSize, RxS
 
     mpack_error_t err = mpack_reader_destroy(&reader);
     if (err != mpack_ok) {
-        // handle error if you want
+        return;
+    }
+
+    if (_onReceived) {
+        _onReceived(message);
     }
 }
