@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MPackArray.h"
 #include "MPackObject.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -81,7 +82,7 @@ class StringSetting : public SettingValue<StringSetting, const char*, 1> {
     }
 
   private:
-    const char** options;
+    MPackArray<const char*> options;
 };
 
 template <typename TValue> class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 4> {
@@ -96,7 +97,7 @@ template <typename TValue> class NumberSetting : public SettingValue<NumberSetti
     }
 
   private:
-    TValue* options;
+    MPackArray<TValue> options;
     TValue min;
     TValue max;
     TValue step;

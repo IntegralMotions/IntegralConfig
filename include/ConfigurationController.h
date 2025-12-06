@@ -17,10 +17,10 @@ template <size_t TxSize, size_t RxSize> class ConfigurationController {
     ConfigurationController(const ConfigurationController&) = delete;
     ConfigurationController& operator=(const ConfigurationController&) = delete;
 
-    static void init(Communication& comm);
+    static void init(Communication& communication);
     static ConfigurationController& get();
 
-    void setOnReceived(ReceiveCallback cb);
+    void setOnReceived(ReceiveCallback callback);
 
     bool write(const MPackObjectBase& object);
     void loop();
@@ -52,11 +52,12 @@ ConfigurationController<TxSize, RxSize>& ConfigurationController<TxSize, RxSize>
 }
 
 template <size_t TxSize, size_t RxSize>
-ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication& comm) : _communication(comm) {}
+ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication& communication)
+    : _communication(communication) {}
 
 template <size_t TxSize, size_t RxSize>
-void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback cb) {
-    _onReceived = std::move(cb);
+void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback callback) {
+    _onReceived = std::move(callback);
 }
 
 template <size_t TxSize, size_t RxSize>
