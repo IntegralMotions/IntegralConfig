@@ -4,9 +4,9 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-static std::vector<uint8_t> writeObject(const ObjectWithInts& objIn) {
+static std::vector<uint8_t> writeObject(const ObjectWithInts &objIn) {
     mpack_writer_t writer;
-    char* data = nullptr;
+    char *data = nullptr;
     size_t size = 0;
 
     mpack_writer_init_growable(&writer, &data, &size);
@@ -15,7 +15,7 @@ static std::vector<uint8_t> writeObject(const ObjectWithInts& objIn) {
     obj.write(writer, 0);
     EXPECT_EQ(mpack_writer_destroy(&writer), mpack_ok);
 
-    std::vector<uint8_t> out(reinterpret_cast<uint8_t*>(data), reinterpret_cast<uint8_t*>(data) + size);
+    std::vector<uint8_t> out(reinterpret_cast<uint8_t *>(data), reinterpret_cast<uint8_t *>(data) + size);
     MPACK_FREE(data); // or free(data) depending on your setup
     return out;
 }
@@ -38,7 +38,7 @@ struct MPackWriteCase {
 class ObjectWithIntsWriteTest : public ::testing::TestWithParam<MPackWriteCase> {};
 
 TEST_P(ObjectWithIntsWriteTest, EncodesValues) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
     ObjectWithInts obj;
     obj.value1 = tc.v1;
     obj.value2 = tc.v2;
@@ -73,7 +73,7 @@ static std::vector<uint8_t> bytes_case2 = {
     0xCD, 0x09, 0x83, 0xA7, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x31, 0x30, 0xD2, 0xFF, 0xF6, 0x59, 0x7B};
 
 struct MPackWriteCaseName {
-    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType>& info) const {
+    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType> &info) const {
         return info.param.name;
     }
 };

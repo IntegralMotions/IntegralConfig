@@ -49,7 +49,7 @@ class SettingValue : public MPackObject<TDerived, SETTING_VALUE_MEMBERS + AddedM
             valueType = CppType::F64;
         } else if constexpr (std::is_same_v<T, bool>) {
             valueType = CppType::Bool;
-        } else if constexpr (std::is_same_v<T, const char*>) {
+        } else if constexpr (std::is_same_v<T, const char *>) {
             valueType = CppType::String;
         }
 
@@ -58,9 +58,9 @@ class SettingValue : public MPackObject<TDerived, SETTING_VALUE_MEMBERS + AddedM
 
   private:
     uint32_t address;
-    const char* id;
-    const char* label;
-    const char* unit;
+    const char *id;
+    const char *label;
+    const char *unit;
     TValue value;
     bool readonly = false;
 };
@@ -73,16 +73,16 @@ class BoolSetting : public SettingValue<BoolSetting, bool, 0> {
     }
 };
 
-class StringSetting : public SettingValue<StringSetting, const char*, 1> {
+class StringSetting : public SettingValue<StringSetting, const char *, 1> {
   public:
     static void registerMembers() {
-        using Base = SettingValue<StringSetting, const char*, 1>;
+        using Base = SettingValue<StringSetting, const char *, 1>;
         Base::registerMembers();
         registerMember("options", {CppType::Array, CppType::String}, &StringSetting::options);
     }
 
   private:
-    MPackArray<const char*> options;
+    MPackArray<const char *> options;
 };
 
 template <typename TValue> class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 4> {

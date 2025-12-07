@@ -10,8 +10,8 @@
 enum class MsgType : uint8_t { Request, Response, Event, Unknown };
 
 struct ReadKeys {
-    static constexpr const char* ReadDevice = "read.device";
-    static constexpr const char* WriteDevice = "write.device";
+    static constexpr const char *ReadDevice = "read.device";
+    static constexpr const char *WriteDevice = "write.device";
 };
 
 class Message : public MPackObject<Message, 3> {
@@ -36,9 +36,9 @@ class Message : public MPackObject<Message, 3> {
     }
 
   private:
-    MPackObjectBase* createObject(const char* /*name*/) override {
+    MPackObjectBase *createObject(const char * /*name*/) override {
         if (std::strcmp(opCode, ReadKeys::WriteDevice) == 0) {
-            return reinterpret_cast<MPackObjectBase*>(new Device());
+            return reinterpret_cast<MPackObjectBase *>(new Device());
         }
         if (std::strcmp(opCode, ReadKeys::ReadDevice) == 0) {
             return nullptr;
@@ -46,7 +46,7 @@ class Message : public MPackObject<Message, 3> {
         return nullptr;
     }
 
-    char* msgType{};
-    char* opCode{};
-    MPackObjectBase* payload{nullptr};
+    char *msgType{};
+    char *opCode{};
+    MPackObjectBase *payload{nullptr};
 };

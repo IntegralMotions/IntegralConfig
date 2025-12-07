@@ -3,9 +3,9 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-static std::vector<uint8_t> writeArrays(ObjectWithArrays& inObj) {
+static std::vector<uint8_t> writeArrays(ObjectWithArrays &inObj) {
     mpack_writer_t w;
-    char* buf = nullptr;
+    char *buf = nullptr;
     size_t size = 0;
 
     mpack_writer_init_growable(&w, &buf, &size);
@@ -14,7 +14,7 @@ static std::vector<uint8_t> writeArrays(ObjectWithArrays& inObj) {
 
     EXPECT_EQ(mpack_writer_destroy(&w), mpack_ok);
 
-    std::vector<uint8_t> out(reinterpret_cast<uint8_t*>(buf), reinterpret_cast<uint8_t*>(buf) + size);
+    std::vector<uint8_t> out(reinterpret_cast<uint8_t *>(buf), reinterpret_cast<uint8_t *>(buf) + size);
     MPACK_FREE(buf);
     return out;
 }
@@ -149,7 +149,7 @@ struct ArrayWriteCase {
 class ObjectWithArraysWriteTest : public ::testing::TestWithParam<ArrayWriteCase> {};
 
 TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
 
     ObjectWithArrays obj;
 
@@ -174,17 +174,17 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
         obj.f64[i] = tc.f64[i];
 
     obj.ss.size = tc.ss.size();
-    obj.ss.p = obj.ss.size ? new const char*[obj.ss.size] : new const char*[0];
+    obj.ss.p = obj.ss.size ? new const char *[obj.ss.size] : new const char *[0];
     for (size_t i = 0; i < tc.ss.size(); ++i) {
-        char* buf = new char[tc.ss[i].size() + 1];
+        char *buf = new char[tc.ss[i].size() + 1];
         memcpy(buf, tc.ss[i].c_str(), tc.ss[i].size() + 1); // copies '\0' too
         obj.ss[i] = buf;
     }
 
     obj.objs.size = tc.objs.size();
-    obj.objs.p = obj.objs.size ? new Elem*[obj.objs.size] : new Elem*[0];
+    obj.objs.p = obj.objs.size ? new Elem *[obj.objs.size] : new Elem *[0];
     for (size_t i = 0; i < tc.objs.size(); ++i) {
-        auto* e = new Elem();
+        auto *e = new Elem();
         e->a = tc.objs[i].first;
         e->b = tc.objs[i].second;
         obj.objs[i] = e;
@@ -193,7 +193,7 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
     obj.aa.size = tc.aa.size();
     obj.aa.p = obj.aa.size ? new MPackArray<int32_t>[obj.aa.size] : new MPackArray<int32_t>[0];
     for (size_t i = 0; i < tc.aa.size(); ++i) {
-        auto& inner = obj.aa[i];
+        auto &inner = obj.aa[i];
         inner.size = tc.aa[i].size();
         inner.p = inner.size ? new int32_t[inner.size] : new int32_t[0];
         for (size_t j = 0; j < tc.aa[i].size(); ++j)
@@ -203,7 +203,7 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
     obj.aa_f64.size = tc.aa_f64.size();
     obj.aa_f64.p = obj.aa_f64.size ? new MPackArray<double>[obj.aa_f64.size] : new MPackArray<double>[0];
     for (size_t i = 0; i < tc.aa_f64.size(); ++i) {
-        auto& inner = obj.aa_f64[i];
+        auto &inner = obj.aa_f64[i];
         inner.size = tc.aa_f64[i].size();
         inner.p = inner.size ? new double[inner.size] : new double[0];
         for (size_t j = 0; j < tc.aa_f64[i].size(); ++j)
@@ -213,7 +213,7 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
     obj.aa_bool.size = tc.aa_bool.size();
     obj.aa_bool.p = obj.aa_bool.size ? new MPackArray<bool>[obj.aa_bool.size] : new MPackArray<bool>[0];
     for (size_t i = 0; i < tc.aa_bool.size(); ++i) {
-        auto& inner = obj.aa_bool[i];
+        auto &inner = obj.aa_bool[i];
         inner.size = tc.aa_bool[i].size();
         inner.p = inner.size ? new bool[inner.size] : new bool[0];
         for (size_t j = 0; j < tc.aa_bool[i].size(); ++j)
@@ -221,13 +221,13 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
     }
 
     obj.aa_objs.size = tc.aa_objs.size();
-    obj.aa_objs.p = obj.aa_objs.size ? new MPackArray<Elem*>[obj.aa_objs.size] : new MPackArray<Elem*>[0];
+    obj.aa_objs.p = obj.aa_objs.size ? new MPackArray<Elem *>[obj.aa_objs.size] : new MPackArray<Elem *>[0];
     for (size_t i = 0; i < tc.aa_objs.size(); ++i) {
-        auto& inner = obj.aa_objs[i];
+        auto &inner = obj.aa_objs[i];
         inner.size = tc.aa_objs[i].size();
-        inner.p = inner.size ? new Elem*[inner.size] : new Elem*[0];
+        inner.p = inner.size ? new Elem *[inner.size] : new Elem *[0];
         for (size_t j = 0; j < tc.aa_objs[i].size(); ++j) {
-            auto* e = new Elem();
+            auto *e = new Elem();
             e->a = tc.aa_objs[i][j].first;
             e->b = tc.aa_objs[i][j].second;
             inner[j] = e;
@@ -235,13 +235,13 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
     }
 
     obj.aa_ss.size = tc.aa_ss.size();
-    obj.aa_ss.p = obj.aa_ss.size ? new MPackArray<const char*>[obj.aa_ss.size] : new MPackArray<const char*>[0];
+    obj.aa_ss.p = obj.aa_ss.size ? new MPackArray<const char *>[obj.aa_ss.size] : new MPackArray<const char *>[0];
     for (size_t i = 0; i < tc.aa_ss.size(); ++i) {
-        auto& inner = obj.aa_ss[i];
+        auto &inner = obj.aa_ss[i];
         inner.size = tc.aa_ss[i].size();
-        inner.p = inner.size ? new const char*[inner.size] : new const char*[0];
+        inner.p = inner.size ? new const char *[inner.size] : new const char *[0];
         for (size_t j = 0; j < tc.aa_ss[i].size(); ++j) {
-            char* buf = new char[tc.ss[i].size() + 1];
+            char *buf = new char[tc.ss[i].size() + 1];
             memcpy(buf, tc.ss[i].c_str(), tc.ss[i].size() + 1);
             inner[j] = buf;
         }
@@ -251,11 +251,11 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
     obj.aaa_f32.p =
         obj.aaa_f32.size ? new MPackArray<MPackArray<float>>[obj.aaa_f32.size] : new MPackArray<MPackArray<float>>[0];
     for (size_t i = 0; i < tc.aaa_f32.size(); ++i) {
-        auto& mid = obj.aaa_f32[i];
+        auto &mid = obj.aaa_f32[i];
         mid.size = tc.aaa_f32[i].size();
         mid.p = mid.size ? new MPackArray<float>[mid.size] : new MPackArray<float>[0];
         for (size_t j = 0; j < tc.aaa_f32[i].size(); ++j) {
-            auto& inner = mid[j];
+            auto &inner = mid[j];
             inner.size = tc.aaa_f32[i][j].size();
             inner.p = inner.size ? new float[inner.size] : new float[0];
             for (size_t k = 0; k < tc.aaa_f32[i][j].size(); ++k)
@@ -268,7 +268,7 @@ TEST_P(ObjectWithArraysWriteTest, EncodesAllArrays) {
 }
 
 struct ArrayWriteCaseName {
-    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType>& info) const {
+    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType> &info) const {
         return info.param.name;
     }
 };

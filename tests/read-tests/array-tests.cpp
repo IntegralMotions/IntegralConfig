@@ -6,9 +6,9 @@
 #include <string>
 
 // --- harness
-static ObjectWithArrays parseArrays(const uint8_t* data, size_t len) {
+static ObjectWithArrays parseArrays(const uint8_t *data, size_t len) {
     mpack_reader_t r;
-    mpack_reader_init_data(&r, (const char*) data, len);
+    mpack_reader_init_data(&r, (const char *) data, len);
     ObjectWithArrays obj;
     obj.read(r, 0);
     EXPECT_EQ(mpack_reader_destroy(&r), mpack_ok);
@@ -32,7 +32,7 @@ struct ArrayCase {
 class ObjectWithArraysTest : public ::testing::TestWithParam<ArrayCase> {};
 
 TEST_P(ObjectWithArraysTest, DecodesAllArrays) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
     auto obj = parseArrays(tc.bytes.data(), tc.bytes.size());
     ASSERT_EQ(obj.i64.size, tc.i64.size());
     ASSERT_EQ(obj.u64.size, tc.u64.size());
@@ -127,7 +127,7 @@ static std::vector<uint8_t> bytes_arrays_case9 = {0x87, 0xA3, 0x69, 0x36, 0x34, 
                                                   0x61, 0x93, 0x93, 0x01, 0x02, 0x03, 0x90, 0x91, 0xFF};
 
 struct ArrayCaseName {
-    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType>& info) const {
+    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType> &info) const {
         // Give each case a readable name
         return info.param.name;
     }

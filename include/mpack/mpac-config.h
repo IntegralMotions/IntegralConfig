@@ -11,4 +11,3 @@
 
 /* Optional: turn off error strings to shrink flash */
 #define MPACK_ERROR_STRINGS 0
-

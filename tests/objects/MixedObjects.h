@@ -5,7 +5,7 @@
 struct MixedInner : public MPackObject<MixedInner, 2> { // NOLINT(readability-magic-numbers)
   public:
     int32_t a{};
-    const char* label{};
+    const char *label{};
 
     static void registerMembers() {
         registerMember("a", CppType::I32, &MixedInner::a);
@@ -26,7 +26,7 @@ class MixedObject : public MPackObject<MixedObject, 13> { // NOLINT(readability-
     float f32{};
     double f64{};
     bool flag{};
-    const char* name{};
+    const char *name{};
     MixedInner child{};
 
     static void registerMembers() {

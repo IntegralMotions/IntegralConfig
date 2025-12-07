@@ -21,14 +21,14 @@ class ObjectWithArrays : public MPackObject<ObjectWithArrays, 12> { // NOLINT(re
     MPackArray<uint64_t> u64;
     MPackArray<float> f32;
     MPackArray<double> f64;
-    MPackArray<const char*> ss;
-    MPackArray<Elem*> objs;
+    MPackArray<const char *> ss;
+    MPackArray<Elem *> objs;
     MPackArray<MPackArray<int32_t>> aa;
 
     MPackArray<MPackArray<double>> aa_f64;             // nested of double
     MPackArray<MPackArray<bool>> aa_bool;              // nested of bool
-    MPackArray<MPackArray<Elem*>> aa_objs;             // nested of object
-    MPackArray<MPackArray<const char*>> aa_ss;         // nested of string
+    MPackArray<MPackArray<Elem *>> aa_objs;            // nested of object
+    MPackArray<MPackArray<const char *>> aa_ss;        // nested of string
     MPackArray<MPackArray<MPackArray<float>>> aaa_f32; // nested-of-nested float
 
     ~ObjectWithArrays() override {
@@ -74,7 +74,7 @@ class ObjectWithArrays : public MPackObject<ObjectWithArrays, 12> { // NOLINT(re
 
         if (aa_objs != nullptr) {
             for (size_t i = 0; i < aa_objs.size; ++i) {
-                auto& inner = aa_objs[i];
+                auto &inner = aa_objs[i];
                 for (size_t j = 0; j < inner.size; ++j) {
                     delete inner[j];
                 }
@@ -85,7 +85,7 @@ class ObjectWithArrays : public MPackObject<ObjectWithArrays, 12> { // NOLINT(re
 
         if (aa_ss != nullptr) {
             for (size_t i = 0; i < aa_ss.size; ++i) {
-                auto& inner = aa_ss[i];
+                auto &inner = aa_ss[i];
                 for (size_t j = 0; j < inner.size; ++j) {
                     delete[] inner[j];
                 }
@@ -96,7 +96,7 @@ class ObjectWithArrays : public MPackObject<ObjectWithArrays, 12> { // NOLINT(re
 
         if (aaa_f32 != nullptr) {
             for (size_t i = 0; i < aaa_f32.size; ++i) {
-                auto& mid = aaa_f32[i];
+                auto &mid = aaa_f32[i];
                 for (size_t j = 0; j < mid.size; ++j) {
                     delete[] mid[j].begin();
                 }
@@ -124,7 +124,7 @@ class ObjectWithArrays : public MPackObject<ObjectWithArrays, 12> { // NOLINT(re
     }
 
   private:
-    MPackObjectBase* createObject(const char* /*name*/) override {
+    MPackObjectBase *createObject(const char * /*name*/) override {
         return new Elem();
     }
 };

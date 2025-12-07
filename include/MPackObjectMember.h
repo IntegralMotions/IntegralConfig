@@ -4,7 +4,7 @@
 
 struct MPackObjectMember {
   public:
-    const char* name;
+    const char *name;
     MPackObjectType type;
     size_t offset;
 };

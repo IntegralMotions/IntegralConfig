@@ -3,9 +3,9 @@
 #include <gtest/gtest.h>
 #include <sys/types.h>
 
-static ObjectWithInts parseObject(const uint8_t* data, size_t len) {
+static ObjectWithInts parseObject(const uint8_t *data, size_t len) {
     mpack_reader_t reader;
-    mpack_reader_init_data(&reader, reinterpret_cast<const char*>(data), len);
+    mpack_reader_init_data(&reader, reinterpret_cast<const char *>(data), len);
     ObjectWithInts obj;
     obj.read(reader, 0);
     EXPECT_EQ(mpack_reader_destroy(&reader), mpack_ok);
@@ -29,7 +29,7 @@ struct MPackTestCase {
 class ObjectWithIntsTest : public ::testing::TestWithParam<MPackTestCase> {};
 
 TEST_P(ObjectWithIntsTest, DecodesValues) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
     auto obj = parseObject(tc.bytes.data(), tc.bytes.size());
     EXPECT_EQ(obj.value1, tc.v1);
     EXPECT_EQ(obj.value2, tc.v2);

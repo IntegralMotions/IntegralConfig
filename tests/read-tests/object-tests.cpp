@@ -6,9 +6,9 @@
 #include <vector>
 
 // --- harness ---------------------------------------------------------
-static ObjectWithObjects parseObjects(const uint8_t* data, size_t len) {
+static ObjectWithObjects parseObjects(const uint8_t *data, size_t len) {
     mpack_reader_t r;
-    mpack_reader_init_data(&r, reinterpret_cast<const char*>(data), len);
+    mpack_reader_init_data(&r, reinterpret_cast<const char *>(data), len);
     ObjectWithObjects obj;
     obj.read(r, 0);
     EXPECT_EQ(mpack_reader_destroy(&r), mpack_ok);
@@ -27,7 +27,7 @@ struct ObjectCase {
 class ObjectWithObjectsTest : public ::testing::TestWithParam<ObjectCase> {};
 
 TEST_P(ObjectWithObjectsTest, DecodesNestedObjects) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
     auto obj = parseObjects(tc.bytes.data(), tc.bytes.size());
 
     EXPECT_EQ(obj.left.a, tc.left_a);
@@ -37,7 +37,7 @@ TEST_P(ObjectWithObjectsTest, DecodesNestedObjects) {
 }
 
 struct ObjectCaseName {
-    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType>& info) const {
+    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType> &info) const {
         return info.param.name;
     }
 };

@@ -32,16 +32,16 @@ struct MPackObjectType {
 
     MPackObjectType(CppType type, CppType inner) : type(type), innerType(std::make_unique<MPackObjectType>(inner)) {}
 
-    MPackObjectType(CppType type, const MPackObjectType& inner)
+    MPackObjectType(CppType type, const MPackObjectType &inner)
         : type(type), innerType(std::make_unique<MPackObjectType>(inner)) {}
 
-    MPackObjectType(const MPackObjectType& objectType) : type(objectType.type) {
+    MPackObjectType(const MPackObjectType &objectType) : type(objectType.type) {
         if (objectType.innerType) {
             innerType = std::make_unique<MPackObjectType>(*objectType.innerType);
         }
     }
 
-    MPackObjectType& operator=(const MPackObjectType& objectType) {
+    MPackObjectType &operator=(const MPackObjectType &objectType) {
         if (this == &objectType) {
             return *this;
         }

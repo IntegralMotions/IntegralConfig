@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-static std::vector<uint8_t> writeStrings(const ObjectWithStrings& inObj) {
+static std::vector<uint8_t> writeStrings(const ObjectWithStrings &inObj) {
     mpack_writer_t w;
-    char* buf = nullptr;
+    char *buf = nullptr;
     size_t size = 0;
 
     mpack_writer_init_growable(&w, &buf, &size);
@@ -15,7 +15,7 @@ static std::vector<uint8_t> writeStrings(const ObjectWithStrings& inObj) {
 
     EXPECT_EQ(mpack_writer_destroy(&w), mpack_ok);
 
-    std::vector<uint8_t> out(reinterpret_cast<uint8_t*>(buf), reinterpret_cast<uint8_t*>(buf) + size);
+    std::vector<uint8_t> out(reinterpret_cast<uint8_t *>(buf), reinterpret_cast<uint8_t *>(buf) + size);
     MPACK_FREE(buf);
     return out;
 }
@@ -41,7 +41,7 @@ struct StringWriteCase {
 class ObjectWithStringsWriteTest : public ::testing::TestWithParam<StringWriteCase> {};
 
 TEST_P(ObjectWithStringsWriteTest, EncodesVariousStrings) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
 
     ObjectWithStrings obj;
     obj.s1 = tc.s1.c_str();
@@ -53,7 +53,7 @@ TEST_P(ObjectWithStringsWriteTest, EncodesVariousStrings) {
 }
 
 struct StringWriteCaseName {
-    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType>& info) const {
+    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType> &info) const {
         return info.param.name;
     }
 };

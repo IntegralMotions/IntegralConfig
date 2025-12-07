@@ -36,4 +36,3 @@
 #include <mpack/mpack-writer.h>
 
 #endif
-

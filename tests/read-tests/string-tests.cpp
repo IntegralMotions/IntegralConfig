@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-static ObjectWithStrings parseStrings(const uint8_t* data, size_t len) {
+static ObjectWithStrings parseStrings(const uint8_t *data, size_t len) {
     mpack_reader_t r;
-    mpack_reader_init_data(&r, reinterpret_cast<const char*>(data), len);
+    mpack_reader_init_data(&r, reinterpret_cast<const char *>(data), len);
     ObjectWithStrings obj;
     obj.read(r, 0);
     EXPECT_EQ(mpack_reader_destroy(&r), mpack_ok);
@@ -20,7 +20,7 @@ struct StringCase {
 class ObjectWithStringsTest : public ::testing::TestWithParam<StringCase> {};
 
 TEST_P(ObjectWithStringsTest, DecodesVariousStrings) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
     auto obj = parseStrings(tc.bytes.data(), tc.bytes.size());
     EXPECT_EQ(obj.s1, tc.s1);
     EXPECT_EQ(obj.s2, tc.s2);

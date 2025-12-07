@@ -6,9 +6,9 @@
 #include <vector>
 
 // --- harness ---------------------------------------------------------
-static MixedObject parseMixed(const uint8_t* data, size_t len) {
+static MixedObject parseMixed(const uint8_t *data, size_t len) {
     mpack_reader_t r;
-    mpack_reader_init_data(&r, reinterpret_cast<const char*>(data), len);
+    mpack_reader_init_data(&r, reinterpret_cast<const char *>(data), len);
     MixedObject obj;
     obj.read(r, 0);
     EXPECT_EQ(mpack_reader_destroy(&r), mpack_ok);
@@ -38,7 +38,7 @@ struct MixedCase {
 class MixedObjectTest : public ::testing::TestWithParam<MixedCase> {};
 
 TEST_P(MixedObjectTest, DecodesAllScalarTypesAndObject) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
     auto obj = parseMixed(tc.bytes.data(), tc.bytes.size());
 
     EXPECT_EQ(obj.i8, tc.i8);
@@ -61,7 +61,7 @@ TEST_P(MixedObjectTest, DecodesAllScalarTypesAndObject) {
 }
 
 struct MixedCaseName {
-    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType>& info) const {
+    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType> &info) const {
         return info.param.name;
     }
 };

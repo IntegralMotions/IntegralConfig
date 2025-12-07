@@ -4,9 +4,9 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-static std::vector<uint8_t> writeFloats(const ObjectWithFloats& inObj) {
+static std::vector<uint8_t> writeFloats(const ObjectWithFloats &inObj) {
     mpack_writer_t w;
-    char* buf = nullptr;
+    char *buf = nullptr;
     size_t size = 0;
 
     mpack_writer_init_growable(&w, &buf, &size);
@@ -16,7 +16,7 @@ static std::vector<uint8_t> writeFloats(const ObjectWithFloats& inObj) {
 
     EXPECT_EQ(mpack_writer_destroy(&w), mpack_ok);
 
-    std::vector<uint8_t> out(reinterpret_cast<uint8_t*>(buf), reinterpret_cast<uint8_t*>(buf) + size);
+    std::vector<uint8_t> out(reinterpret_cast<uint8_t *>(buf), reinterpret_cast<uint8_t *>(buf) + size);
     MPACK_FREE(buf);
     return out;
 }
@@ -37,7 +37,7 @@ struct FloatWriteCase {
 class ObjectWithFloatsWriteTest : public ::testing::TestWithParam<FloatWriteCase> {};
 
 TEST_P(ObjectWithFloatsWriteTest, EncodesFloatDouble) {
-    const auto& tc = GetParam();
+    const auto &tc = GetParam();
 
     ObjectWithFloats obj;
     obj.f32 = tc.f32;
@@ -48,7 +48,7 @@ TEST_P(ObjectWithFloatsWriteTest, EncodesFloatDouble) {
 }
 
 struct FloatWriteCaseName {
-    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType>& info) const {
+    template <class ParamType> std::string operator()(const ::testing::TestParamInfo<ParamType> &info) const {
         return info.param.name;
     }
 };
