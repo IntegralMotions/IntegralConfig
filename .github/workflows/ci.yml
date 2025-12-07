@@ -41,8 +41,7 @@ jobs:
           thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
 
           ignore: |
-            'tests/**'
-            '**/mpack/**'
+            'tests/**|**/mpack/**'
 
       - name: Fail on lint issues
         if: |
