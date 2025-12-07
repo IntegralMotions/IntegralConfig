@@ -77,7 +77,7 @@ class ConfigurationControllerTests : public ::testing::Test {
         StringSetting::registerMembers();
     }
 
-    TestController& controller() {
+    static TestController& controller() {
         return TestController::get();
     }
 

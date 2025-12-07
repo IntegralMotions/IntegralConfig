@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MPackArray.h"
 #include "MPackObject.hpp"
 #include "SettingValues.h"
 #include <cstring>
@@ -55,7 +56,7 @@ class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers
   private:
     const char* id{};
     const char* label{};
-    Setting** settings{};
+    MPackArray<Setting*> settings{};
 };
 
 class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbers)
@@ -74,7 +75,7 @@ class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbe
   private:
     const char* id{};
     const char* label{};
-    Group** groups{};
+    MPackArray<Group*> groups;
 };
 
 class DeviceInfo : public MPackObject<DeviceInfo, 2> { // NOLINT(readability-magic-numbers)
@@ -109,5 +110,5 @@ class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbe
 
   private:
     DeviceInfo* deviceInfo{};
-    Module** modules{};
+    MPackArray<Module*> modules;
 };
