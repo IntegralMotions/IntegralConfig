@@ -39,9 +39,7 @@ jobs:
           database: build
           file-annotations: true
           thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
-
-          ignore: |
-            'tests/**|**/mpack/**'
+          ignore: 'tests/**|**/mpack/**'
 
       - name: Fail on lint issues
         if: |
