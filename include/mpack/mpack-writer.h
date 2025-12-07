@@ -72,7 +72,7 @@ typedef struct mpack_writer_t mpack_writer_t;
  *
  * The specified context for callbacks is at writer->context.
  */
-typedef void (*mpack_writer_flush_t)(mpack_writer_t* writer, const char* buffer, size_t count);
+typedef void (*mpack_writer_flush_t)(mpack_writer_t *writer, const char *buffer, size_t count);
 
 /**
  * An error handler function to be called when an error is flagged on
@@ -98,12 +98,12 @@ typedef void (*mpack_writer_flush_t)(mpack_writer_t* writer, const char* buffer,
  * that the writer is destroyed since any future accesses to it cause
  * undefined behavior.
  */
-typedef void (*mpack_writer_error_t)(mpack_writer_t* writer, mpack_error_t error);
+typedef void (*mpack_writer_error_t)(mpack_writer_t *writer, mpack_error_t error);
 
 /**
  * A teardown function to be called when the writer is destroyed.
  */
-typedef void (*mpack_writer_teardown_t)(mpack_writer_t* writer);
+typedef void (*mpack_writer_teardown_t)(mpack_writer_t *writer);
 
 /* Hide internals from documentation */
 /** @cond */
@@ -117,7 +117,7 @@ typedef void (*mpack_writer_teardown_t)(mpack_writer_t* writer);
  * they store the number of used bytes.
  */
 typedef struct mpack_builder_page_t {
-    struct mpack_builder_page_t* next;
+    struct mpack_builder_page_t *next;
     size_t bytes_used;
 } mpack_builder_page_t;
 
@@ -126,11 +126,11 @@ typedef struct mpack_builder_page_t {
  * contents directly in the paged builder buffer.
  */
 typedef struct mpack_build_t {
-    //mpack_builder_page_t* page;
-    struct mpack_build_t* parent;
-    //struct mpack_build_t* next;
+    // mpack_builder_page_t* page;
+    struct mpack_build_t *parent;
+    // struct mpack_build_t* next;
 
-    size_t bytes; // number of bytes between this build and the next one
+    size_t bytes;   // number of bytes between this build and the next one
     uint32_t count; // number of elements (or key/value pairs) in this map/array
     mpack_type_t type;
 
@@ -148,74 +148,73 @@ typedef struct mpack_build_t {
  * The builder state. This is stored within mpack_writer_t.
  */
 typedef struct mpack_builder_t {
-    mpack_build_t* current_build; // build which is accumulating elements
-    mpack_build_t* latest_build; // build which is accumulating bytes
-    mpack_builder_page_t* current_page;
-    mpack_builder_page_t* pages;
-    char* stash_buffer;
-    char* stash_position;
-    char* stash_end;
-    #if MPACK_BUILDER_INTERNAL_STORAGE
+    mpack_build_t *current_build; // build which is accumulating elements
+    mpack_build_t *latest_build;  // build which is accumulating bytes
+    mpack_builder_page_t *current_page;
+    mpack_builder_page_t *pages;
+    char *stash_buffer;
+    char *stash_position;
+    char *stash_end;
+#if MPACK_BUILDER_INTERNAL_STORAGE
     char internal[MPACK_BUILDER_INTERNAL_STORAGE_SIZE];
-    #endif
+#endif
 } mpack_builder_t;
 #endif
 
 struct mpack_writer_t {
-    #if MPACK_COMPATIBILITY
-    mpack_version_t version;          /* Version of the MessagePack spec to write */
-    #endif
+#if MPACK_COMPATIBILITY
+    mpack_version_t version; /* Version of the MessagePack spec to write */
+#endif
     mpack_writer_flush_t flush;       /* Function to write bytes to the output stream */
     mpack_writer_error_t error_fn;    /* Function to call on error */
     mpack_writer_teardown_t teardown; /* Function to teardown the context on destroy */
-    void* context;                    /* Context for writer callbacks */
+    void *context;                    /* Context for writer callbacks */
 
-    char* buffer;         /* Byte buffer */
-    char* position;       /* Current position within the buffer */
-    char* end;            /* The end of the buffer */
-    mpack_error_t error;  /* Error state */
-
-    #if MPACK_WRITE_TRACKING
-    mpack_track_t track; /* Stack of map/array/str/bin/ext writes */
-    #endif
-
-    #ifdef MPACK_MALLOC
-    /* Reserved. You can use this space to allocate a custom
-     * context in order to reduce heap allocations. */
-    void* reserved[2];
-    #endif
-
-    #if MPACK_BUILDER
-    mpack_builder_t builder;
-    #endif
-};
-
+    char *buffer;        /* Byte buffer */
+    char *position;      /* Current position within the buffer */
+    char *end;           /* The end of the buffer */
+    mpack_error_t error; /* Error state */
 
 #if MPACK_WRITE_TRACKING
-void mpack_writer_track_push(mpack_writer_t* writer, mpack_type_t type, uint32_t count);
-void mpack_writer_track_push_builder(mpack_writer_t* writer, mpack_type_t type);
-void mpack_writer_track_pop(mpack_writer_t* writer, mpack_type_t type);
-void mpack_writer_track_pop_builder(mpack_writer_t* writer, mpack_type_t type);
-void mpack_writer_track_bytes(mpack_writer_t* writer, size_t count);
+    mpack_track_t track; /* Stack of map/array/str/bin/ext writes */
+#endif
+
+#ifdef MPACK_MALLOC
+    /* Reserved. You can use this space to allocate a custom
+     * context in order to reduce heap allocations. */
+    void *reserved[2];
+#endif
+
+#if MPACK_BUILDER
+    mpack_builder_t builder;
+#endif
+};
+
+#if MPACK_WRITE_TRACKING
+void mpack_writer_track_push(mpack_writer_t *writer, mpack_type_t type, uint32_t count);
+void mpack_writer_track_push_builder(mpack_writer_t *writer, mpack_type_t type);
+void mpack_writer_track_pop(mpack_writer_t *writer, mpack_type_t type);
+void mpack_writer_track_pop_builder(mpack_writer_t *writer, mpack_type_t type);
+void mpack_writer_track_bytes(mpack_writer_t *writer, size_t count);
 #else
-MPACK_INLINE void mpack_writer_track_push(mpack_writer_t* writer, mpack_type_t type, uint32_t count) {
+MPACK_INLINE void mpack_writer_track_push(mpack_writer_t *writer, mpack_type_t type, uint32_t count) {
     MPACK_UNUSED(writer);
     MPACK_UNUSED(type);
     MPACK_UNUSED(count);
 }
-MPACK_INLINE void mpack_writer_track_push_builder(mpack_writer_t* writer, mpack_type_t type) {
+MPACK_INLINE void mpack_writer_track_push_builder(mpack_writer_t *writer, mpack_type_t type) {
     MPACK_UNUSED(writer);
     MPACK_UNUSED(type);
 }
-MPACK_INLINE void mpack_writer_track_pop(mpack_writer_t* writer, mpack_type_t type) {
+MPACK_INLINE void mpack_writer_track_pop(mpack_writer_t *writer, mpack_type_t type) {
     MPACK_UNUSED(writer);
     MPACK_UNUSED(type);
 }
-MPACK_INLINE void mpack_writer_track_pop_builder(mpack_writer_t* writer, mpack_type_t type) {
+MPACK_INLINE void mpack_writer_track_pop_builder(mpack_writer_t *writer, mpack_type_t type) {
     MPACK_UNUSED(writer);
     MPACK_UNUSED(type);
 }
-MPACK_INLINE void mpack_writer_track_bytes(mpack_writer_t* writer, size_t count) {
+MPACK_INLINE void mpack_writer_track_bytes(mpack_writer_t *writer, size_t count) {
     MPACK_UNUSED(writer);
     MPACK_UNUSED(count);
 }
@@ -241,7 +240,7 @@ MPACK_INLINE void mpack_writer_track_bytes(mpack_writer_t* writer, size_t count)
  * @param buffer The buffer into which to write MessagePack data.
  * @param size The size of the buffer.
  */
-void mpack_writer_init(mpack_writer_t* writer, char* buffer, size_t size);
+void mpack_writer_init(mpack_writer_t *writer, char *buffer, size_t size);
 
 #ifdef MPACK_MALLOC
 /**
@@ -261,14 +260,14 @@ void mpack_writer_init(mpack_writer_t* writer, char* buffer, size_t size);
  * @param data Where to place the allocated data.
  * @param size Where to write the size of the data.
  */
-void mpack_writer_init_growable(mpack_writer_t* writer, char** data, size_t* size);
+void mpack_writer_init_growable(mpack_writer_t *writer, char **data, size_t *size);
 #endif
 
 /**
  * Initializes an MPack writer directly into an error state. Use this if you
  * are writing a wrapper to mpack_writer_init() which can fail its setup.
  */
-void mpack_writer_init_error(mpack_writer_t* writer, mpack_error_t error);
+void mpack_writer_init_error(mpack_writer_t *writer, mpack_error_t error);
 
 #if MPACK_STDIO
 /**
@@ -277,14 +276,14 @@ void mpack_writer_init_error(mpack_writer_t* writer, mpack_error_t error);
  * @throws mpack_error_memory if allocation fails
  * @throws mpack_error_io if the file cannot be opened
  */
-void mpack_writer_init_filename(mpack_writer_t* writer, const char* filename);
+void mpack_writer_init_filename(mpack_writer_t *writer, const char *filename);
 
 /**
  * Deprecated.
  *
  * \deprecated Renamed to mpack_writer_init_filename().
  */
-MPACK_INLINE void mpack_writer_init_file(mpack_writer_t* writer, const char* filename) {
+MPACK_INLINE void mpack_writer_init_file(mpack_writer_t *writer, const char *filename) {
     mpack_writer_init_filename(writer, filename);
 }
 
@@ -303,17 +302,16 @@ MPACK_INLINE void mpack_writer_init_file(mpack_writer_t* writer, const char* fil
  *
  * @see mpack_writer_flush_message
  */
-void mpack_writer_init_stdfile(mpack_writer_t* writer, FILE* stdfile, bool close_when_done);
+void mpack_writer_init_stdfile(mpack_writer_t *writer, FILE *stdfile, bool close_when_done);
 #endif
 
 /** @cond */
 
-#define mpack_writer_init_stack_line_ex(line, writer) \
-    char mpack_buf_##line[MPACK_STACK_SIZE]; \
+#define mpack_writer_init_stack_line_ex(line, writer)                                                                  \
+    char mpack_buf_##line[MPACK_STACK_SIZE];                                                                           \
     mpack_writer_init(writer, mpack_buf_##line, sizeof(mpack_buf_##line))
 
-#define mpack_writer_init_stack_line(line, writer) \
-    mpack_writer_init_stack_line_ex(line, writer)
+#define mpack_writer_init_stack_line(line, writer) mpack_writer_init_stack_line_ex(line, writer)
 
 /*
  * Initializes an MPack writer using stack space as a buffer. A flush function
@@ -322,8 +320,7 @@ void mpack_writer_init_stdfile(mpack_writer_t* writer, FILE* stdfile, bool close
  * This is currently undocumented since it's not entirely useful on its own.
  */
 
-#define mpack_writer_init_stack(writer) \
-    mpack_writer_init_stack_line(__LINE__, (writer))
+#define mpack_writer_init_stack(writer) mpack_writer_init_stack_line(__LINE__, (writer))
 
 /** @endcond */
 
@@ -353,7 +350,7 @@ void mpack_writer_init_stdfile(mpack_writer_t* writer, FILE* stdfile, bool close
  * @see mpack_writer_flag_error
  * @see mpack_error_data
  */
-mpack_error_t mpack_writer_destroy(mpack_writer_t* writer);
+mpack_error_t mpack_writer_destroy(mpack_writer_t *writer);
 
 /**
  * @}
@@ -373,7 +370,7 @@ mpack_error_t mpack_writer_destroy(mpack_writer_t* writer);
  *
  * @note This requires @ref MPACK_COMPATIBILITY.
  */
-MPACK_INLINE void mpack_writer_set_version(mpack_writer_t* writer, mpack_version_t version) {
+MPACK_INLINE void mpack_writer_set_version(mpack_writer_t *writer, mpack_version_t version) {
     writer->version = version;
 }
 #endif
@@ -387,7 +384,7 @@ MPACK_INLINE void mpack_writer_set_version(mpack_writer_t* writer, mpack_version
  *
  * @see mpack_writer_context()
  */
-MPACK_INLINE void mpack_writer_set_context(mpack_writer_t* writer, void* context) {
+MPACK_INLINE void mpack_writer_set_context(mpack_writer_t *writer, void *context) {
     writer->context = context;
 }
 
@@ -397,7 +394,7 @@ MPACK_INLINE void mpack_writer_set_context(mpack_writer_t* writer, void* context
  * @see mpack_writer_set_context
  * @see mpack_writer_set_flush
  */
-MPACK_INLINE void* mpack_writer_context(mpack_writer_t* writer) {
+MPACK_INLINE void *mpack_writer_context(mpack_writer_t *writer) {
     return writer->context;
 }
 
@@ -415,7 +412,7 @@ MPACK_INLINE void* mpack_writer_context(mpack_writer_t* writer) {
  *
  * @see mpack_writer_context()
  */
-void mpack_writer_set_flush(mpack_writer_t* writer, mpack_writer_flush_t flush);
+void mpack_writer_set_flush(mpack_writer_t *writer, mpack_writer_flush_t flush);
 
 /**
  * Sets the error function to call when an error is flagged on the writer.
@@ -430,7 +427,7 @@ void mpack_writer_set_flush(mpack_writer_t* writer, mpack_writer_flush_t flush);
  * @param writer The MPack writer.
  * @param error_fn The function to call when an error is flagged on the writer.
  */
-MPACK_INLINE void mpack_writer_set_error_handler(mpack_writer_t* writer, mpack_writer_error_t error_fn) {
+MPACK_INLINE void mpack_writer_set_error_handler(mpack_writer_t *writer, mpack_writer_error_t error_fn) {
     writer->error_fn = error_fn;
 }
 
@@ -443,7 +440,7 @@ MPACK_INLINE void mpack_writer_set_error_handler(mpack_writer_t* writer, mpack_w
  * @param writer The MPack writer.
  * @param teardown The function to call when the writer is destroyed.
  */
-MPACK_INLINE void mpack_writer_set_teardown(mpack_writer_t* writer, mpack_writer_teardown_t teardown) {
+MPACK_INLINE void mpack_writer_set_teardown(mpack_writer_t *writer, mpack_writer_teardown_t teardown) {
     writer->teardown = teardown;
 }
 
@@ -474,31 +471,31 @@ MPACK_INLINE void mpack_writer_set_teardown(mpack_writer_t* writer, mpack_writer
  * that no compound types are still open. This prevents a "missing
  * finish" bug from causing a never-ending message.
  */
-void mpack_writer_flush_message(mpack_writer_t* writer);
+void mpack_writer_flush_message(mpack_writer_t *writer);
 
 /**
  * Returns the number of bytes currently stored in the buffer. This
  * may be less than the total number of bytes written if bytes have
  * been flushed to an underlying stream.
  */
-MPACK_INLINE size_t mpack_writer_buffer_used(mpack_writer_t* writer) {
-    return (size_t)(writer->position - writer->buffer);
+MPACK_INLINE size_t mpack_writer_buffer_used(mpack_writer_t *writer) {
+    return (size_t) (writer->position - writer->buffer);
 }
 
 /**
  * Returns the amount of space left in the buffer. This may be reset
  * after a write if bytes are flushed to an underlying stream.
  */
-MPACK_INLINE size_t mpack_writer_buffer_left(mpack_writer_t* writer) {
-    return (size_t)(writer->end - writer->position);
+MPACK_INLINE size_t mpack_writer_buffer_left(mpack_writer_t *writer) {
+    return (size_t) (writer->end - writer->position);
 }
 
 /**
  * Returns the (current) size of the buffer. This may change after a write if
  * the flush callback changes the buffer.
  */
-MPACK_INLINE size_t mpack_writer_buffer_size(mpack_writer_t* writer) {
-    return (size_t)(writer->end - writer->buffer);
+MPACK_INLINE size_t mpack_writer_buffer_size(mpack_writer_t *writer) {
+    return (size_t) (writer->end - writer->buffer);
 }
 
 /**
@@ -517,7 +514,7 @@ MPACK_INLINE size_t mpack_writer_buffer_size(mpack_writer_t* writer) {
  * @see mpack_writer_destroy
  * @see mpack_error_data
  */
-void mpack_writer_flag_error(mpack_writer_t* writer, mpack_error_t error);
+void mpack_writer_flag_error(mpack_writer_t *writer, mpack_error_t error);
 
 /**
  * Queries the error state of the MPack writer.
@@ -525,7 +522,7 @@ void mpack_writer_flag_error(mpack_writer_t* writer, mpack_error_t error);
  * If a writer is in an error state, you should discard all data since the
  * last time the error flag was checked. The error flag cannot be cleared.
  */
-MPACK_INLINE mpack_error_t mpack_writer_error(mpack_writer_t* writer) {
+MPACK_INLINE mpack_error_t mpack_writer_error(mpack_writer_t *writer) {
     return writer->error;
 }
 
@@ -545,7 +542,7 @@ MPACK_INLINE mpack_error_t mpack_writer_error(mpack_writer_t* writer) {
  * @see mpack_finish_ext()
  * @see mpack_finish_type()
  */
-void mpack_write_tag(mpack_writer_t* writer, mpack_tag_t tag);
+void mpack_write_tag(mpack_writer_t *writer, mpack_tag_t tag);
 
 /**
  * @}
@@ -557,36 +554,36 @@ void mpack_write_tag(mpack_writer_t* writer, mpack_tag_t tag);
  */
 
 /** Writes an 8-bit integer in the most efficient packing available. */
-void mpack_write_i8(mpack_writer_t* writer, int8_t value);
+void mpack_write_i8(mpack_writer_t *writer, int8_t value);
 
 /** Writes a 16-bit integer in the most efficient packing available. */
-void mpack_write_i16(mpack_writer_t* writer, int16_t value);
+void mpack_write_i16(mpack_writer_t *writer, int16_t value);
 
 /** Writes a 32-bit integer in the most efficient packing available. */
-void mpack_write_i32(mpack_writer_t* writer, int32_t value);
+void mpack_write_i32(mpack_writer_t *writer, int32_t value);
 
 /** Writes a 64-bit integer in the most efficient packing available. */
-void mpack_write_i64(mpack_writer_t* writer, int64_t value);
+void mpack_write_i64(mpack_writer_t *writer, int64_t value);
 
 /** Writes an integer in the most efficient packing available. */
-MPACK_INLINE void mpack_write_int(mpack_writer_t* writer, int64_t value) {
+MPACK_INLINE void mpack_write_int(mpack_writer_t *writer, int64_t value) {
     mpack_write_i64(writer, value);
 }
 
 /** Writes an 8-bit unsigned integer in the most efficient packing available. */
-void mpack_write_u8(mpack_writer_t* writer, uint8_t value);
+void mpack_write_u8(mpack_writer_t *writer, uint8_t value);
 
 /** Writes an 16-bit unsigned integer in the most efficient packing available. */
-void mpack_write_u16(mpack_writer_t* writer, uint16_t value);
+void mpack_write_u16(mpack_writer_t *writer, uint16_t value);
 
 /** Writes an 32-bit unsigned integer in the most efficient packing available. */
-void mpack_write_u32(mpack_writer_t* writer, uint32_t value);
+void mpack_write_u32(mpack_writer_t *writer, uint32_t value);
 
 /** Writes an 64-bit unsigned integer in the most efficient packing available. */
-void mpack_write_u64(mpack_writer_t* writer, uint64_t value);
+void mpack_write_u64(mpack_writer_t *writer, uint64_t value);
 
 /** Writes an unsigned integer in the most efficient packing available. */
-MPACK_INLINE void mpack_write_uint(mpack_writer_t* writer, uint64_t value) {
+MPACK_INLINE void mpack_write_uint(mpack_writer_t *writer, uint64_t value) {
     mpack_write_u64(writer, value);
 }
 
@@ -601,34 +598,34 @@ MPACK_INLINE void mpack_write_uint(mpack_writer_t* writer, uint64_t value) {
 
 #if MPACK_FLOAT
 /** Writes a float. */
-void mpack_write_float(mpack_writer_t* writer, float value);
+void mpack_write_float(mpack_writer_t *writer, float value);
 #else
 /** Writes a float from a raw uint32_t. */
-void mpack_write_raw_float(mpack_writer_t* writer, uint32_t raw_value);
+void mpack_write_raw_float(mpack_writer_t *writer, uint32_t raw_value);
 #endif
 
 #if MPACK_DOUBLE
 /** Writes a double. */
-void mpack_write_double(mpack_writer_t* writer, double value);
+void mpack_write_double(mpack_writer_t *writer, double value);
 #else
 /** Writes a double from a raw uint64_t. */
-void mpack_write_raw_double(mpack_writer_t* writer, uint64_t raw_value);
+void mpack_write_raw_double(mpack_writer_t *writer, uint64_t raw_value);
 #endif
 
 /** Writes a boolean. */
-void mpack_write_bool(mpack_writer_t* writer, bool value);
+void mpack_write_bool(mpack_writer_t *writer, bool value);
 
 /** Writes a boolean with value true. */
-void mpack_write_true(mpack_writer_t* writer);
+void mpack_write_true(mpack_writer_t *writer);
 
 /** Writes a boolean with value false. */
-void mpack_write_false(mpack_writer_t* writer);
+void mpack_write_false(mpack_writer_t *writer);
 
 /** Writes a nil. */
-void mpack_write_nil(mpack_writer_t* writer);
+void mpack_write_nil(mpack_writer_t *writer);
 
 /** Write a pre-encoded messagepack object */
-void mpack_write_object_bytes(mpack_writer_t* writer, const char* data, size_t bytes);
+void mpack_write_object_bytes(mpack_writer_t *writer, const char *data, size_t bytes);
 
 #if MPACK_EXTENSIONS
 /**
@@ -640,7 +637,7 @@ void mpack_write_object_bytes(mpack_writer_t* writer, const char* data, size_t b
  * @param seconds The (signed) number of seconds since 1970-01-01T00:00:00Z.
  * @param nanoseconds The additional number of nanoseconds from 0 to 999,999,999 inclusive.
  */
-void mpack_write_timestamp(mpack_writer_t* writer, int64_t seconds, uint32_t nanoseconds);
+void mpack_write_timestamp(mpack_writer_t *writer, int64_t seconds, uint32_t nanoseconds);
 
 /**
  * Writes a timestamp with the given number of seconds (and zero nanoseconds).
@@ -650,7 +647,7 @@ void mpack_write_timestamp(mpack_writer_t* writer, int64_t seconds, uint32_t nan
  * @param writer The writer
  * @param seconds The (signed) number of seconds since 1970-01-01T00:00:00Z.
  */
-MPACK_INLINE void mpack_write_timestamp_seconds(mpack_writer_t* writer, int64_t seconds) {
+MPACK_INLINE void mpack_write_timestamp_seconds(mpack_writer_t *writer, int64_t seconds) {
     mpack_write_timestamp(writer, seconds, 0);
 }
 
@@ -659,7 +656,7 @@ MPACK_INLINE void mpack_write_timestamp_seconds(mpack_writer_t* writer, int64_t 
  *
  * @note This requires @ref MPACK_EXTENSIONS.
  */
-MPACK_INLINE void mpack_write_timestamp_struct(mpack_writer_t* writer, mpack_timestamp_t timestamp) {
+MPACK_INLINE void mpack_write_timestamp_struct(mpack_writer_t *writer, mpack_timestamp_t timestamp) {
     mpack_write_timestamp(writer, timestamp.seconds, timestamp.nanoseconds);
 }
 #endif
@@ -685,7 +682,7 @@ MPACK_INLINE void mpack_write_timestamp_struct(mpack_writer_t* writer, mpack_tim
  * @see mpack_finish_array()
  * @see mpack_build_array() to count the number of elements automatically
  */
-void mpack_start_array(mpack_writer_t* writer, uint32_t count);
+void mpack_start_array(mpack_writer_t *writer, uint32_t count);
 
 /**
  * Opens a map.
@@ -703,29 +700,29 @@ void mpack_start_array(mpack_writer_t* writer, uint32_t count);
  * @see mpack_finish_map()
  * @see mpack_build_map() to count the number of key/value pairs automatically
  */
-void mpack_start_map(mpack_writer_t* writer, uint32_t count);
+void mpack_start_map(mpack_writer_t *writer, uint32_t count);
 
-MPACK_INLINE void mpack_builder_compound_push(mpack_writer_t* writer) {
+MPACK_INLINE void mpack_builder_compound_push(mpack_writer_t *writer) {
     MPACK_UNUSED(writer);
 
-    #if MPACK_BUILDER
-    mpack_build_t* build = writer->builder.current_build;
+#if MPACK_BUILDER
+    mpack_build_t *build = writer->builder.current_build;
     if (build != NULL) {
         ++build->nested_compound_elements;
     }
-    #endif
+#endif
 }
 
-MPACK_INLINE void mpack_builder_compound_pop(mpack_writer_t* writer) {
+MPACK_INLINE void mpack_builder_compound_pop(mpack_writer_t *writer) {
     MPACK_UNUSED(writer);
 
-    #if MPACK_BUILDER
-    mpack_build_t* build = writer->builder.current_build;
+#if MPACK_BUILDER
+    mpack_build_t *build = writer->builder.current_build;
     if (build != NULL) {
         mpack_assert(build->nested_compound_elements > 0);
         --build->nested_compound_elements;
     }
-    #endif
+#endif
 }
 
 /**
@@ -739,7 +736,7 @@ MPACK_INLINE void mpack_builder_compound_pop(mpack_writer_t* writer) {
  *
  * @see mpack_start_array()
  */
-MPACK_INLINE void mpack_finish_array(mpack_writer_t* writer) {
+MPACK_INLINE void mpack_finish_array(mpack_writer_t *writer) {
     mpack_writer_track_pop(writer, mpack_type_array);
     mpack_builder_compound_pop(writer);
 }
@@ -755,7 +752,7 @@ MPACK_INLINE void mpack_finish_array(mpack_writer_t* writer) {
  *
  * @see mpack_start_map()
  */
-MPACK_INLINE void mpack_finish_map(mpack_writer_t* writer) {
+MPACK_INLINE void mpack_finish_map(mpack_writer_t *writer) {
     mpack_writer_track_pop(writer, mpack_type_map);
     mpack_builder_compound_pop(writer);
 }
@@ -778,7 +775,7 @@ MPACK_INLINE void mpack_finish_map(mpack_writer_t* writer) {
  * @see mpack_start_array() if you already know the size of the array
  * @see mpack_build_map() for implementation details
  */
-void mpack_build_array(struct mpack_writer_t* writer);
+void mpack_build_array(struct mpack_writer_t *writer);
 
 /**
  * Starts building a map.
@@ -818,21 +815,21 @@ void mpack_build_array(struct mpack_writer_t* writer);
  * @see mpack_complete_map() to complete this map
  * @see mpack_start_map() if you already know the size of the map
  */
-void mpack_build_map(struct mpack_writer_t* writer);
+void mpack_build_map(struct mpack_writer_t *writer);
 
 /**
  * Completes an array being built.
  *
  * @see mpack_build_array()
  */
-void mpack_complete_array(struct mpack_writer_t* writer);
+void mpack_complete_array(struct mpack_writer_t *writer);
 
 /**
  * Completes a map being built.
  *
  * @see mpack_build_map()
  */
-void mpack_complete_map(struct mpack_writer_t* writer);
+void mpack_complete_map(struct mpack_writer_t *writer);
 
 /**
  * @}
@@ -856,7 +853,7 @@ void mpack_complete_map(struct mpack_writer_t* writer);
  * You should not call mpack_finish_str() after calling this; this
  * performs both start and finish.
  */
-void mpack_write_str(mpack_writer_t* writer, const char* str, uint32_t length);
+void mpack_write_str(mpack_writer_t *writer, const char *str, uint32_t length);
 
 /**
  * Writes a string, ensuring that it is valid UTF-8.
@@ -869,7 +866,7 @@ void mpack_write_str(mpack_writer_t* writer, const char* str, uint32_t length);
  *
  * @throws mpack_error_invalid if the string is not valid UTF-8
  */
-void mpack_write_utf8(mpack_writer_t* writer, const char* str, uint32_t length);
+void mpack_write_utf8(mpack_writer_t *writer, const char *str, uint32_t length);
 
 /**
  * Writes a null-terminated string. (The null-terminator is not written.)
@@ -882,7 +879,7 @@ void mpack_write_utf8(mpack_writer_t* writer, const char* str, uint32_t length);
  * You should not call mpack_finish_str() after calling this; this
  * performs both start and finish.
  */
-void mpack_write_cstr(mpack_writer_t* writer, const char* cstr);
+void mpack_write_cstr(mpack_writer_t *writer, const char *cstr);
 
 /**
  * Writes a null-terminated string, or a nil node if the given cstr pointer
@@ -896,7 +893,7 @@ void mpack_write_cstr(mpack_writer_t* writer, const char* cstr);
  * You should not call mpack_finish_str() after calling this; this
  * performs both start and finish.
  */
-void mpack_write_cstr_or_nil(mpack_writer_t* writer, const char* cstr);
+void mpack_write_cstr_or_nil(mpack_writer_t *writer, const char *cstr);
 
 /**
  * Writes a null-terminated string, ensuring that it is valid UTF-8. (The
@@ -910,7 +907,7 @@ void mpack_write_cstr_or_nil(mpack_writer_t* writer, const char* cstr);
  *
  * @throws mpack_error_invalid if the string is not valid UTF-8
  */
-void mpack_write_utf8_cstr(mpack_writer_t* writer, const char* cstr);
+void mpack_write_utf8_cstr(mpack_writer_t *writer, const char *cstr);
 
 /**
  * Writes a null-terminated string ensuring that it is valid UTF-8, or
@@ -925,7 +922,7 @@ void mpack_write_utf8_cstr(mpack_writer_t* writer, const char* cstr);
  *
  * @throws mpack_error_invalid if the string is not valid UTF-8
  */
-void mpack_write_utf8_cstr_or_nil(mpack_writer_t* writer, const char* cstr);
+void mpack_write_utf8_cstr_or_nil(mpack_writer_t *writer, const char *cstr);
 
 /**
  * Writes a binary blob.
@@ -935,7 +932,7 @@ void mpack_write_utf8_cstr_or_nil(mpack_writer_t* writer, const char* cstr);
  * You should not call mpack_finish_bin() after calling this; this
  * performs both start and finish.
  */
-void mpack_write_bin(mpack_writer_t* writer, const char* data, uint32_t count);
+void mpack_write_bin(mpack_writer_t *writer, const char *data, uint32_t count);
 
 #if MPACK_EXTENSIONS
 /**
@@ -951,7 +948,7 @@ void mpack_write_bin(mpack_writer_t* writer, const char* data, uint32_t count);
  *
  * @note This requires @ref MPACK_EXTENSIONS.
  */
-void mpack_write_ext(mpack_writer_t* writer, int8_t exttype, const char* data, uint32_t count);
+void mpack_write_ext(mpack_writer_t *writer, int8_t exttype, const char *data, uint32_t count);
 #endif
 
 /**
@@ -974,14 +971,14 @@ void mpack_write_ext(mpack_writer_t* writer, int8_t exttype, const char* data, u
  * MPack does not care about the underlying encoding, but UTF-8 is highly
  * recommended, especially for compatibility with JSON.
  */
-void mpack_start_str(mpack_writer_t* writer, uint32_t count);
+void mpack_start_str(mpack_writer_t *writer, uint32_t count);
 
 /**
  * Opens a binary blob. `count` bytes should be written with calls to
  * mpack_write_bytes(), and mpack_finish_bin() should be called
  * when done.
  */
-void mpack_start_bin(mpack_writer_t* writer, uint32_t count);
+void mpack_start_bin(mpack_writer_t *writer, uint32_t count);
 
 #if MPACK_EXTENSIONS
 /**
@@ -994,7 +991,7 @@ void mpack_start_bin(mpack_writer_t* writer, uint32_t count);
  *
  * @note This requires @ref MPACK_EXTENSIONS.
  */
-void mpack_start_ext(mpack_writer_t* writer, int8_t exttype, uint32_t count);
+void mpack_start_ext(mpack_writer_t *writer, int8_t exttype, uint32_t count);
 #endif
 
 /**
@@ -1019,7 +1016,7 @@ void mpack_start_ext(mpack_writer_t* writer, int8_t exttype, uint32_t count);
  * @see mpack_finish_ext()
  * @see mpack_finish_type()
  */
-void mpack_write_bytes(mpack_writer_t* writer, const char* data, size_t count);
+void mpack_write_bytes(mpack_writer_t *writer, const char *data, size_t count);
 
 /**
  * Finishes writing a string.
@@ -1032,7 +1029,7 @@ void mpack_write_bytes(mpack_writer_t* writer, const char* data, size_t count);
  * @see mpack_start_str()
  * @see mpack_write_bytes()
  */
-MPACK_INLINE void mpack_finish_str(mpack_writer_t* writer) {
+MPACK_INLINE void mpack_finish_str(mpack_writer_t *writer) {
     mpack_writer_track_pop(writer, mpack_type_str);
 }
 
@@ -1047,7 +1044,7 @@ MPACK_INLINE void mpack_finish_str(mpack_writer_t* writer) {
  * @see mpack_start_bin()
  * @see mpack_write_bytes()
  */
-MPACK_INLINE void mpack_finish_bin(mpack_writer_t* writer) {
+MPACK_INLINE void mpack_finish_bin(mpack_writer_t *writer) {
     mpack_writer_track_pop(writer, mpack_type_bin);
 }
 
@@ -1065,7 +1062,7 @@ MPACK_INLINE void mpack_finish_bin(mpack_writer_t* writer) {
  * @see mpack_start_ext()
  * @see mpack_write_bytes()
  */
-MPACK_INLINE void mpack_finish_ext(mpack_writer_t* writer) {
+MPACK_INLINE void mpack_finish_ext(mpack_writer_t *writer) {
     mpack_writer_track_pop(writer, mpack_type_ext);
 }
 #endif
@@ -1079,7 +1076,7 @@ MPACK_INLINE void mpack_finish_ext(mpack_writer_t* writer) {
  * This can be called with the appropriate type instead the corresponding
  * mpack_finish_*() function if you want to finish a dynamic type.
  */
-MPACK_INLINE void mpack_finish_type(mpack_writer_t* writer, mpack_type_t type) {
+MPACK_INLINE void mpack_finish_type(mpack_writer_t *writer, mpack_type_t type) {
     mpack_writer_track_pop(writer, type);
 }
 
@@ -1110,31 +1107,28 @@ MPACK_INLINE void mpack_finish_type(mpack_writer_t* writer, mpack_type_t type) {
  * types when passed uncast, so be careful when using them.
  */
 #if MPACK_FLOAT
-    #define MPACK_WRITE_GENERIC_FLOAT float: mpack_write_float,
+#define MPACK_WRITE_GENERIC_FLOAT float : mpack_write_float,
 #else
-    #define MPACK_WRITE_GENERIC_FLOAT /*nothing*/
+#define MPACK_WRITE_GENERIC_FLOAT /*nothing*/
 #endif
 #if MPACK_DOUBLE
-    #define MPACK_WRITE_GENERIC_DOUBLE double: mpack_write_double,
+#define MPACK_WRITE_GENERIC_DOUBLE double : mpack_write_double,
 #else
-    #define MPACK_WRITE_GENERIC_DOUBLE /*nothing*/
+#define MPACK_WRITE_GENERIC_DOUBLE /*nothing*/
 #endif
-#define mpack_write(writer, value) \
-    _Generic(((void)0, value),                      \
-              int8_t: mpack_write_i8,               \
-             int16_t: mpack_write_i16,              \
-             int32_t: mpack_write_i32,              \
-             int64_t: mpack_write_i64,              \
-             uint8_t: mpack_write_u8,               \
-            uint16_t: mpack_write_u16,              \
-            uint32_t: mpack_write_u32,              \
-            uint64_t: mpack_write_u64,              \
-                bool: mpack_write_bool,             \
-            MPACK_WRITE_GENERIC_FLOAT               \
-            MPACK_WRITE_GENERIC_DOUBLE              \
-              char *: mpack_write_cstr_or_nil,      \
-        const char *: mpack_write_cstr_or_nil       \
-    )(writer, value)
+#define mpack_write(writer, value)                                                                                     \
+    _Generic(((void) 0, value),                                                                                        \
+        int8_t: mpack_write_i8,                                                                                        \
+        int16_t: mpack_write_i16,                                                                                      \
+        int32_t: mpack_write_i32,                                                                                      \
+        int64_t: mpack_write_i64,                                                                                      \
+        uint8_t: mpack_write_u8,                                                                                       \
+        uint16_t: mpack_write_u16,                                                                                     \
+        uint32_t: mpack_write_u32,                                                                                     \
+        uint64_t: mpack_write_u64,                                                                                     \
+        bool: mpack_write_bool,                                                                                        \
+        MPACK_WRITE_GENERIC_FLOAT MPACK_WRITE_GENERIC_DOUBLE char *: mpack_write_cstr_or_nil,                          \
+        const char *: mpack_write_cstr_or_nil)(writer, value)
 
 /**
  * @def mpack_write_kv(writer, key, value)
@@ -1152,10 +1146,11 @@ MPACK_INLINE void mpack_finish_type(mpack_writer_t* writer, mpack_type_t type) {
  * @param key A null-terminated C string.
  * @param value A primitive type supported by mpack_write().
  */
-#define mpack_write_kv(writer, key, value) do {     \
-    mpack_write_cstr(writer, key);                  \
-    mpack_write(writer, value);                     \
-} while (0)
+#define mpack_write_kv(writer, key, value)                                                                             \
+    do {                                                                                                               \
+        mpack_write_cstr(writer, key);                                                                                 \
+        mpack_write(writer, value);                                                                                    \
+    } while (0)
 
 /**
  * @}
@@ -1182,121 +1177,121 @@ MPACK_EXTERN_C_END
 #undef mpack_write_kv
 #endif
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, int8_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, int8_t value) {
     mpack_write_i8(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, int16_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, int16_t value) {
     mpack_write_i16(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, int32_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, int32_t value) {
     mpack_write_i32(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, int64_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, int64_t value) {
     mpack_write_i64(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, uint8_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, uint8_t value) {
     mpack_write_u8(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, uint16_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, uint16_t value) {
     mpack_write_u16(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, uint32_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, uint32_t value) {
     mpack_write_u32(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, uint64_t value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, uint64_t value) {
     mpack_write_u64(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, bool value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, bool value) {
     mpack_write_bool(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, float value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, float value) {
     mpack_write_float(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, double value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, double value) {
     mpack_write_double(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, char *value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, char *value) {
     mpack_write_cstr_or_nil(writer, value);
 }
 
-MPACK_INLINE void mpack_write(mpack_writer_t* writer, const char *value) {
+MPACK_INLINE void mpack_write(mpack_writer_t *writer, const char *value) {
     mpack_write_cstr_or_nil(writer, value);
 }
 
 /* C++ generic write for key-value pairs */
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, int8_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, int8_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_i8(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, int16_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, int16_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_i16(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, int32_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, int32_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_i32(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, int64_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, int64_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_i64(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, uint8_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, uint8_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_u8(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, uint16_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, uint16_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_u16(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, uint32_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, uint32_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_u32(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, uint64_t value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, uint64_t value) {
     mpack_write_cstr(writer, key);
     mpack_write_u64(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, bool value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, bool value) {
     mpack_write_cstr(writer, key);
     mpack_write_bool(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, float value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, float value) {
     mpack_write_cstr(writer, key);
     mpack_write_float(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, double value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, double value) {
     mpack_write_cstr(writer, key);
     mpack_write_double(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, char *value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, char *value) {
     mpack_write_cstr(writer, key);
     mpack_write_cstr_or_nil(writer, value);
 }
 
-MPACK_INLINE void mpack_write_kv(mpack_writer_t* writer, const char *key, const char *value) {
+MPACK_INLINE void mpack_write_kv(mpack_writer_t *writer, const char *key, const char *value) {
     mpack_write_cstr(writer, key);
     mpack_write_cstr_or_nil(writer, value);
 }

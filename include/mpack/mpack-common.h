@@ -37,8 +37,6 @@
 MPACK_SILENCE_WARNINGS_BEGIN
 MPACK_EXTERN_C_BEGIN
 
-
-
 /**
  * @defgroup common Tags and Common Elements
  *
@@ -50,28 +48,23 @@ MPACK_EXTERN_C_BEGIN
 
 /* Version information */
 
-#define MPACK_VERSION_MAJOR 1  /**< The major version number of MPack. */
-#define MPACK_VERSION_MINOR 1  /**< The minor version number of MPack. */
-#define MPACK_VERSION_PATCH 1  /**< The patch version number of MPack. */
+#define MPACK_VERSION_MAJOR 1 /**< The major version number of MPack. */
+#define MPACK_VERSION_MINOR 1 /**< The minor version number of MPack. */
+#define MPACK_VERSION_PATCH 1 /**< The patch version number of MPack. */
 
 /** A number containing the version number of MPack for comparison purposes. */
-#define MPACK_VERSION ((MPACK_VERSION_MAJOR * 10000) + \
-        (MPACK_VERSION_MINOR * 100) + MPACK_VERSION_PATCH)
+#define MPACK_VERSION ((MPACK_VERSION_MAJOR * 10000) + (MPACK_VERSION_MINOR * 100) + MPACK_VERSION_PATCH)
 
 /** A macro to test for a minimum version of MPack. */
-#define MPACK_VERSION_AT_LEAST(major, minor, patch) \
-        (MPACK_VERSION >= (((major) * 10000) + ((minor) * 100) + (patch)))
+#define MPACK_VERSION_AT_LEAST(major, minor, patch) (MPACK_VERSION >= (((major) * 10000) + ((minor) * 100) + (patch)))
 
 /** @cond */
 #if (MPACK_VERSION_PATCH > 0)
-#define MPACK_VERSION_STRING_BASE \
-        MPACK_STRINGIFY(MPACK_VERSION_MAJOR) "." \
-        MPACK_STRINGIFY(MPACK_VERSION_MINOR) "." \
-        MPACK_STRINGIFY(MPACK_VERSION_PATCH)
+#define MPACK_VERSION_STRING_BASE                                                                                      \
+    MPACK_STRINGIFY(MPACK_VERSION_MAJOR)                                                                               \
+    "." MPACK_STRINGIFY(MPACK_VERSION_MINOR) "." MPACK_STRINGIFY(MPACK_VERSION_PATCH)
 #else
-#define MPACK_VERSION_STRING_BASE \
-        MPACK_STRINGIFY(MPACK_VERSION_MAJOR) "." \
-        MPACK_STRINGIFY(MPACK_VERSION_MINOR)
+#define MPACK_VERSION_STRING_BASE MPACK_STRINGIFY(MPACK_VERSION_MAJOR) "." MPACK_STRINGIFY(MPACK_VERSION_MINOR)
 #endif
 /** @endcond */
 
@@ -119,8 +112,6 @@ MPACK_EXTERN_C_BEGIN
 #define MPACK_TIMESTAMP_NANOSECONDS_MAX 999999999
 #endif
 
-
-
 #if MPACK_COMPATIBILITY
 /**
  * Versions of the MessagePack format.
@@ -159,23 +150,25 @@ typedef enum mpack_version_t {
  * the source is in an error state before using such values.
  */
 typedef enum mpack_error_t {
-    mpack_ok = 0,        /**< No error. */
-    mpack_error_io = 2,  /**< The reader or writer failed to fill or flush, or some other file or socket error occurred. */
-    mpack_error_invalid, /**< The data read is not valid MessagePack. */
-    mpack_error_unsupported, /**< The data read is not supported by this configuration of MPack. (See @ref MPACK_EXTENSIONS.) */
-    mpack_error_type,    /**< The type or value range did not match what was expected by the caller. */
-    mpack_error_too_big, /**< A read or write was bigger than the maximum size allowed for that operation. */
-    mpack_error_memory,  /**< An allocation failure occurred. */
-    mpack_error_bug,     /**< The MPack API was used incorrectly. (This will always assert in debug mode.) */
-    mpack_error_data,    /**< The contained data is not valid. */
-    mpack_error_eof,     /**< The reader failed to read because of file or socket EOF */
+    mpack_ok = 0, /**< No error. */
+    mpack_error_io =
+        2, /**< The reader or writer failed to fill or flush, or some other file or socket error occurred. */
+    mpack_error_invalid,     /**< The data read is not valid MessagePack. */
+    mpack_error_unsupported, /**< The data read is not supported by this configuration of MPack. (See @ref
+                                MPACK_EXTENSIONS.) */
+    mpack_error_type,        /**< The type or value range did not match what was expected by the caller. */
+    mpack_error_too_big,     /**< A read or write was bigger than the maximum size allowed for that operation. */
+    mpack_error_memory,      /**< An allocation failure occurred. */
+    mpack_error_bug,         /**< The MPack API was used incorrectly. (This will always assert in debug mode.) */
+    mpack_error_data,        /**< The contained data is not valid. */
+    mpack_error_eof,         /**< The reader failed to read because of file or socket EOF */
 } mpack_error_t;
 
 /**
  * Converts an MPack error to a string. This function returns an empty
  * string when MPACK_DEBUG is not set.
  */
-const char* mpack_error_to_string(mpack_error_t error);
+const char *mpack_error_to_string(mpack_error_t error);
 
 /**
  * Defines the type of a MessagePack tag.
@@ -197,21 +190,21 @@ typedef enum mpack_type_t {
     mpack_type_array,       /**< An array of MessagePack objects. */
     mpack_type_map,         /**< An ordered map of key/value pairs of MessagePack objects. */
 
-    #if MPACK_EXTENSIONS
+#if MPACK_EXTENSIONS
     /**
      * A typed MessagePack extension object containing a chunk of binary data.
      *
      * @note This requires @ref MPACK_EXTENSIONS.
      */
     mpack_type_ext,
-    #endif
+#endif
 } mpack_type_t;
 
 /**
  * Converts an MPack type to a string. This function returns an empty
  * string when MPACK_DEBUG is not set.
  */
-const char* mpack_type_to_string(mpack_type_t type);
+const char *mpack_type_to_string(mpack_type_t type);
 
 #if MPACK_EXTENSIONS
 /**
@@ -220,7 +213,7 @@ const char* mpack_type_to_string(mpack_type_t type);
  * @note This requires @ref MPACK_EXTENSIONS.
  */
 typedef struct mpack_timestamp_t {
-    int64_t seconds; /*< The number of seconds (signed) since 1970-01-01T00:00:00Z. */
+    int64_t seconds;      /*< The number of seconds (signed) since 1970-01-01T00:00:00Z. */
     uint32_t nanoseconds; /*< The number of additional nanoseconds, between 0 and 999,999,999. */
 } mpack_timestamp_t;
 #endif
@@ -244,27 +237,27 @@ typedef struct mpack_tag_t mpack_tag_t;
 struct mpack_tag_t {
     mpack_type_t type; /*< The type of value. */
 
-    #if MPACK_EXTENSIONS
+#if MPACK_EXTENSIONS
     int8_t exttype; /*< The extension type if the type is @ref mpack_type_ext. */
-    #endif
+#endif
 
     /* The value for non-compound types. */
     union {
         uint64_t u; /*< The value if the type is unsigned int. */
-        int64_t  i; /*< The value if the type is signed int. */
-        bool     b; /*< The value if the type is bool. */
+        int64_t i;  /*< The value if the type is signed int. */
+        bool b;     /*< The value if the type is bool. */
 
-        #if MPACK_FLOAT
-        float    f; /*< The value if the type is float. */
-        #else
+#if MPACK_FLOAT
+        float f; /*< The value if the type is float. */
+#else
         uint32_t f; /*< The raw value if the type is float. */
-        #endif
+#endif
 
-        #if MPACK_DOUBLE
-        double   d; /*< The value if the type is double. */
-        #else
+#if MPACK_DOUBLE
+        double d; /*< The value if the type is double. */
+#else
         uint64_t d; /*< The raw value if the type is double. */
-        #endif
+#endif
 
         /* The number of bytes if the type is str, bin or ext. */
         uint32_t l;
@@ -290,9 +283,9 @@ struct mpack_tag_t {
  * initialized this way. Use @ref mpack_tag_make_nil() to generate a nil tag.
  */
 #if MPACK_EXTENSIONS
-#define MPACK_TAG_ZERO {(mpack_type_t)0, 0, {0}}
+#define MPACK_TAG_ZERO {(mpack_type_t) 0, 0, {0}}
 #else
-#define MPACK_TAG_ZERO {(mpack_type_t)0, {0}}
+#define MPACK_TAG_ZERO {(mpack_type_t) 0, {0}}
 #endif
 
 /** Generates a nil tag. */
@@ -429,7 +422,7 @@ MPACK_INLINE mpack_tag_t mpack_tag_make_ext(int8_t exttype, uint32_t length) {
 /**
  * Gets the type of a tag.
  */
-MPACK_INLINE mpack_type_t mpack_tag_type(mpack_tag_t* tag) {
+MPACK_INLINE mpack_type_t mpack_tag_type(mpack_tag_t *tag) {
     return tag->type;
 }
 
@@ -440,7 +433,7 @@ MPACK_INLINE mpack_type_t mpack_tag_type(mpack_tag_t* tag) {
  * This asserts that the type in the tag is @ref mpack_type_bool. (No check is
  * performed if MPACK_DEBUG is not set.)
  */
-MPACK_INLINE bool mpack_tag_bool_value(mpack_tag_t* tag) {
+MPACK_INLINE bool mpack_tag_bool_value(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_bool, "tag is not a bool!");
     return tag->v.b;
 }
@@ -458,7 +451,7 @@ MPACK_INLINE bool mpack_tag_bool_value(mpack_tag_t* tag) {
  *
  * @see mpack_type_int
  */
-MPACK_INLINE int64_t mpack_tag_int_value(mpack_tag_t* tag) {
+MPACK_INLINE int64_t mpack_tag_int_value(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_int, "tag is not an int!");
     return tag->v.i;
 }
@@ -476,7 +469,7 @@ MPACK_INLINE int64_t mpack_tag_int_value(mpack_tag_t* tag) {
  *
  * @see mpack_type_uint
  */
-MPACK_INLINE uint64_t mpack_tag_uint_value(mpack_tag_t* tag) {
+MPACK_INLINE uint64_t mpack_tag_uint_value(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_uint, "tag is not a uint!");
     return tag->v.u;
 }
@@ -494,9 +487,9 @@ MPACK_INLINE uint64_t mpack_tag_uint_value(mpack_tag_t* tag) {
  */
 MPACK_INLINE
 #if MPACK_FLOAT
-float mpack_tag_float_value(mpack_tag_t* tag)
+float mpack_tag_float_value(mpack_tag_t *tag)
 #else
-uint32_t mpack_tag_raw_float_value(mpack_tag_t* tag)
+uint32_t mpack_tag_raw_float_value(mpack_tag_t *tag)
 #endif
 {
     mpack_assert(tag->type == mpack_type_float, "tag is not a float!");
@@ -516,9 +509,9 @@ uint32_t mpack_tag_raw_float_value(mpack_tag_t* tag)
  */
 MPACK_INLINE
 #if MPACK_DOUBLE
-double mpack_tag_double_value(mpack_tag_t* tag)
+double mpack_tag_double_value(mpack_tag_t *tag)
 #else
-uint64_t mpack_tag_raw_double_value(mpack_tag_t* tag)
+uint64_t mpack_tag_raw_double_value(mpack_tag_t *tag)
 #endif
 {
     mpack_assert(tag->type == mpack_type_double, "tag is not a double!");
@@ -533,7 +526,7 @@ uint64_t mpack_tag_raw_double_value(mpack_tag_t* tag)
  *
  * @see mpack_type_array
  */
-MPACK_INLINE uint32_t mpack_tag_array_count(mpack_tag_t* tag) {
+MPACK_INLINE uint32_t mpack_tag_array_count(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_array, "tag is not an array!");
     return tag->v.n;
 }
@@ -546,7 +539,7 @@ MPACK_INLINE uint32_t mpack_tag_array_count(mpack_tag_t* tag) {
  *
  * @see mpack_type_map
  */
-MPACK_INLINE uint32_t mpack_tag_map_count(mpack_tag_t* tag) {
+MPACK_INLINE uint32_t mpack_tag_map_count(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_map, "tag is not a map!");
     return tag->v.n;
 }
@@ -559,7 +552,7 @@ MPACK_INLINE uint32_t mpack_tag_map_count(mpack_tag_t* tag) {
  *
  * @see mpack_type_str
  */
-MPACK_INLINE uint32_t mpack_tag_str_length(mpack_tag_t* tag) {
+MPACK_INLINE uint32_t mpack_tag_str_length(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_str, "tag is not a str!");
     return tag->v.l;
 }
@@ -572,7 +565,7 @@ MPACK_INLINE uint32_t mpack_tag_str_length(mpack_tag_t* tag) {
  *
  * @see mpack_type_bin
  */
-MPACK_INLINE uint32_t mpack_tag_bin_length(mpack_tag_t* tag) {
+MPACK_INLINE uint32_t mpack_tag_bin_length(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_bin, "tag is not a bin!");
     return tag->v.l;
 }
@@ -588,7 +581,7 @@ MPACK_INLINE uint32_t mpack_tag_bin_length(mpack_tag_t* tag) {
  *
  * @see mpack_type_ext
  */
-MPACK_INLINE uint32_t mpack_tag_ext_length(mpack_tag_t* tag) {
+MPACK_INLINE uint32_t mpack_tag_ext_length(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_ext, "tag is not an ext!");
     return tag->v.l;
 }
@@ -603,7 +596,7 @@ MPACK_INLINE uint32_t mpack_tag_ext_length(mpack_tag_t* tag) {
  *
  * @see mpack_type_ext
  */
-MPACK_INLINE int8_t mpack_tag_ext_exttype(mpack_tag_t* tag) {
+MPACK_INLINE int8_t mpack_tag_ext_exttype(mpack_tag_t *tag) {
     mpack_assert(tag->type == mpack_type_ext, "tag is not an ext!");
     return tag->exttype;
 }
@@ -620,14 +613,13 @@ MPACK_INLINE int8_t mpack_tag_ext_exttype(mpack_tag_t* tag) {
  * @see mpack_type_bin
  * @see mpack_type_ext
  */
-MPACK_INLINE uint32_t mpack_tag_bytes(mpack_tag_t* tag) {
-    #if MPACK_EXTENSIONS
-    mpack_assert(tag->type == mpack_type_str || tag->type == mpack_type_bin
-            || tag->type == mpack_type_ext, "tag is not a str, bin or ext!");
-    #else
-    mpack_assert(tag->type == mpack_type_str || tag->type == mpack_type_bin,
-            "tag is not a str or bin!");
-    #endif
+MPACK_INLINE uint32_t mpack_tag_bytes(mpack_tag_t *tag) {
+#if MPACK_EXTENSIONS
+    mpack_assert(tag->type == mpack_type_str || tag->type == mpack_type_bin || tag->type == mpack_type_ext,
+                 "tag is not a str, bin or ext!");
+#else
+    mpack_assert(tag->type == mpack_type_str || tag->type == mpack_type_bin, "tag is not a str or bin!");
+#endif
     return tag->v.l;
 }
 
@@ -646,7 +638,7 @@ MPACK_INLINE uint32_t mpack_tag_bytes(mpack_tag_t* tag) {
  *
  * @note This requires @ref MPACK_EXTENSIONS.
  */
-#define MPACK_EXTTYPE_TIMESTAMP ((int8_t)(-1))
+#define MPACK_EXTTYPE_TIMESTAMP ((int8_t) (-1))
 #endif
 
 /**
@@ -695,8 +687,8 @@ MPACK_INLINE bool mpack_tag_equal(mpack_tag_t left, mpack_tag_t right) {
  * The prefix is used to print the first few hexadecimal bytes of a bin or ext
  * type. Pass NULL if not a bin or ext.
  */
-void mpack_tag_debug_pseudo_json(mpack_tag_t tag, char* buffer, size_t buffer_size,
-        const char* prefix, size_t prefix_size);
+void mpack_tag_debug_pseudo_json(mpack_tag_t tag, char *buffer, size_t buffer_size, const char *prefix,
+                                 size_t prefix_size);
 
 /**
  * Generates a debug string description of the given tag into the given buffer.
@@ -704,7 +696,7 @@ void mpack_tag_debug_pseudo_json(mpack_tag_t tag, char* buffer, size_t buffer_si
  * This is only available in debug mode, and only if stdio is available (since
  * it uses snprintf().) It's strictly for debugging purposes.
  */
-void mpack_tag_debug_describe(mpack_tag_t tag, char* buffer, size_t buffer_size);
+void mpack_tag_debug_describe(mpack_tag_t tag, char *buffer, size_t buffer_size);
 
 /** @cond */
 
@@ -713,27 +705,27 @@ void mpack_tag_debug_describe(mpack_tag_t tag, char* buffer, size_t buffer_size)
  *
  * @see mpack_node_print_callback
  */
-typedef void (*mpack_print_callback_t)(void* context, const char* data, size_t count);
+typedef void (*mpack_print_callback_t)(void *context, const char *data, size_t count);
 
 // helpers for printing debug output
 // i feel a bit like i'm re-implementing a buffered writer again...
 typedef struct mpack_print_t {
-    char* buffer;
+    char *buffer;
     size_t size;
     size_t count;
     mpack_print_callback_t callback;
-    void* context;
+    void *context;
 } mpack_print_t;
 
-void mpack_print_append(mpack_print_t* print, const char* data, size_t count);
+void mpack_print_append(mpack_print_t *print, const char *data, size_t count);
 
-MPACK_INLINE void mpack_print_append_cstr(mpack_print_t* print, const char* cstr) {
+MPACK_INLINE void mpack_print_append_cstr(mpack_print_t *print, const char *cstr) {
     mpack_print_append(print, cstr, mpack_strlen(cstr));
 }
 
-void mpack_print_flush(mpack_print_t* print);
+void mpack_print_flush(mpack_print_t *print);
 
-void mpack_print_file_callback(void* context, const char* data, size_t count);
+void mpack_print_file_callback(void *context, const char *data, size_t count);
 
 /** @endcond */
 
@@ -804,28 +796,28 @@ MPACK_INLINE mpack_tag_t mpack_tag_double(double value) {
 
 /** \deprecated Renamed to mpack_tag_make_array(). */
 MPACK_INLINE mpack_tag_t mpack_tag_array(int32_t count) {
-    return mpack_tag_make_array((uint32_t)count);
+    return mpack_tag_make_array((uint32_t) count);
 }
 
 /** \deprecated Renamed to mpack_tag_make_map(). */
 MPACK_INLINE mpack_tag_t mpack_tag_map(int32_t count) {
-    return mpack_tag_make_map((uint32_t)count);
+    return mpack_tag_make_map((uint32_t) count);
 }
 
 /** \deprecated Renamed to mpack_tag_make_str(). */
 MPACK_INLINE mpack_tag_t mpack_tag_str(int32_t length) {
-    return mpack_tag_make_str((uint32_t)length);
+    return mpack_tag_make_str((uint32_t) length);
 }
 
 /** \deprecated Renamed to mpack_tag_make_bin(). */
 MPACK_INLINE mpack_tag_t mpack_tag_bin(int32_t length) {
-    return mpack_tag_make_bin((uint32_t)length);
+    return mpack_tag_make_bin((uint32_t) length);
 }
 
 #if MPACK_EXTENSIONS
 /** \deprecated Renamed to mpack_tag_make_ext(). */
 MPACK_INLINE mpack_tag_t mpack_tag_ext(int8_t exttype, int32_t length) {
-    return mpack_tag_make_ext(exttype, (uint32_t)length);
+    return mpack_tag_make_ext(exttype, (uint32_t) length);
 }
 #endif
 
@@ -844,108 +836,117 @@ MPACK_INLINE mpack_tag_t mpack_tag_ext(int8_t exttype, int32_t length) {
  * use them for other purposes, but they are undocumented.
  */
 
-MPACK_INLINE uint8_t mpack_load_u8(const char* p) {
-    return (uint8_t)p[0];
+MPACK_INLINE uint8_t mpack_load_u8(const char *p) {
+    return (uint8_t) p[0];
 }
 
-MPACK_INLINE uint16_t mpack_load_u16(const char* p) {
-    #ifdef MPACK_NHSWAP16
+MPACK_INLINE uint16_t mpack_load_u16(const char *p) {
+#ifdef MPACK_NHSWAP16
     uint16_t val;
     mpack_memcpy(&val, p, sizeof(val));
     return MPACK_NHSWAP16(val);
-    #else
-    return (uint16_t)((((uint16_t)(uint8_t)p[0]) << 8) |
-           ((uint16_t)(uint8_t)p[1]));
-    #endif
+#else
+    return (uint16_t) ((((uint16_t) (uint8_t) p[0]) << 8) | ((uint16_t) (uint8_t) p[1]));
+#endif
 }
 
-MPACK_INLINE uint32_t mpack_load_u32(const char* p) {
-    #ifdef MPACK_NHSWAP32
+MPACK_INLINE uint32_t mpack_load_u32(const char *p) {
+#ifdef MPACK_NHSWAP32
     uint32_t val;
     mpack_memcpy(&val, p, sizeof(val));
     return MPACK_NHSWAP32(val);
-    #else
-    return (((uint32_t)(uint8_t)p[0]) << 24) |
-           (((uint32_t)(uint8_t)p[1]) << 16) |
-           (((uint32_t)(uint8_t)p[2]) <<  8) |
-            ((uint32_t)(uint8_t)p[3]);
-    #endif
+#else
+    return (((uint32_t) (uint8_t) p[0]) << 24) | (((uint32_t) (uint8_t) p[1]) << 16) |
+           (((uint32_t) (uint8_t) p[2]) << 8) | ((uint32_t) (uint8_t) p[3]);
+#endif
 }
 
-MPACK_INLINE uint64_t mpack_load_u64(const char* p) {
-    #ifdef MPACK_NHSWAP64
+MPACK_INLINE uint64_t mpack_load_u64(const char *p) {
+#ifdef MPACK_NHSWAP64
     uint64_t val;
     mpack_memcpy(&val, p, sizeof(val));
     return MPACK_NHSWAP64(val);
-    #else
-    return (((uint64_t)(uint8_t)p[0]) << 56) |
-           (((uint64_t)(uint8_t)p[1]) << 48) |
-           (((uint64_t)(uint8_t)p[2]) << 40) |
-           (((uint64_t)(uint8_t)p[3]) << 32) |
-           (((uint64_t)(uint8_t)p[4]) << 24) |
-           (((uint64_t)(uint8_t)p[5]) << 16) |
-           (((uint64_t)(uint8_t)p[6]) <<  8) |
-            ((uint64_t)(uint8_t)p[7]);
-    #endif
+#else
+    return (((uint64_t) (uint8_t) p[0]) << 56) | (((uint64_t) (uint8_t) p[1]) << 48) |
+           (((uint64_t) (uint8_t) p[2]) << 40) | (((uint64_t) (uint8_t) p[3]) << 32) |
+           (((uint64_t) (uint8_t) p[4]) << 24) | (((uint64_t) (uint8_t) p[5]) << 16) |
+           (((uint64_t) (uint8_t) p[6]) << 8) | ((uint64_t) (uint8_t) p[7]);
+#endif
 }
 
-MPACK_INLINE void mpack_store_u8(char* p, uint8_t val) {
-    uint8_t* u = (uint8_t*)p;
+MPACK_INLINE void mpack_store_u8(char *p, uint8_t val) {
+    uint8_t *u = (uint8_t *) p;
     u[0] = val;
 }
 
-MPACK_INLINE void mpack_store_u16(char* p, uint16_t val) {
-    #ifdef MPACK_NHSWAP16
+MPACK_INLINE void mpack_store_u16(char *p, uint16_t val) {
+#ifdef MPACK_NHSWAP16
     val = MPACK_NHSWAP16(val);
     mpack_memcpy(p, &val, sizeof(val));
-    #else
-    uint8_t* u = (uint8_t*)p;
-    u[0] = (uint8_t)((val >> 8) & 0xFF);
-    u[1] = (uint8_t)( val       & 0xFF);
-    #endif
+#else
+    uint8_t *u = (uint8_t *) p;
+    u[0] = (uint8_t) ((val >> 8) & 0xFF);
+    u[1] = (uint8_t) (val & 0xFF);
+#endif
 }
 
-MPACK_INLINE void mpack_store_u32(char* p, uint32_t val) {
-    #ifdef MPACK_NHSWAP32
+MPACK_INLINE void mpack_store_u32(char *p, uint32_t val) {
+#ifdef MPACK_NHSWAP32
     val = MPACK_NHSWAP32(val);
     mpack_memcpy(p, &val, sizeof(val));
-    #else
-    uint8_t* u = (uint8_t*)p;
-    u[0] = (uint8_t)((val >> 24) & 0xFF);
-    u[1] = (uint8_t)((val >> 16) & 0xFF);
-    u[2] = (uint8_t)((val >>  8) & 0xFF);
-    u[3] = (uint8_t)( val        & 0xFF);
-    #endif
+#else
+    uint8_t *u = (uint8_t *) p;
+    u[0] = (uint8_t) ((val >> 24) & 0xFF);
+    u[1] = (uint8_t) ((val >> 16) & 0xFF);
+    u[2] = (uint8_t) ((val >> 8) & 0xFF);
+    u[3] = (uint8_t) (val & 0xFF);
+#endif
 }
 
-MPACK_INLINE void mpack_store_u64(char* p, uint64_t val) {
-    #ifdef MPACK_NHSWAP64
+MPACK_INLINE void mpack_store_u64(char *p, uint64_t val) {
+#ifdef MPACK_NHSWAP64
     val = MPACK_NHSWAP64(val);
     mpack_memcpy(p, &val, sizeof(val));
-    #else
-    uint8_t* u = (uint8_t*)p;
-    u[0] = (uint8_t)((val >> 56) & 0xFF);
-    u[1] = (uint8_t)((val >> 48) & 0xFF);
-    u[2] = (uint8_t)((val >> 40) & 0xFF);
-    u[3] = (uint8_t)((val >> 32) & 0xFF);
-    u[4] = (uint8_t)((val >> 24) & 0xFF);
-    u[5] = (uint8_t)((val >> 16) & 0xFF);
-    u[6] = (uint8_t)((val >>  8) & 0xFF);
-    u[7] = (uint8_t)( val        & 0xFF);
-    #endif
+#else
+    uint8_t *u = (uint8_t *) p;
+    u[0] = (uint8_t) ((val >> 56) & 0xFF);
+    u[1] = (uint8_t) ((val >> 48) & 0xFF);
+    u[2] = (uint8_t) ((val >> 40) & 0xFF);
+    u[3] = (uint8_t) ((val >> 32) & 0xFF);
+    u[4] = (uint8_t) ((val >> 24) & 0xFF);
+    u[5] = (uint8_t) ((val >> 16) & 0xFF);
+    u[6] = (uint8_t) ((val >> 8) & 0xFF);
+    u[7] = (uint8_t) (val & 0xFF);
+#endif
 }
 
-MPACK_INLINE int8_t  mpack_load_i8 (const char* p) {return (int8_t) mpack_load_u8 (p);}
-MPACK_INLINE int16_t mpack_load_i16(const char* p) {return (int16_t)mpack_load_u16(p);}
-MPACK_INLINE int32_t mpack_load_i32(const char* p) {return (int32_t)mpack_load_u32(p);}
-MPACK_INLINE int64_t mpack_load_i64(const char* p) {return (int64_t)mpack_load_u64(p);}
-MPACK_INLINE void mpack_store_i8 (char* p, int8_t  val) {mpack_store_u8 (p, (uint8_t) val);}
-MPACK_INLINE void mpack_store_i16(char* p, int16_t val) {mpack_store_u16(p, (uint16_t)val);}
-MPACK_INLINE void mpack_store_i32(char* p, int32_t val) {mpack_store_u32(p, (uint32_t)val);}
-MPACK_INLINE void mpack_store_i64(char* p, int64_t val) {mpack_store_u64(p, (uint64_t)val);}
+MPACK_INLINE int8_t mpack_load_i8(const char *p) {
+    return (int8_t) mpack_load_u8(p);
+}
+MPACK_INLINE int16_t mpack_load_i16(const char *p) {
+    return (int16_t) mpack_load_u16(p);
+}
+MPACK_INLINE int32_t mpack_load_i32(const char *p) {
+    return (int32_t) mpack_load_u32(p);
+}
+MPACK_INLINE int64_t mpack_load_i64(const char *p) {
+    return (int64_t) mpack_load_u64(p);
+}
+MPACK_INLINE void mpack_store_i8(char *p, int8_t val) {
+    mpack_store_u8(p, (uint8_t) val);
+}
+MPACK_INLINE void mpack_store_i16(char *p, int16_t val) {
+    mpack_store_u16(p, (uint16_t) val);
+}
+MPACK_INLINE void mpack_store_i32(char *p, int32_t val) {
+    mpack_store_u32(p, (uint32_t) val);
+}
+MPACK_INLINE void mpack_store_i64(char *p, int64_t val) {
+    mpack_store_u64(p, (uint64_t) val);
+}
 
 #if MPACK_FLOAT
-MPACK_INLINE float mpack_load_float(const char* p) {
+MPACK_INLINE float mpack_load_float(const char *p) {
     MPACK_CHECK_FLOAT_ORDER();
     MPACK_STATIC_ASSERT(sizeof(float) == sizeof(uint32_t), "float is wrong size??");
     union {
@@ -958,7 +959,7 @@ MPACK_INLINE float mpack_load_float(const char* p) {
 #endif
 
 #if MPACK_DOUBLE
-MPACK_INLINE double mpack_load_double(const char* p) {
+MPACK_INLINE double mpack_load_double(const char *p) {
     MPACK_CHECK_FLOAT_ORDER();
     MPACK_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t), "double is wrong size??");
     union {
@@ -971,7 +972,7 @@ MPACK_INLINE double mpack_load_double(const char* p) {
 #endif
 
 #if MPACK_FLOAT
-MPACK_INLINE void mpack_store_float(char* p, float value) {
+MPACK_INLINE void mpack_store_float(char *p, float value) {
     MPACK_CHECK_FLOAT_ORDER();
     union {
         float f;
@@ -983,7 +984,7 @@ MPACK_INLINE void mpack_store_float(char* p, float value) {
 #endif
 
 #if MPACK_DOUBLE
-MPACK_INLINE void mpack_store_double(char* p, double value) {
+MPACK_INLINE void mpack_store_double(char *p, double value) {
     MPACK_CHECK_FLOAT_ORDER();
     union {
         double d;
@@ -1014,11 +1015,11 @@ MPACK_INLINE float mpack_shorten_raw_double_to_float(uint64_t d) {
     // float has  1 bit sign,  8 bits exponent, 23 bits significand
     // double has 1 bit sign, 11 bits exponent, 52 bits significand
 
-    uint64_t d_sign = (uint64_t)(d >> 63);
-    uint64_t d_exponent = (uint32_t)(d >> 52) & ((1 << 11) - 1);
-    uint64_t d_significand = d & (((uint64_t)1 << 52) - 1);
+    uint64_t d_sign = (uint64_t) (d >> 63);
+    uint64_t d_exponent = (uint32_t) (d >> 52) & ((1 << 11) - 1);
+    uint64_t d_significand = d & (((uint64_t) 1 << 52) - 1);
 
-    uint32_t f_sign = (uint32_t)d_sign;
+    uint32_t f_sign = (uint32_t) d_sign;
     uint32_t f_exponent;
     uint32_t f_significand;
 
@@ -1027,10 +1028,10 @@ MPACK_INLINE float mpack_shorten_raw_double_to_float(uint64_t d) {
         // indicates signaling NAN, but also set the low bit if any bits were
         // set (that way we can't shift NAN to infinity.)
         f_exponent = ((1 << 8) - 1);
-        f_significand = (uint32_t)(d_significand >> 29) | (d_significand ? 1 : 0);
+        f_significand = (uint32_t) (d_significand >> 29) | (d_significand ? 1 : 0);
 
     } else {
-        int fix_bias = (int)d_exponent - ((1 << 10) - 1) + ((1 << 7) - 1);
+        int fix_bias = (int) d_exponent - ((1 << 10) - 1) + ((1 << 7) - 1);
         if (MPACK_UNLIKELY(fix_bias <= 0)) {
             // we don't currently handle subnormal numbers. just set it to zero.
             f_exponent = 0;
@@ -1041,18 +1042,18 @@ MPACK_INLINE float mpack_shorten_raw_double_to_float(uint64_t d) {
             f_significand = 0;
         } else {
             // a normal number that fits in a float. this is the usual case.
-            f_exponent = (uint32_t)fix_bias;
-            f_significand = (uint32_t)(d_significand >> 29);
+            f_exponent = (uint32_t) fix_bias;
+            f_significand = (uint32_t) (d_significand >> 29);
         }
     }
 
-    #if 0
+#if 0
     printf("\n===============\n");
     for (size_t i = 0; i < 64; ++i)
         printf("%i%s",(int)((d>>(63-i))&1),((i%8)==7)?" ":"");
     printf("\n%lu %lu %lu\n", d_sign, d_exponent, d_significand);
     printf("%u %u %u\n", f_sign, f_exponent, f_significand);
-    #endif
+#endif
 
     v.u = (f_sign << 31) | (f_exponent << 23) | f_significand;
     return v.f;
@@ -1061,44 +1062,42 @@ MPACK_INLINE float mpack_shorten_raw_double_to_float(uint64_t d) {
 
 /** @endcond */
 
-
-
 /** @cond */
 
 // Sizes in bytes for the various possible tags
-#define MPACK_TAG_SIZE_FIXUINT  1
-#define MPACK_TAG_SIZE_U8       2
-#define MPACK_TAG_SIZE_U16      3
-#define MPACK_TAG_SIZE_U32      5
-#define MPACK_TAG_SIZE_U64      9
-#define MPACK_TAG_SIZE_FIXINT   1
-#define MPACK_TAG_SIZE_I8       2
-#define MPACK_TAG_SIZE_I16      3
-#define MPACK_TAG_SIZE_I32      5
-#define MPACK_TAG_SIZE_I64      9
-#define MPACK_TAG_SIZE_FLOAT    5
-#define MPACK_TAG_SIZE_DOUBLE   9
+#define MPACK_TAG_SIZE_FIXUINT 1
+#define MPACK_TAG_SIZE_U8 2
+#define MPACK_TAG_SIZE_U16 3
+#define MPACK_TAG_SIZE_U32 5
+#define MPACK_TAG_SIZE_U64 9
+#define MPACK_TAG_SIZE_FIXINT 1
+#define MPACK_TAG_SIZE_I8 2
+#define MPACK_TAG_SIZE_I16 3
+#define MPACK_TAG_SIZE_I32 5
+#define MPACK_TAG_SIZE_I64 9
+#define MPACK_TAG_SIZE_FLOAT 5
+#define MPACK_TAG_SIZE_DOUBLE 9
 #define MPACK_TAG_SIZE_FIXARRAY 1
-#define MPACK_TAG_SIZE_ARRAY16  3
-#define MPACK_TAG_SIZE_ARRAY32  5
-#define MPACK_TAG_SIZE_FIXMAP   1
-#define MPACK_TAG_SIZE_MAP16    3
-#define MPACK_TAG_SIZE_MAP32    5
-#define MPACK_TAG_SIZE_FIXSTR   1
-#define MPACK_TAG_SIZE_STR8     2
-#define MPACK_TAG_SIZE_STR16    3
-#define MPACK_TAG_SIZE_STR32    5
-#define MPACK_TAG_SIZE_BIN8     2
-#define MPACK_TAG_SIZE_BIN16    3
-#define MPACK_TAG_SIZE_BIN32    5
-#define MPACK_TAG_SIZE_FIXEXT1  2
-#define MPACK_TAG_SIZE_FIXEXT2  2
-#define MPACK_TAG_SIZE_FIXEXT4  2
-#define MPACK_TAG_SIZE_FIXEXT8  2
+#define MPACK_TAG_SIZE_ARRAY16 3
+#define MPACK_TAG_SIZE_ARRAY32 5
+#define MPACK_TAG_SIZE_FIXMAP 1
+#define MPACK_TAG_SIZE_MAP16 3
+#define MPACK_TAG_SIZE_MAP32 5
+#define MPACK_TAG_SIZE_FIXSTR 1
+#define MPACK_TAG_SIZE_STR8 2
+#define MPACK_TAG_SIZE_STR16 3
+#define MPACK_TAG_SIZE_STR32 5
+#define MPACK_TAG_SIZE_BIN8 2
+#define MPACK_TAG_SIZE_BIN16 3
+#define MPACK_TAG_SIZE_BIN32 5
+#define MPACK_TAG_SIZE_FIXEXT1 2
+#define MPACK_TAG_SIZE_FIXEXT2 2
+#define MPACK_TAG_SIZE_FIXEXT4 2
+#define MPACK_TAG_SIZE_FIXEXT8 2
 #define MPACK_TAG_SIZE_FIXEXT16 2
-#define MPACK_TAG_SIZE_EXT8     3
-#define MPACK_TAG_SIZE_EXT16    4
-#define MPACK_TAG_SIZE_EXT32    6
+#define MPACK_TAG_SIZE_EXT8 3
+#define MPACK_TAG_SIZE_EXT16 4
+#define MPACK_TAG_SIZE_EXT32 6
 
 // size in bytes for complete ext types
 #define MPACK_EXT_SIZE_TIMESTAMP4 (MPACK_TAG_SIZE_FIXEXT4 + 4)
@@ -1106,8 +1105,6 @@ MPACK_INLINE float mpack_shorten_raw_double_to_float(uint64_t d) {
 #define MPACK_EXT_SIZE_TIMESTAMP12 (MPACK_TAG_SIZE_EXT8 + 12)
 
 /** @endcond */
-
-
 
 #if MPACK_READ_TRACKING || MPACK_WRITE_TRACKING
 /* Tracks the write state of compound elements (maps, arrays, */
@@ -1131,57 +1128,49 @@ typedef struct mpack_track_element_t {
 typedef struct mpack_track_t {
     size_t count;
     size_t capacity;
-    mpack_track_element_t* elements;
+    mpack_track_element_t *elements;
 } mpack_track_t;
 
 #if MPACK_INTERNAL
-mpack_error_t mpack_track_init(mpack_track_t* track);
-mpack_error_t mpack_track_grow(mpack_track_t* track);
-mpack_error_t mpack_track_push(mpack_track_t* track, mpack_type_t type, uint32_t count);
-mpack_error_t mpack_track_push_builder(mpack_track_t* track, mpack_type_t type);
-mpack_error_t mpack_track_pop(mpack_track_t* track, mpack_type_t type);
-mpack_error_t mpack_track_pop_builder(mpack_track_t* track, mpack_type_t type);
-mpack_error_t mpack_track_element(mpack_track_t* track, bool read);
-mpack_error_t mpack_track_peek_element(mpack_track_t* track, bool read);
-mpack_error_t mpack_track_bytes(mpack_track_t* track, bool read, size_t count);
-mpack_error_t mpack_track_str_bytes_all(mpack_track_t* track, bool read, size_t count);
-mpack_error_t mpack_track_check_empty(mpack_track_t* track);
-mpack_error_t mpack_track_destroy(mpack_track_t* track, bool cancel);
+mpack_error_t mpack_track_init(mpack_track_t *track);
+mpack_error_t mpack_track_grow(mpack_track_t *track);
+mpack_error_t mpack_track_push(mpack_track_t *track, mpack_type_t type, uint32_t count);
+mpack_error_t mpack_track_push_builder(mpack_track_t *track, mpack_type_t type);
+mpack_error_t mpack_track_pop(mpack_track_t *track, mpack_type_t type);
+mpack_error_t mpack_track_pop_builder(mpack_track_t *track, mpack_type_t type);
+mpack_error_t mpack_track_element(mpack_track_t *track, bool read);
+mpack_error_t mpack_track_peek_element(mpack_track_t *track, bool read);
+mpack_error_t mpack_track_bytes(mpack_track_t *track, bool read, size_t count);
+mpack_error_t mpack_track_str_bytes_all(mpack_track_t *track, bool read, size_t count);
+mpack_error_t mpack_track_check_empty(mpack_track_t *track);
+mpack_error_t mpack_track_destroy(mpack_track_t *track, bool cancel);
 #endif
 
 /** @endcond */
 #endif
 
-
-
 #if MPACK_INTERNAL
 /** @cond */
-
-
 
 /* Miscellaneous string functions */
 
 /**
  * Returns true if the given UTF-8 string is valid.
  */
-bool mpack_utf8_check(const char* str, size_t bytes);
+bool mpack_utf8_check(const char *str, size_t bytes);
 
 /**
  * Returns true if the given UTF-8 string is valid and contains no null characters.
  */
-bool mpack_utf8_check_no_null(const char* str, size_t bytes);
+bool mpack_utf8_check_no_null(const char *str, size_t bytes);
 
 /**
  * Returns true if the given string has no null bytes.
  */
-bool mpack_str_check_no_null(const char* str, size_t bytes);
-
-
+bool mpack_str_check_no_null(const char *str, size_t bytes);
 
 /** @endcond */
 #endif
-
-
 
 /**
  * @}
@@ -1191,4 +1180,3 @@ MPACK_EXTERN_C_END
 MPACK_SILENCE_WARNINGS_END
 
 #endif
-

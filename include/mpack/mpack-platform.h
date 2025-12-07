@@ -37,8 +37,6 @@
 #ifndef MPACK_PLATFORM_H
 #define MPACK_PLATFORM_H 1
 
-
-
 /**
  * @defgroup config Configuration Options
  *
@@ -71,8 +69,6 @@
  * @{
  */
 
-
-
 /*
  * Pre-include checks
  *
@@ -82,25 +78,23 @@
 
 /** @cond */
 #if defined(_MSC_VER) && _MSC_VER < 1800 && !defined(__cplusplus)
-    #error "In Visual Studio 2012 and earlier, MPack must be compiled as C++. Enable the /Tp compiler flag."
+#error "In Visual Studio 2012 and earlier, MPack must be compiled as C++. Enable the /Tp compiler flag."
 #endif
 
 #if defined(_WIN32) && MPACK_INTERNAL
-    #define _CRT_SECURE_NO_WARNINGS 1
+#define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
 #ifndef __STDC_LIMIT_MACROS
-    #define __STDC_LIMIT_MACROS 1
+#define __STDC_LIMIT_MACROS 1
 #endif
 #ifndef __STDC_FORMAT_MACROS
-    #define __STDC_FORMAT_MACROS 1
+#define __STDC_FORMAT_MACROS 1
 #endif
 #ifndef __STDC_CONSTANT_MACROS
-    #define __STDC_CONSTANT_MACROS 1
+#define __STDC_CONSTANT_MACROS 1
 #endif
 /** @endcond */
-
-
 
 /**
  * @name File Configuration
@@ -118,11 +112,11 @@
  * This is off by default.
  */
 #if defined(MPACK_HAS_CONFIG)
-    #if MPACK_HAS_CONFIG
-        #include "mpack-config.h"
-    #endif
+#if MPACK_HAS_CONFIG
+#include "mpack-config.h"
+#endif
 #else
-    #define MPACK_HAS_CONFIG 0
+#define MPACK_HAS_CONFIG 0
 #endif
 
 /**
@@ -132,11 +126,9 @@
 // this needs to come first since some stuff depends on it
 /** @cond */
 #ifndef MPACK_NO_BUILTINS
-    #define MPACK_NO_BUILTINS 0
+#define MPACK_NO_BUILTINS 0
 #endif
 /** @endcond */
-
-
 
 /**
  * @name Features
@@ -235,8 +227,6 @@
  * @}
  */
 
-
-
 // workarounds for Doxygen
 #if defined(MPACK_DOXYGEN)
 #if MPACK_DOXYGEN
@@ -249,8 +239,6 @@
 #define MPACK_EXTENSIONS 0
 #endif
 #endif
-
-
 
 /**
  * @name Dependencies
@@ -280,7 +268,7 @@
  * cppreference.com documentation on Conformance</a>
  */
 #ifndef MPACK_CONFORMING
-    #define MPACK_CONFORMING 1
+#define MPACK_CONFORMING 1
 #endif
 
 /**
@@ -307,13 +295,13 @@
  * @see MPACK_FREE
  */
 #ifndef MPACK_STDLIB
-    #if !MPACK_CONFORMING
-        // If we don't even have a proper <limits.h> we assume we won't have
-        // malloc() either.
-        #define MPACK_STDLIB 0
-    #else
-        #define MPACK_STDLIB 1
-    #endif
+#if !MPACK_CONFORMING
+// If we don't even have a proper <limits.h> we assume we won't have
+// malloc() either.
+#define MPACK_STDLIB 0
+#else
+#define MPACK_STDLIB 1
+#endif
 #endif
 
 /**
@@ -323,11 +311,11 @@
  * reading/writing C files and makes debugging easier.
  */
 #ifndef MPACK_STDIO
-    #if !MPACK_STDLIB || defined(__AVR__)
-        #define MPACK_STDIO 0
-    #else
-        #define MPACK_STDIO 1
-    #endif
+#if !MPACK_STDLIB || defined(__AVR__)
+#define MPACK_STDIO 0
+#else
+#define MPACK_STDIO 1
+#endif
 #endif
 
 /**
@@ -338,7 +326,7 @@
  * still perform manual float parsing yourself.
  */
 #ifndef MPACK_FLOAT
-    #define MPACK_FLOAT 1
+#define MPACK_FLOAT 1
 #endif
 
 /**
@@ -353,19 +341,17 @@
  * mpack_expect_float() or @ref mpack_node_float().
  */
 #ifndef MPACK_DOUBLE
-    #if !MPACK_FLOAT || defined(__AVR__)
-        // AVR supports only float, not double.
-        #define MPACK_DOUBLE 0
-    #else
-        #define MPACK_DOUBLE 1
-    #endif
+#if !MPACK_FLOAT || defined(__AVR__)
+// AVR supports only float, not double.
+#define MPACK_DOUBLE 0
+#else
+#define MPACK_DOUBLE 1
+#endif
 #endif
 
 /**
  * @}
  */
-
-
 
 /**
  * @name Allocation Functions
@@ -428,56 +414,52 @@
  */
 
 #if defined(MPACK_MALLOC) && !defined(MPACK_FREE)
-    #error "MPACK_MALLOC requires MPACK_FREE."
+#error "MPACK_MALLOC requires MPACK_FREE."
 #endif
 #if !defined(MPACK_MALLOC) && defined(MPACK_FREE)
-    #error "MPACK_FREE requires MPACK_MALLOC."
+#error "MPACK_FREE requires MPACK_MALLOC."
 #endif
 
 // These were never configurable in lowercase but we check anyway.
 #ifdef mpack_malloc
-    #error "Define MPACK_MALLOC, not mpack_malloc."
+#error "Define MPACK_MALLOC, not mpack_malloc."
 #endif
 #ifdef mpack_realloc
-    #error "Define MPACK_REALLOC, not mpack_realloc."
+#error "Define MPACK_REALLOC, not mpack_realloc."
 #endif
 #ifdef mpack_free
-    #error "Define MPACK_FREE, not mpack_free."
+#error "Define MPACK_FREE, not mpack_free."
 #endif
 
 // We don't use calloc() at all.
 #ifdef MPACK_CALLOC
-    #error "Don't define MPACK_CALLOC. MPack does not use calloc()."
+#error "Don't define MPACK_CALLOC. MPack does not use calloc()."
 #endif
 #ifdef mpack_calloc
-    #error "Don't define mpack_calloc. MPack does not use calloc()."
+#error "Don't define mpack_calloc. MPack does not use calloc()."
 #endif
 
 // Use defaults in stdlib if we have them. Without it we don't use malloc.
 #if defined(MPACK_STDLIB)
-    #if MPACK_STDLIB && !defined(MPACK_MALLOC)
-        #define MPACK_MALLOC malloc
-        #define MPACK_REALLOC realloc
-        #define MPACK_FREE free
-    #endif
+#if MPACK_STDLIB && !defined(MPACK_MALLOC)
+#define MPACK_MALLOC malloc
+#define MPACK_REALLOC realloc
+#define MPACK_FREE free
+#endif
 #endif
 
 /**
  * @}
  */
 
-
-
 // This needs to be defined after we've decided whether we have malloc().
 #ifndef MPACK_BUILDER
-    #if defined(MPACK_MALLOC) && MPACK_WRITER
-        #define MPACK_BUILDER 1
-    #else
-        #define MPACK_BUILDER 0
-    #endif
+#if defined(MPACK_MALLOC) && MPACK_WRITER
+#define MPACK_BUILDER 1
+#else
+#define MPACK_BUILDER 0
 #endif
-
-
+#endif
 
 /**
  * @name System Functions
@@ -548,82 +530,80 @@
 // These were briefly configurable in lowercase in an unreleased version. Just
 // to make sure no one is doing this, we make sure these aren't already defined.
 #ifdef mpack_memcmp
-    #error "Define MPACK_MEMCMP, not mpack_memcmp."
+#error "Define MPACK_MEMCMP, not mpack_memcmp."
 #endif
 #ifdef mpack_memcpy
-    #error "Define MPACK_MEMCPY, not mpack_memcpy."
+#error "Define MPACK_MEMCPY, not mpack_memcpy."
 #endif
 #ifdef mpack_memmove
-    #error "Define MPACK_MEMMOVE, not mpack_memmove."
+#error "Define MPACK_MEMMOVE, not mpack_memmove."
 #endif
 #ifdef mpack_memset
-    #error "Define MPACK_MEMSET, not mpack_memset."
+#error "Define MPACK_MEMSET, not mpack_memset."
 #endif
 #ifdef mpack_strlen
-    #error "Define MPACK_STRLEN, not mpack_strlen."
+#error "Define MPACK_STRLEN, not mpack_strlen."
 #endif
 
 // If the standard library is available, we prefer to use its functions.
 #if MPACK_STDLIB
-    #ifndef MPACK_MEMCMP
-        #define MPACK_MEMCMP memcmp
-    #endif
-    #ifndef MPACK_MEMCPY
-        #define MPACK_MEMCPY memcpy
-    #endif
-    #ifndef MPACK_MEMMOVE
-        #define MPACK_MEMMOVE memmove
-    #endif
-    #ifndef MPACK_MEMSET
-        #define MPACK_MEMSET memset
-    #endif
-    #ifndef MPACK_STRLEN
-        #define MPACK_STRLEN strlen
-    #endif
+#ifndef MPACK_MEMCMP
+#define MPACK_MEMCMP memcmp
+#endif
+#ifndef MPACK_MEMCPY
+#define MPACK_MEMCPY memcpy
+#endif
+#ifndef MPACK_MEMMOVE
+#define MPACK_MEMMOVE memmove
+#endif
+#ifndef MPACK_MEMSET
+#define MPACK_MEMSET memset
+#endif
+#ifndef MPACK_STRLEN
+#define MPACK_STRLEN strlen
+#endif
 #endif
 
 #if !MPACK_NO_BUILTINS
-    #ifdef __has_builtin
-        #if !defined(MPACK_MEMCMP) && __has_builtin(__builtin_memcmp)
-            #define MPACK_MEMCMP __builtin_memcmp
-        #endif
-        #if !defined(MPACK_MEMCPY) && __has_builtin(__builtin_memcpy)
-            #define MPACK_MEMCPY __builtin_memcpy
-        #endif
-        #if !defined(MPACK_MEMMOVE) && __has_builtin(__builtin_memmove)
-            #define MPACK_MEMMOVE __builtin_memmove
-        #endif
-        #if !defined(MPACK_MEMSET) && __has_builtin(__builtin_memset)
-            #define MPACK_MEMSET __builtin_memset
-        #endif
-        #if !defined(MPACK_STRLEN) && __has_builtin(__builtin_strlen)
-            #define MPACK_STRLEN __builtin_strlen
-        #endif
-    #elif defined(__GNUC__)
-        #ifndef MPACK_MEMCMP
-            #define MPACK_MEMCMP __builtin_memcmp
-        #endif
-        #ifndef MPACK_MEMCPY
-            #define MPACK_MEMCPY __builtin_memcpy
-        #endif
-        // There's not always a builtin memmove for GCC. If we can't test for
-        // it with __has_builtin above, we don't use it. It's been around for
-        // much longer under clang, but then so has __has_builtin, so we let
-        // the block above handle it.
-        #ifndef MPACK_MEMSET
-            #define MPACK_MEMSET __builtin_memset
-        #endif
-        #ifndef MPACK_STRLEN
-            #define MPACK_STRLEN __builtin_strlen
-        #endif
-    #endif
+#ifdef __has_builtin
+#if !defined(MPACK_MEMCMP) && __has_builtin(__builtin_memcmp)
+#define MPACK_MEMCMP __builtin_memcmp
+#endif
+#if !defined(MPACK_MEMCPY) && __has_builtin(__builtin_memcpy)
+#define MPACK_MEMCPY __builtin_memcpy
+#endif
+#if !defined(MPACK_MEMMOVE) && __has_builtin(__builtin_memmove)
+#define MPACK_MEMMOVE __builtin_memmove
+#endif
+#if !defined(MPACK_MEMSET) && __has_builtin(__builtin_memset)
+#define MPACK_MEMSET __builtin_memset
+#endif
+#if !defined(MPACK_STRLEN) && __has_builtin(__builtin_strlen)
+#define MPACK_STRLEN __builtin_strlen
+#endif
+#elif defined(__GNUC__)
+#ifndef MPACK_MEMCMP
+#define MPACK_MEMCMP __builtin_memcmp
+#endif
+#ifndef MPACK_MEMCPY
+#define MPACK_MEMCPY __builtin_memcpy
+#endif
+// There's not always a builtin memmove for GCC. If we can't test for
+// it with __has_builtin above, we don't use it. It's been around for
+// much longer under clang, but then so has __has_builtin, so we let
+// the block above handle it.
+#ifndef MPACK_MEMSET
+#define MPACK_MEMSET __builtin_memset
+#endif
+#ifndef MPACK_STRLEN
+#define MPACK_STRLEN __builtin_strlen
+#endif
+#endif
 #endif
 
 /**
  * @}
  */
-
-
 
 /**
  * @name Debugging Options
@@ -639,11 +619,11 @@
  * different values in different translation units.)
  */
 #if !defined(MPACK_DEBUG)
-    #if defined(DEBUG) || defined(_DEBUG)
-        #define MPACK_DEBUG 1
-    #else
-        #define MPACK_DEBUG 0
-    #endif
+#if defined(DEBUG) || defined(_DEBUG)
+#define MPACK_DEBUG 1
+#else
+#define MPACK_DEBUG 0
+#endif
 #endif
 
 /**
@@ -656,11 +636,11 @@
  * mpack_error_to_string() and mpack_type_to_string() return an empty string.
  */
 #ifndef MPACK_STRINGS
-    #ifdef __AVR__
-        #define MPACK_STRINGS 0
-    #else
-        #define MPACK_STRINGS 1
-    #endif
+#ifdef __AVR__
+#define MPACK_STRINGS 0
+#else
+#define MPACK_STRINGS 1
+#endif
 #endif
 
 /**
@@ -684,14 +664,14 @@
  * available.)
  */
 #if !defined(MPACK_READ_TRACKING)
-    #if MPACK_DEBUG && MPACK_READER && defined(MPACK_MALLOC)
-        #define MPACK_READ_TRACKING 1
-    #else
-        #define MPACK_READ_TRACKING 0
-    #endif
+#if MPACK_DEBUG && MPACK_READER && defined(MPACK_MALLOC)
+#define MPACK_READ_TRACKING 1
+#else
+#define MPACK_READ_TRACKING 0
+#endif
 #endif
 #if MPACK_READ_TRACKING && !MPACK_READER
-    #error "MPACK_READ_TRACKING requires MPACK_READER."
+#error "MPACK_READ_TRACKING requires MPACK_READER."
 #endif
 
 /**
@@ -709,22 +689,19 @@
  * available.)
  */
 #if !defined(MPACK_WRITE_TRACKING)
-    #if MPACK_DEBUG && MPACK_WRITER && defined(MPACK_MALLOC)
-        #define MPACK_WRITE_TRACKING 1
-    #else
-        #define MPACK_WRITE_TRACKING 0
-    #endif
+#if MPACK_DEBUG && MPACK_WRITER && defined(MPACK_MALLOC)
+#define MPACK_WRITE_TRACKING 1
+#else
+#define MPACK_WRITE_TRACKING 0
+#endif
 #endif
 #if MPACK_WRITE_TRACKING && !MPACK_WRITER
-    #error "MPACK_WRITE_TRACKING requires MPACK_WRITER."
+#error "MPACK_WRITE_TRACKING requires MPACK_WRITER."
 #endif
 
 /**
  * @}
  */
-
-
-
 
 /**
  * @name Miscellaneous Options
@@ -742,11 +719,11 @@
  * doesn't seem to be a macro defined for /Os under MSVC.
  */
 #ifndef MPACK_OPTIMIZE_FOR_SIZE
-    #ifdef __OPTIMIZE_SIZE__
-        #define MPACK_OPTIMIZE_FOR_SIZE 1
-    #else
-        #define MPACK_OPTIMIZE_FOR_SIZE 0
-    #endif
+#ifdef __OPTIMIZE_SIZE__
+#define MPACK_OPTIMIZE_FOR_SIZE 1
+#else
+#define MPACK_OPTIMIZE_FOR_SIZE 0
+#endif
 #endif
 
 /**
@@ -873,15 +850,13 @@
  */
 #if defined(MPACK_DOXYGEN)
 #if MPACK_DOXYGEN
-    #define MPACK_NO_BUILTINS 0
+#define MPACK_NO_BUILTINS 0
 #endif
 #endif
 
 /**
  * @}
  */
-
-
 
 #if MPACK_DEBUG
 /**
@@ -900,18 +875,14 @@
  * Asserts are only used when @ref MPACK_DEBUG is enabled, and can be
  * triggered by bugs in MPack or bugs due to incorrect usage of MPack.
  */
-void mpack_assert_fail(const char* message);
+void mpack_assert_fail(const char *message);
 /**
  * @}
  */
 #endif
 
-
-
 // The rest of this file shouldn't show up in Doxygen docs.
 /** @cond */
-
-
 
 /*
  * All remaining pseudo-configuration options that have not yet been set must
@@ -936,224 +907,207 @@ void mpack_assert_fail(const char* message);
 #define MPACK_INTERNAL 0
 #endif
 
-
-
 /* System headers (based on configuration) */
 
 #if MPACK_CONFORMING
-    #include <stddef.h>
-    #include <stdint.h>
-    #include <stdbool.h>
-    #include <inttypes.h>
-    #include <limits.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #endif
 
 #if MPACK_STDLIB
-    #include <string.h>
-    #include <stdlib.h>
+#include <stdlib.h>
+#include <string.h>
 #endif
 
 #if MPACK_STDIO
-    #include <stdio.h>
-    #include <errno.h>
-    #if MPACK_DEBUG
-        #include <stdarg.h>
-    #endif
+#include <errno.h>
+#include <stdio.h>
+#if MPACK_DEBUG
+#include <stdarg.h>
 #endif
-
-
+#endif
 
 /*
  * Integer Constants and Limits
  */
 
 #if MPACK_CONFORMING
-    #define MPACK_INT64_C INT64_C
-    #define MPACK_UINT64_C UINT64_C
+#define MPACK_INT64_C INT64_C
+#define MPACK_UINT64_C UINT64_C
 
-    #define MPACK_INT8_MIN INT8_MIN
-    #define MPACK_INT16_MIN INT16_MIN
-    #define MPACK_INT32_MIN INT32_MIN
-    #define MPACK_INT64_MIN INT64_MIN
-    #define MPACK_INT_MIN INT_MIN
+#define MPACK_INT8_MIN INT8_MIN
+#define MPACK_INT16_MIN INT16_MIN
+#define MPACK_INT32_MIN INT32_MIN
+#define MPACK_INT64_MIN INT64_MIN
+#define MPACK_INT_MIN INT_MIN
 
-    #define MPACK_INT8_MAX INT8_MAX
-    #define MPACK_INT16_MAX INT16_MAX
-    #define MPACK_INT32_MAX INT32_MAX
-    #define MPACK_INT64_MAX INT64_MAX
-    #define MPACK_INT_MAX INT_MAX
+#define MPACK_INT8_MAX INT8_MAX
+#define MPACK_INT16_MAX INT16_MAX
+#define MPACK_INT32_MAX INT32_MAX
+#define MPACK_INT64_MAX INT64_MAX
+#define MPACK_INT_MAX INT_MAX
 
-    #define MPACK_UINT8_MAX UINT8_MAX
-    #define MPACK_UINT16_MAX UINT16_MAX
-    #define MPACK_UINT32_MAX UINT32_MAX
-    #define MPACK_UINT64_MAX UINT64_MAX
-    #define MPACK_UINT_MAX UINT_MAX
+#define MPACK_UINT8_MAX UINT8_MAX
+#define MPACK_UINT16_MAX UINT16_MAX
+#define MPACK_UINT32_MAX UINT32_MAX
+#define MPACK_UINT64_MAX UINT64_MAX
+#define MPACK_UINT_MAX UINT_MAX
 #else
-    // For a non-conforming implementation we assume int is 32 bits.
+// For a non-conforming implementation we assume int is 32 bits.
 
-    #define MPACK_INT64_C(x) ((int64_t)(x##LL))
-    #define MPACK_UINT64_C(x) ((uint64_t)(x##LLU))
+#define MPACK_INT64_C(x) ((int64_t) (x##LL))
+#define MPACK_UINT64_C(x) ((uint64_t) (x##LLU))
 
-    #define MPACK_INT8_MIN ((int8_t)(0x80))
-    #define MPACK_INT16_MIN ((int16_t)(0x8000))
-    #define MPACK_INT32_MIN ((int32_t)(0x80000000))
-    #define MPACK_INT64_MIN MPACK_INT64_C(0x8000000000000000)
-    #define MPACK_INT_MIN MPACK_INT32_MIN
+#define MPACK_INT8_MIN ((int8_t) (0x80))
+#define MPACK_INT16_MIN ((int16_t) (0x8000))
+#define MPACK_INT32_MIN ((int32_t) (0x80000000))
+#define MPACK_INT64_MIN MPACK_INT64_C(0x8000000000000000)
+#define MPACK_INT_MIN MPACK_INT32_MIN
 
-    #define MPACK_INT8_MAX ((int8_t)(0x7f))
-    #define MPACK_INT16_MAX ((int16_t)(0x7fff))
-    #define MPACK_INT32_MAX ((int32_t)(0x7fffffff))
-    #define MPACK_INT64_MAX MPACK_INT64_C(0x7fffffffffffffff)
-    #define MPACK_INT_MAX MPACK_INT32_MAX
+#define MPACK_INT8_MAX ((int8_t) (0x7f))
+#define MPACK_INT16_MAX ((int16_t) (0x7fff))
+#define MPACK_INT32_MAX ((int32_t) (0x7fffffff))
+#define MPACK_INT64_MAX MPACK_INT64_C(0x7fffffffffffffff)
+#define MPACK_INT_MAX MPACK_INT32_MAX
 
-    #define MPACK_UINT8_MAX ((uint8_t)(0xffu))
-    #define MPACK_UINT16_MAX ((uint16_t)(0xffffu))
-    #define MPACK_UINT32_MAX ((uint32_t)(0xffffffffu))
-    #define MPACK_UINT64_MAX MPACK_UINT64_C(0xffffffffffffffff)
-    #define MPACK_UINT_MAX MPACK_UINT32_MAX
+#define MPACK_UINT8_MAX ((uint8_t) (0xffu))
+#define MPACK_UINT16_MAX ((uint16_t) (0xffffu))
+#define MPACK_UINT32_MAX ((uint32_t) (0xffffffffu))
+#define MPACK_UINT64_MAX MPACK_UINT64_C(0xffffffffffffffff)
+#define MPACK_UINT_MAX MPACK_UINT32_MAX
 #endif
-
-
 
 /*
  * Floating point support
  */
 
 #if MPACK_DOUBLE && !MPACK_FLOAT
-    #error "MPACK_DOUBLE requires MPACK_FLOAT."
+#error "MPACK_DOUBLE requires MPACK_FLOAT."
 #endif
 
 // If we don't have support for float or double, we poison the identifiers to
 // make sure we don't define anything related to them.
 #if MPACK_INTERNAL && defined(MPACK_UNIT_TESTS) && defined(__GNUC__)
-    #if !MPACK_FLOAT
-        #pragma GCC poison float
-    #endif
-    #if !MPACK_DOUBLE
-        #pragma GCC poison double
-    #endif
+#if !MPACK_FLOAT
+#pragma GCC poison float
 #endif
-
-
+#if !MPACK_DOUBLE
+#pragma GCC poison double
+#endif
+#endif
 
 /*
  * extern C
  */
 
 #ifdef __cplusplus
-    #define MPACK_EXTERN_C_BEGIN extern "C" {
-    #define MPACK_EXTERN_C_END   }
+#define MPACK_EXTERN_C_BEGIN extern "C" {
+#define MPACK_EXTERN_C_END }
 #else
-    #define MPACK_EXTERN_C_BEGIN /*nothing*/
-    #define MPACK_EXTERN_C_END   /*nothing*/
+#define MPACK_EXTERN_C_BEGIN /*nothing*/
+#define MPACK_EXTERN_C_END   /*nothing*/
 #endif
-
-
 
 /*
  * Warnings
  */
 
 #if defined(__GNUC__)
-    // Diagnostic push is not supported before GCC 4.6.
-    #if defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-        #define MPACK_SILENCE_WARNINGS_PUSH _Pragma ("GCC diagnostic push")
-        #define MPACK_SILENCE_WARNINGS_POP _Pragma ("GCC diagnostic pop")
-    #endif
+// Diagnostic push is not supported before GCC 4.6.
+#if defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#define MPACK_SILENCE_WARNINGS_PUSH _Pragma("GCC diagnostic push")
+#define MPACK_SILENCE_WARNINGS_POP _Pragma("GCC diagnostic pop")
+#endif
 #elif defined(_MSC_VER)
-    // To support VS2017 and earlier we need to use __pragma and not _Pragma
-    #define MPACK_SILENCE_WARNINGS_PUSH __pragma(warning(push))
-    #define MPACK_SILENCE_WARNINGS_POP __pragma(warning(pop))
+// To support VS2017 and earlier we need to use __pragma and not _Pragma
+#define MPACK_SILENCE_WARNINGS_PUSH __pragma(warning(push))
+#define MPACK_SILENCE_WARNINGS_POP __pragma(warning(pop))
 #endif
 
 #if defined(_MSC_VER)
-    // These are a bunch of mostly useless warnings emitted under MSVC /W4,
-    // some as a result of the expansion of macros.
-    #define MPACK_SILENCE_WARNINGS_MSVC_W4 \
-            __pragma(warning(disable:4996)) /* _CRT_SECURE_NO_WARNINGS */ \
-            __pragma(warning(disable:4127)) /* comparison is constant */ \
-            __pragma(warning(disable:4702)) /* unreachable code */ \
-            __pragma(warning(disable:4310)) /* cast truncates constant value */
+// These are a bunch of mostly useless warnings emitted under MSVC /W4,
+// some as a result of the expansion of macros.
+#define MPACK_SILENCE_WARNINGS_MSVC_W4                                                                                 \
+    __pragma(warning(disable : 4996))     /* _CRT_SECURE_NO_WARNINGS */                                                \
+        __pragma(warning(disable : 4127)) /* comparison is constant */                                                 \
+        __pragma(warning(disable : 4702)) /* unreachable code */                                                       \
+        __pragma(warning(disable : 4310)) /* cast truncates constant value */
 #else
-    #define MPACK_SILENCE_WARNINGS_MSVC_W4 /*nothing*/
+#define MPACK_SILENCE_WARNINGS_MSVC_W4 /*nothing*/
 #endif
 
 /* GCC versions before 5.1 warn about defining a C99 non-static inline function
  * before declaring it (see issue #20). */
 #if defined(__GNUC__) && !defined(__clang__)
-    #if __GNUC__ < 5 || (__GNUC__ == 5 && __GNUC_MINOR__ < 1)
-        #ifdef __cplusplus
-            #define MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES \
-                _Pragma ("GCC diagnostic ignored \"-Wmissing-declarations\"")
-        #else
-            #define MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES \
-                _Pragma ("GCC diagnostic ignored \"-Wmissing-prototypes\"")
-        #endif
-    #endif
+#if __GNUC__ < 5 || (__GNUC__ == 5 && __GNUC_MINOR__ < 1)
+#ifdef __cplusplus
+#define MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES _Pragma("GCC diagnostic ignored \"-Wmissing-declarations\"")
+#else
+#define MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES _Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
+#endif
+#endif
 #endif
 #ifndef MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES
-    #define MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES /*nothing*/
+#define MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES /*nothing*/
 #endif
 
 /* GCC versions before 4.8 warn about shadowing a function with a variable that
  * isn't a function or function pointer (like "index"). */
 #if defined(__GNUC__) && !defined(__clang__)
-    #if __GNUC__ == 4 && __GNUC_MINOR__ < 8
-        #define MPACK_SILENCE_WARNINGS_SHADOW \
-            _Pragma ("GCC diagnostic ignored \"-Wshadow\"")
-    #endif
+#if __GNUC__ == 4 && __GNUC_MINOR__ < 8
+#define MPACK_SILENCE_WARNINGS_SHADOW _Pragma("GCC diagnostic ignored \"-Wshadow\"")
+#endif
 #endif
 #ifndef MPACK_SILENCE_WARNINGS_SHADOW
-    #define MPACK_SILENCE_WARNINGS_SHADOW /*nothing*/
+#define MPACK_SILENCE_WARNINGS_SHADOW /*nothing*/
 #endif
 
 // On platforms with small size_t (e.g. AVR) we get type limits warnings where
 // we compare a size_t to e.g. MPACK_UINT32_MAX.
 #ifdef __AVR__
-    #define MPACK_SILENCE_WARNINGS_TYPE_LIMITS \
-        _Pragma ("GCC diagnostic ignored \"-Wtype-limits\"")
+#define MPACK_SILENCE_WARNINGS_TYPE_LIMITS _Pragma("GCC diagnostic ignored \"-Wtype-limits\"")
 #else
-    #define MPACK_SILENCE_WARNINGS_TYPE_LIMITS /*nothing*/
+#define MPACK_SILENCE_WARNINGS_TYPE_LIMITS /*nothing*/
 #endif
 
 // MPack uses declarations after statements. This silences warnings about it
 // (e.g. when using MPack in a Linux kernel module.)
 #if defined(__GNUC__) && !defined(__cplusplus)
-    #define MPACK_SILENCE_WARNINGS_DECLARATION_AFTER_STATEMENT \
-        _Pragma ("GCC diagnostic ignored \"-Wdeclaration-after-statement\"")
+#define MPACK_SILENCE_WARNINGS_DECLARATION_AFTER_STATEMENT                                                             \
+    _Pragma("GCC diagnostic ignored \"-Wdeclaration-after-statement\"")
 #else
-    #define MPACK_SILENCE_WARNINGS_DECLARATION_AFTER_STATEMENT /*nothing*/
+#define MPACK_SILENCE_WARNINGS_DECLARATION_AFTER_STATEMENT /*nothing*/
 #endif
 
 #ifdef MPACK_SILENCE_WARNINGS_PUSH
-    // We only silence warnings if push/pop is supported, that way we aren't
-    // silencing warnings in code that uses MPack. If your compiler doesn't
-    // support push/pop silencing of warnings, you'll have to turn off
-    // conflicting warnings manually.
+// We only silence warnings if push/pop is supported, that way we aren't
+// silencing warnings in code that uses MPack. If your compiler doesn't
+// support push/pop silencing of warnings, you'll have to turn off
+// conflicting warnings manually.
 
-    #define MPACK_SILENCE_WARNINGS_BEGIN \
-        MPACK_SILENCE_WARNINGS_PUSH \
-        MPACK_SILENCE_WARNINGS_MSVC_W4 \
-        MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES \
-        MPACK_SILENCE_WARNINGS_SHADOW \
-        MPACK_SILENCE_WARNINGS_TYPE_LIMITS \
-        MPACK_SILENCE_WARNINGS_DECLARATION_AFTER_STATEMENT
+#define MPACK_SILENCE_WARNINGS_BEGIN                                                                                   \
+    MPACK_SILENCE_WARNINGS_PUSH                                                                                        \
+    MPACK_SILENCE_WARNINGS_MSVC_W4                                                                                     \
+    MPACK_SILENCE_WARNINGS_MISSING_PROTOTYPES                                                                          \
+    MPACK_SILENCE_WARNINGS_SHADOW                                                                                      \
+    MPACK_SILENCE_WARNINGS_TYPE_LIMITS                                                                                 \
+    MPACK_SILENCE_WARNINGS_DECLARATION_AFTER_STATEMENT
 
-    #define MPACK_SILENCE_WARNINGS_END \
-        MPACK_SILENCE_WARNINGS_POP
+#define MPACK_SILENCE_WARNINGS_END MPACK_SILENCE_WARNINGS_POP
 #else
-    #define MPACK_SILENCE_WARNINGS_BEGIN /*nothing*/
-    #define MPACK_SILENCE_WARNINGS_END /*nothing*/
+#define MPACK_SILENCE_WARNINGS_BEGIN /*nothing*/
+#define MPACK_SILENCE_WARNINGS_END   /*nothing*/
 #endif
 
 MPACK_SILENCE_WARNINGS_BEGIN
 MPACK_EXTERN_C_BEGIN
 
-
-
 /* Miscellaneous helper macros */
 
-#define MPACK_UNUSED(var) ((void)(var))
+#define MPACK_UNUSED(var) ((void) (var))
 
 #define MPACK_STRINGIFY_IMPL(arg) #arg
 #define MPACK_STRINGIFY(arg) MPACK_STRINGIFY_IMPL(arg)
@@ -1170,14 +1124,12 @@ MPACK_EXTERN_C_BEGIN
 // Extracts the first argument of a variadic macro list, where there might only
 // be one argument.
 #define MPACK_EXTRACT_ARG0_IMPL(first, ...) first
-#define MPACK_EXTRACT_ARG0(...) MPACK_EXPAND(MPACK_EXTRACT_ARG0_IMPL( __VA_ARGS__ , ignored))
+#define MPACK_EXTRACT_ARG0(...) MPACK_EXPAND(MPACK_EXTRACT_ARG0_IMPL(__VA_ARGS__, ignored))
 
 // Stringifies the first argument of a variadic macro list, where there might
 // only be one argument.
 #define MPACK_STRINGIFY_ARG0_impl(first, ...) #first
-#define MPACK_STRINGIFY_ARG0(...) MPACK_EXPAND(MPACK_STRINGIFY_ARG0_impl( __VA_ARGS__ , ignored))
-
-
+#define MPACK_STRINGIFY_ARG0(...) MPACK_EXPAND(MPACK_STRINGIFY_ARG0_impl(__VA_ARGS__, ignored))
 
 /*
  * Definition of inline macros.
@@ -1213,48 +1165,49 @@ MPACK_EXTERN_C_BEGIN
  */
 
 #if defined(__cplusplus)
-    // C++ rules
-    // The linker will need COMDAT support to link C++ object files,
-    // so we don't need to worry about emitting definitions from C++
-    // translation units. If mpack-platform.c (or the amalgamation)
-    // is compiled as C, its definition will be used, otherwise a
-    // C++ definition will be used, and no other C files will emit
-    // a definition.
-    #define MPACK_INLINE inline
+// C++ rules
+// The linker will need COMDAT support to link C++ object files,
+// so we don't need to worry about emitting definitions from C++
+// translation units. If mpack-platform.c (or the amalgamation)
+// is compiled as C, its definition will be used, otherwise a
+// C++ definition will be used, and no other C files will emit
+// a definition.
+#define MPACK_INLINE inline
 
 #elif defined(_MSC_VER)
-    // MSVC 2013 always uses COMDAT linkage, but it doesn't treat 'inline' as a
-    // keyword in C99 mode. (This appears to be fixed in a later version of
-    // MSVC but we don't bother detecting it.)
-    #define MPACK_INLINE __inline
-    #define MPACK_STATIC_INLINE static __inline
+// MSVC 2013 always uses COMDAT linkage, but it doesn't treat 'inline' as a
+// keyword in C99 mode. (This appears to be fixed in a later version of
+// MSVC but we don't bother detecting it.)
+#define MPACK_INLINE __inline
+#define MPACK_STATIC_INLINE static __inline
 
-#elif defined(__GNUC__) && (defined(__GNUC_GNU_INLINE__) || \
-        (!defined(__GNUC_STDC_INLINE__) && !defined(__GNUC_GNU_INLINE__)))
-    // GNU rules
-    #if MPACK_EMIT_INLINE_DEFS
-        #define MPACK_INLINE inline
-    #else
-        #define MPACK_INLINE extern inline
-    #endif
+#elif defined(__GNUC__) &&                                                                                             \
+    (defined(__GNUC_GNU_INLINE__) || (!defined(__GNUC_STDC_INLINE__) && !defined(__GNUC_GNU_INLINE__)))
+// GNU rules
+#if MPACK_EMIT_INLINE_DEFS
+#define MPACK_INLINE inline
+#else
+#define MPACK_INLINE extern inline
+#endif
 
 #elif defined(__TINYC__)
-    // tcc ignores the inline keyword, so we have to use static inline. We
-    // issue a warning to make sure you are aware. You can define the below
-    // macro to disable the warning. Hopefully this will be fixed soon:
-    //     https://lists.nongnu.org/archive/html/tinycc-devel/2019-06/msg00000.html
-    #ifndef MPACK_DISABLE_TINYC_INLINE_WARNING
-        #warning "Single-definition inline is not supported by tcc. All inlines will be static. Define MPACK_DISABLE_TINYC_INLINE_WARNING to disable this warning."
-    #endif
-    #define MPACK_INLINE static inline
+// tcc ignores the inline keyword, so we have to use static inline. We
+// issue a warning to make sure you are aware. You can define the below
+// macro to disable the warning. Hopefully this will be fixed soon:
+//     https://lists.nongnu.org/archive/html/tinycc-devel/2019-06/msg00000.html
+#ifndef MPACK_DISABLE_TINYC_INLINE_WARNING
+#warning                                                                                                               \
+    "Single-definition inline is not supported by tcc. All inlines will be static. Define MPACK_DISABLE_TINYC_INLINE_WARNING to disable this warning."
+#endif
+#define MPACK_INLINE static inline
 
 #else
-    // C99 rules
-    #if MPACK_EMIT_INLINE_DEFS
-        #define MPACK_INLINE extern inline
-    #else
-        #define MPACK_INLINE inline
-    #endif
+// C99 rules
+#if MPACK_EMIT_INLINE_DEFS
+#define MPACK_INLINE extern inline
+#else
+#define MPACK_INLINE inline
+#endif
 #endif
 
 #ifndef MPACK_STATIC_INLINE
@@ -1262,10 +1215,8 @@ MPACK_EXTERN_C_BEGIN
 #endif
 
 #ifdef MPACK_OPTIMIZE_FOR_SPEED
-    #error "You should define MPACK_OPTIMIZE_FOR_SIZE, not MPACK_OPTIMIZE_FOR_SPEED."
+#error "You should define MPACK_OPTIMIZE_FOR_SIZE, not MPACK_OPTIMIZE_FOR_SPEED."
 #endif
-
-
 
 /*
  * Prevent inlining
@@ -1277,17 +1228,15 @@ MPACK_EXTERN_C_BEGIN
  */
 
 #if !MPACK_NO_BUILTINS
-    #if defined(_MSC_VER)
-        #define MPACK_NOINLINE __declspec(noinline)
-    #elif defined(__GNUC__) || defined(__clang__)
-        #define MPACK_NOINLINE __attribute__((__noinline__))
-    #endif
+#if defined(_MSC_VER)
+#define MPACK_NOINLINE __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+#define MPACK_NOINLINE __attribute__((__noinline__))
+#endif
 #endif
 #ifndef MPACK_NOINLINE
-    #define MPACK_NOINLINE /* nothing */
+#define MPACK_NOINLINE /* nothing */
 #endif
-
-
 
 /* restrict */
 
@@ -1296,56 +1245,52 @@ MPACK_EXTERN_C_BEGIN
 // builtins work in C++, so using the same keyword in both C and C++ prevents
 // any incompatibilities when using MPack compiled as C in C++ code.
 #if !MPACK_NO_BUILTINS
-    #if defined(__GNUC__)
-        #define MPACK_RESTRICT __restrict__
-    #elif defined(_MSC_VER)
-        #define MPACK_RESTRICT __restrict
-    #endif
+#if defined(__GNUC__)
+#define MPACK_RESTRICT __restrict__
+#elif defined(_MSC_VER)
+#define MPACK_RESTRICT __restrict
+#endif
 #endif
 
 #ifndef MPACK_RESTRICT
-    #ifdef __cplusplus
-        #define MPACK_RESTRICT /* nothing, unavailable in C++ */
-    #endif
+#ifdef __cplusplus
+#define MPACK_RESTRICT /* nothing, unavailable in C++ */
+#endif
 #endif
 
 #ifndef MPACK_RESTRICT
-    #ifdef _MSC_VER
-        // MSVC 2015 apparently doesn't properly support the restrict keyword
-        // in C. We're using builtins above which do work on 2015, but when
-        // MPACK_NO_BUILTINS is enabled we can't use it.
-        #if _MSC_VER < 1910
-            #define MPACK_RESTRICT /*nothing*/
-        #endif
-    #endif
+#ifdef _MSC_VER
+// MSVC 2015 apparently doesn't properly support the restrict keyword
+// in C. We're using builtins above which do work on 2015, but when
+// MPACK_NO_BUILTINS is enabled we can't use it.
+#if _MSC_VER < 1910
+#define MPACK_RESTRICT /*nothing*/
+#endif
+#endif
 #endif
 
 #ifndef MPACK_RESTRICT
-    #define MPACK_RESTRICT restrict /* required in C99 */
+#define MPACK_RESTRICT restrict /* required in C99 */
 #endif
-
-
 
 /* Some compiler-specific keywords and builtins */
 
 #if !MPACK_NO_BUILTINS
-    #if defined(__GNUC__) || defined(__clang__)
-        #define MPACK_UNREACHABLE __builtin_unreachable()
-        #define MPACK_NORETURN(fn) fn __attribute__((__noreturn__))
-    #elif defined(_MSC_VER)
-        #define MPACK_UNREACHABLE __assume(0)
-        #define MPACK_NORETURN(fn) __declspec(noreturn) fn
-    #endif
+#if defined(__GNUC__) || defined(__clang__)
+#define MPACK_UNREACHABLE __builtin_unreachable()
+#define MPACK_NORETURN(fn) fn __attribute__((__noreturn__))
+#elif defined(_MSC_VER)
+#define MPACK_UNREACHABLE __assume(0)
+#define MPACK_NORETURN(fn) __declspec(noreturn) fn
+#endif
 #endif
 
 #ifndef MPACK_UNREACHABLE
-#define MPACK_UNREACHABLE ((void)0)
+#define MPACK_UNREACHABLE ((void) 0)
 #endif
 #ifndef MPACK_NORETURN
 #define MPACK_NORETURN(fn) fn
 #endif
-
-
 
 /*
  * Likely/unlikely
@@ -1356,158 +1301,149 @@ MPACK_EXTERN_C_BEGIN
  */
 
 #if !MPACK_NO_BUILTINS
-    #if defined(__GNUC__) || defined(__clang__)
-        #ifndef MPACK_LIKELY
-            #define MPACK_LIKELY(x) __builtin_expect((x),1)
-        #endif
-        #ifndef MPACK_UNLIKELY
-            #define MPACK_UNLIKELY(x) __builtin_expect((x),0)
-        #endif
-    #endif
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef MPACK_LIKELY
+#define MPACK_LIKELY(x) __builtin_expect((x), 1)
+#endif
+#ifndef MPACK_UNLIKELY
+#define MPACK_UNLIKELY(x) __builtin_expect((x), 0)
+#endif
+#endif
 #endif
 
 #ifndef MPACK_LIKELY
-    #define MPACK_LIKELY(x) (x)
+#define MPACK_LIKELY(x) (x)
 #endif
 #ifndef MPACK_UNLIKELY
-    #define MPACK_UNLIKELY(x) (x)
+#define MPACK_UNLIKELY(x) (x)
 #endif
-
-
 
 /* alignof */
 
 #ifndef MPACK_ALIGNOF
-    #if defined(__STDC_VERSION__)
-        #if __STDC_VERSION__ >= 201112L
-            #define MPACK_ALIGNOF(T) (_Alignof(T))
-        #endif
-    #endif
+#if defined(__STDC_VERSION__)
+#if __STDC_VERSION__ >= 201112L
+#define MPACK_ALIGNOF(T) (_Alignof(T))
+#endif
+#endif
 #endif
 
 #ifndef MPACK_ALIGNOF
-    #if defined(__cplusplus)
-        #if __cplusplus >= 201103L
-            #define MPACK_ALIGNOF(T) (alignof(T))
-        #endif
-    #endif
+#if defined(__cplusplus)
+#if __cplusplus >= 201103L
+#define MPACK_ALIGNOF(T) (alignof(T))
+#endif
+#endif
 #endif
 
 #ifndef MPACK_ALIGNOF
-    #if defined(__GNUC__) && !defined(MPACK_NO_BUILTINS)
-        #if defined(__clang__) || __GNUC__ >= 4
-            #define MPACK_ALIGNOF(T) (__alignof__(T))
-        #endif
-    #endif
+#if defined(__GNUC__) && !defined(MPACK_NO_BUILTINS)
+#if defined(__clang__) || __GNUC__ >= 4
+#define MPACK_ALIGNOF(T) (__alignof__(T))
+#endif
+#endif
 #endif
 
 #ifndef MPACK_ALIGNOF
-    #ifdef _MSC_VER
-        #define MPACK_ALIGNOF(T) __alignof(T)
-    #endif
+#ifdef _MSC_VER
+#define MPACK_ALIGNOF(T) __alignof(T)
+#endif
 #endif
 
 // MPACK_ALIGNOF may not exist, in which case a workaround is used.
 
-
-
 /* Static assert */
 
 #ifndef MPACK_STATIC_ASSERT
-    #if defined(__cplusplus)
-        #if __cplusplus >= 201103L
-            #define MPACK_STATIC_ASSERT static_assert
-        #endif
-    #elif defined(__STDC_VERSION__)
-        #if __STDC_VERSION__ >= 201112L
-            #define MPACK_STATIC_ASSERT _Static_assert
-        #endif
-    #endif
+#if defined(__cplusplus)
+#if __cplusplus >= 201103L
+#define MPACK_STATIC_ASSERT static_assert
+#endif
+#elif defined(__STDC_VERSION__)
+#if __STDC_VERSION__ >= 201112L
+#define MPACK_STATIC_ASSERT _Static_assert
+#endif
+#endif
 #endif
 
 #if !MPACK_NO_BUILTINS
-    #ifndef MPACK_STATIC_ASSERT
-        #if defined(__has_feature)
-            #if __has_feature(cxx_static_assert)
-                #define MPACK_STATIC_ASSERT static_assert
-            #elif __has_feature(c_static_assert)
-                #define MPACK_STATIC_ASSERT _Static_assert
-            #endif
-        #endif
-    #endif
-
-    #ifndef MPACK_STATIC_ASSERT
-        #if defined(__GNUC__)
-            /* Diagnostic push is not supported before GCC 4.6. */
-            #if defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-                #ifndef __cplusplus
-                    #if defined(__clang__) || __GNUC__ >= 5
-                    #define MPACK_IGNORE_PEDANTIC "GCC diagnostic ignored \"-Wpedantic\""
-                    #else
-                    #define MPACK_IGNORE_PEDANTIC "GCC diagnostic ignored \"-pedantic\""
-                    #endif
-                    #define MPACK_STATIC_ASSERT(expr, str) do { \
-                        _Pragma ("GCC diagnostic push") \
-                        _Pragma (MPACK_IGNORE_PEDANTIC) \
-                        _Pragma ("GCC diagnostic ignored \"-Wc++-compat\"") \
-                        _Static_assert(expr, str); \
-                        _Pragma ("GCC diagnostic pop") \
-                    } while (0)
-                #endif
-            #endif
-        #endif
-    #endif
-
-    #ifndef MPACK_STATIC_ASSERT
-        #ifdef _MSC_VER
-            #if _MSC_VER >= 1600
-                #define MPACK_STATIC_ASSERT static_assert
-            #endif
-        #endif
-    #endif
+#ifndef MPACK_STATIC_ASSERT
+#if defined(__has_feature)
+#if __has_feature(cxx_static_assert)
+#define MPACK_STATIC_ASSERT static_assert
+#elif __has_feature(c_static_assert)
+#define MPACK_STATIC_ASSERT _Static_assert
+#endif
+#endif
 #endif
 
 #ifndef MPACK_STATIC_ASSERT
-    #define MPACK_STATIC_ASSERT(expr, str) (MPACK_UNUSED(sizeof(char[1 - 2*!(expr)])))
+#if defined(__GNUC__)
+/* Diagnostic push is not supported before GCC 4.6. */
+#if defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#ifndef __cplusplus
+#if defined(__clang__) || __GNUC__ >= 5
+#define MPACK_IGNORE_PEDANTIC "GCC diagnostic ignored \"-Wpedantic\""
+#else
+#define MPACK_IGNORE_PEDANTIC "GCC diagnostic ignored \"-pedantic\""
+#endif
+#define MPACK_STATIC_ASSERT(expr, str)                                                                                 \
+    do {                                                                                                               \
+        _Pragma("GCC diagnostic push") _Pragma(MPACK_IGNORE_PEDANTIC)                                                  \
+            _Pragma("GCC diagnostic ignored \"-Wc++-compat\"") _Static_assert(expr, str);                              \
+        _Pragma("GCC diagnostic pop")                                                                                  \
+    } while (0)
+#endif
+#endif
+#endif
 #endif
 
+#ifndef MPACK_STATIC_ASSERT
+#ifdef _MSC_VER
+#if _MSC_VER >= 1600
+#define MPACK_STATIC_ASSERT static_assert
+#endif
+#endif
+#endif
+#endif
 
+#ifndef MPACK_STATIC_ASSERT
+#define MPACK_STATIC_ASSERT(expr, str) (MPACK_UNUSED(sizeof(char[1 - 2 * !(expr)])))
+#endif
 
 /* _Generic */
 
 #ifndef MPACK_HAS_GENERIC
-    #if defined(__clang__) && defined(__has_feature)
-        // With Clang we can test for _Generic support directly
-        // and ignore C/C++ version
-        #if __has_feature(c_generic_selections)
-            #define MPACK_HAS_GENERIC 1
-        #else
-            #define MPACK_HAS_GENERIC 0
-        #endif
-    #endif
+#if defined(__clang__) && defined(__has_feature)
+// With Clang we can test for _Generic support directly
+// and ignore C/C++ version
+#if __has_feature(c_generic_selections)
+#define MPACK_HAS_GENERIC 1
+#else
+#define MPACK_HAS_GENERIC 0
+#endif
+#endif
 #endif
 
 #ifndef MPACK_HAS_GENERIC
-    #if defined(__STDC_VERSION__)
-        #if __STDC_VERSION__ >= 201112L
-            #if defined(__GNUC__) && !defined(__clang__)
-                // GCC does not have full C11 support in GCC 4.7 and 4.8
-                #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
-                    #define MPACK_HAS_GENERIC 1
-                #endif
-            #else
-                // We hope other compilers aren't lying about C11/_Generic support
-                #define MPACK_HAS_GENERIC 1
-            #endif
-        #endif
-    #endif
+#if defined(__STDC_VERSION__)
+#if __STDC_VERSION__ >= 201112L
+#if defined(__GNUC__) && !defined(__clang__)
+// GCC does not have full C11 support in GCC 4.7 and 4.8
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
+#define MPACK_HAS_GENERIC 1
+#endif
+#else
+// We hope other compilers aren't lying about C11/_Generic support
+#define MPACK_HAS_GENERIC 1
+#endif
+#endif
+#endif
 #endif
 
 #ifndef MPACK_HAS_GENERIC
-    #define MPACK_HAS_GENERIC 0
+#define MPACK_HAS_GENERIC 0
 #endif
-
-
 
 /*
  * Finite Math
@@ -1529,8 +1465,6 @@ MPACK_EXTERN_C_BEGIN
 #define MPACK_FINITE_MATH 0
 #endif
 
-
-
 /*
  * Endianness checks
  *
@@ -1544,89 +1478,88 @@ MPACK_EXTERN_C_BEGIN
  */
 
 #if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_BIG_ENDIAN__)
-    #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-        #define MPACK_NHSWAP16(x) (x)
-        #define MPACK_NHSWAP32(x) (x)
-        #define MPACK_NHSWAP64(x) (x)
-    #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define MPACK_NHSWAP16(x) (x)
+#define MPACK_NHSWAP32(x) (x)
+#define MPACK_NHSWAP64(x) (x)
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 
-        #if !MPACK_NO_BUILTINS
-            #if defined(__clang__)
-                #ifdef __has_builtin
-                    // Unlike the GCC builtins, the bswap builtins in Clang
-                    // significantly improve ARM performance.
-                    #if __has_builtin(__builtin_bswap16)
-                        #define MPACK_NHSWAP16(x) __builtin_bswap16(x)
-                    #endif
-                    #if __has_builtin(__builtin_bswap32)
-                        #define MPACK_NHSWAP32(x) __builtin_bswap32(x)
-                    #endif
-                    #if __has_builtin(__builtin_bswap64)
-                        #define MPACK_NHSWAP64(x) __builtin_bswap64(x)
-                    #endif
-                #endif
+#if !MPACK_NO_BUILTINS
+#if defined(__clang__)
+#ifdef __has_builtin
+// Unlike the GCC builtins, the bswap builtins in Clang
+// significantly improve ARM performance.
+#if __has_builtin(__builtin_bswap16)
+#define MPACK_NHSWAP16(x) __builtin_bswap16(x)
+#endif
+#if __has_builtin(__builtin_bswap32)
+#define MPACK_NHSWAP32(x) __builtin_bswap32(x)
+#endif
+#if __has_builtin(__builtin_bswap64)
+#define MPACK_NHSWAP64(x) __builtin_bswap64(x)
+#endif
+#endif
 
-            #elif defined(__GNUC__)
+#elif defined(__GNUC__)
 
-                // The GCC bswap builtins are apparently poorly optimized on older
-                // versions of GCC, so we set a minimum version here just in case.
-                //     http://hardwarebug.org/2010/01/14/beware-the-builtins/
+// The GCC bswap builtins are apparently poorly optimized on older
+// versions of GCC, so we set a minimum version here just in case.
+//     http://hardwarebug.org/2010/01/14/beware-the-builtins/
 
-                #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
-                    #define MPACK_NHSWAP64(x) __builtin_bswap64(x)
-                #endif
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
+#define MPACK_NHSWAP64(x) __builtin_bswap64(x)
+#endif
 
-                // __builtin_bswap16() was not implemented on all platforms
-                // until GCC 4.8.0:
-                //     https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52624
-                //
-                // The 16- and 32-bit versions in GCC significantly reduce performance
-                // on ARM with little effect on code size so we don't use them.
+// __builtin_bswap16() was not implemented on all platforms
+// until GCC 4.8.0:
+//     https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52624
+//
+// The 16- and 32-bit versions in GCC significantly reduce performance
+// on ARM with little effect on code size so we don't use them.
 
-            #endif
-        #endif
-    #endif
+#endif
+#endif
+#endif
 
 #elif defined(_MSC_VER) && defined(_WIN32) && MPACK_STDLIB && !MPACK_NO_BUILTINS
 
-    // On Windows, we assume x86 and x86_64 are always little-endian.
-    // We make no assumptions about ARM even though all current
-    // Windows Phone devices are little-endian in case Microsoft's
-    // compiler is ever used with a big-endian ARM device.
+// On Windows, we assume x86 and x86_64 are always little-endian.
+// We make no assumptions about ARM even though all current
+// Windows Phone devices are little-endian in case Microsoft's
+// compiler is ever used with a big-endian ARM device.
 
-    // These are functions in <stdlib.h> so we depend on MPACK_STDLIB.
-    // It's not clear if these are actually faster than just doing the
-    // swap manually; maybe we shouldn't bother with this.
+// These are functions in <stdlib.h> so we depend on MPACK_STDLIB.
+// It's not clear if these are actually faster than just doing the
+// swap manually; maybe we shouldn't bother with this.
 
-    #if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64)
-        #define MPACK_NHSWAP16(x) _byteswap_ushort(x)
-        #define MPACK_NHSWAP32(x) _byteswap_ulong(x)
-        #define MPACK_NHSWAP64(x) _byteswap_uint64(x)
-    #endif
+#if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64)
+#define MPACK_NHSWAP16(x) _byteswap_ushort(x)
+#define MPACK_NHSWAP32(x) _byteswap_ulong(x)
+#define MPACK_NHSWAP64(x) _byteswap_uint64(x)
+#endif
 
 #endif
 
 #if defined(__FLOAT_WORD_ORDER__) && defined(__BYTE_ORDER__)
 
-    // We check where possible that the float byte order matches the
-    // integer byte order. This is extremely unlikely to fail, but
-    // we check anyway just in case.
-    //
-    // (The static assert is placed in float/double encoders instead
-    // of here because our static assert fallback doesn't work at
-    // file scope)
+// We check where possible that the float byte order matches the
+// integer byte order. This is extremely unlikely to fail, but
+// we check anyway just in case.
+//
+// (The static assert is placed in float/double encoders instead
+// of here because our static assert fallback doesn't work at
+// file scope)
 
-    #define MPACK_CHECK_FLOAT_ORDER() \
-        MPACK_STATIC_ASSERT(__FLOAT_WORD_ORDER__ == __BYTE_ORDER__, \
-            "float byte order does not match int byte order! float/double " \
-            "encoding is not properly implemented on this platform.")
+#define MPACK_CHECK_FLOAT_ORDER()                                                                                      \
+    MPACK_STATIC_ASSERT(__FLOAT_WORD_ORDER__ == __BYTE_ORDER__,                                                        \
+                        "float byte order does not match int byte order! float/double "                                \
+                        "encoding is not properly implemented on this platform.")
 
 #endif
 
 #ifndef MPACK_CHECK_FLOAT_ORDER
-    #define MPACK_CHECK_FLOAT_ORDER() /* nothing */
+#define MPACK_CHECK_FLOAT_ORDER() /* nothing */
 #endif
-
 
 /*
  * Here we define mpack_assert() and mpack_break(). They both work like a normal
@@ -1663,165 +1596,150 @@ MPACK_EXTERN_C_BEGIN
  */
 
 #if MPACK_DEBUG
-    MPACK_NORETURN(void mpack_assert_fail_wrapper(const char* message));
-    #if MPACK_STDIO
-        MPACK_NORETURN(void mpack_assert_fail_format(const char* format, ...));
-        #define mpack_assert_fail_at(line, file, exprstr, format, ...) \
-                MPACK_EXPAND(mpack_assert_fail_format("mpack assertion failed at " file ":" #line "\n%s\n" format, exprstr, __VA_ARGS__))
-    #else
-        #define mpack_assert_fail_at(line, file, exprstr, format, ...) \
-                mpack_assert_fail_wrapper("mpack assertion failed at " file ":" #line "\n" exprstr "\n")
-    #endif
-
-    #define mpack_assert_fail_pos(line, file, exprstr, expr, ...) \
-            MPACK_EXPAND(mpack_assert_fail_at(line, file, exprstr, __VA_ARGS__))
-
-    // This contains a workaround to the pedantic C99 requirement of having at
-    // least one argument to a variadic macro. The first argument is the
-    // boolean expression, the optional second argument (if provided) must be a
-    // literal format string, and any additional arguments are the format
-    // argument list.
-    //
-    // Unfortunately this means macros are expanded in the expression before it
-    // gets stringified. I haven't found a workaround to this.
-    //
-    // This adds two unused arguments to the format argument list when a
-    // format string is provided, so this would complicate the use of
-    // -Wformat and __attribute__((__format__)) on mpack_assert_fail_format()
-    // if we ever bothered to implement it.
-    #define mpack_assert(...) \
-            MPACK_EXPAND(((!(MPACK_EXTRACT_ARG0(__VA_ARGS__))) ? \
-                mpack_assert_fail_pos(__LINE__, __FILE__, MPACK_STRINGIFY_ARG0(__VA_ARGS__) , __VA_ARGS__ , "", NULL) : \
-                (void)0))
-
-    void mpack_break_hit(const char* message);
-    #if MPACK_STDIO
-        void mpack_break_hit_format(const char* format, ...);
-        #define mpack_break_hit_at(line, file, ...) \
-                MPACK_EXPAND(mpack_break_hit_format("mpack breakpoint hit at " file ":" #line "\n" __VA_ARGS__))
-    #else
-        #define mpack_break_hit_at(line, file, ...) \
-                mpack_break_hit("mpack breakpoint hit at " file ":" #line )
-    #endif
-    #define mpack_break_hit_pos(line, file, ...) MPACK_EXPAND(mpack_break_hit_at(line, file, __VA_ARGS__))
-    #define mpack_break(...) MPACK_EXPAND(mpack_break_hit_pos(__LINE__, __FILE__, __VA_ARGS__))
+MPACK_NORETURN(void mpack_assert_fail_wrapper(const char *message));
+#if MPACK_STDIO
+MPACK_NORETURN(void mpack_assert_fail_format(const char *format, ...));
+#define mpack_assert_fail_at(line, file, exprstr, format, ...)                                                         \
+    MPACK_EXPAND(                                                                                                      \
+        mpack_assert_fail_format("mpack assertion failed at " file ":" #line "\n%s\n" format, exprstr, __VA_ARGS__))
 #else
-    #define mpack_assert(...) \
-            (MPACK_EXPAND((!(MPACK_EXTRACT_ARG0(__VA_ARGS__))) ? \
-                (MPACK_UNREACHABLE, (void)0) : \
-                (void)0))
-    #define mpack_break(...) ((void)0)
+#define mpack_assert_fail_at(line, file, exprstr, format, ...)                                                         \
+    mpack_assert_fail_wrapper("mpack assertion failed at " file ":" #line "\n" exprstr "\n")
 #endif
 
+#define mpack_assert_fail_pos(line, file, exprstr, expr, ...)                                                          \
+    MPACK_EXPAND(mpack_assert_fail_at(line, file, exprstr, __VA_ARGS__))
 
+// This contains a workaround to the pedantic C99 requirement of having at
+// least one argument to a variadic macro. The first argument is the
+// boolean expression, the optional second argument (if provided) must be a
+// literal format string, and any additional arguments are the format
+// argument list.
+//
+// Unfortunately this means macros are expanded in the expression before it
+// gets stringified. I haven't found a workaround to this.
+//
+// This adds two unused arguments to the format argument list when a
+// format string is provided, so this would complicate the use of
+// -Wformat and __attribute__((__format__)) on mpack_assert_fail_format()
+// if we ever bothered to implement it.
+#define mpack_assert(...)                                                                                              \
+    MPACK_EXPAND(                                                                                                      \
+        ((!(MPACK_EXTRACT_ARG0(__VA_ARGS__)))                                                                          \
+             ? mpack_assert_fail_pos(__LINE__, __FILE__, MPACK_STRINGIFY_ARG0(__VA_ARGS__), __VA_ARGS__, "", NULL)     \
+             : (void) 0))
+
+void mpack_break_hit(const char *message);
+#if MPACK_STDIO
+void mpack_break_hit_format(const char *format, ...);
+#define mpack_break_hit_at(line, file, ...)                                                                            \
+    MPACK_EXPAND(mpack_break_hit_format("mpack breakpoint hit at " file ":" #line "\n" __VA_ARGS__))
+#else
+#define mpack_break_hit_at(line, file, ...) mpack_break_hit("mpack breakpoint hit at " file ":" #line)
+#endif
+#define mpack_break_hit_pos(line, file, ...) MPACK_EXPAND(mpack_break_hit_at(line, file, __VA_ARGS__))
+#define mpack_break(...) MPACK_EXPAND(mpack_break_hit_pos(__LINE__, __FILE__, __VA_ARGS__))
+#else
+#define mpack_assert(...)                                                                                              \
+    (MPACK_EXPAND((!(MPACK_EXTRACT_ARG0(__VA_ARGS__))) ? (MPACK_UNREACHABLE, (void) 0) : (void) 0))
+#define mpack_break(...) ((void) 0)
+#endif
 
 // make sure we don't use the stdlib directly during development
 #if MPACK_STDLIB && defined(MPACK_UNIT_TESTS) && MPACK_INTERNAL && defined(__GNUC__)
-    #undef memcmp
-    #undef memcpy
-    #undef memmove
-    #undef memset
-    #undef strlen
-    #undef malloc
-    #undef calloc
-    #undef realloc
-    #undef free
-    #pragma GCC poison memcmp
-    #pragma GCC poison memcpy
-    #pragma GCC poison memmove
-    #pragma GCC poison memset
-    #pragma GCC poison strlen
-    #pragma GCC poison malloc
-    #pragma GCC poison calloc
-    #pragma GCC poison realloc
-    #pragma GCC poison free
+#undef memcmp
+#undef memcpy
+#undef memmove
+#undef memset
+#undef strlen
+#undef malloc
+#undef calloc
+#undef realloc
+#undef free
+#pragma GCC poison memcmp
+#pragma GCC poison memcpy
+#pragma GCC poison memmove
+#pragma GCC poison memset
+#pragma GCC poison strlen
+#pragma GCC poison malloc
+#pragma GCC poison calloc
+#pragma GCC poison realloc
+#pragma GCC poison free
 #endif
-
-
 
 // If we don't have these stdlib functions, we need to define them ourselves.
 // Either way we give them a lowercase name to make the code a bit nicer.
 
 #ifdef MPACK_MEMCMP
-    #define mpack_memcmp MPACK_MEMCMP
+#define mpack_memcmp MPACK_MEMCMP
 #else
-    int mpack_memcmp(const void* s1, const void* s2, size_t n);
+int mpack_memcmp(const void *s1, const void *s2, size_t n);
 #endif
 
 #ifdef MPACK_MEMCPY
-    #define mpack_memcpy MPACK_MEMCPY
+#define mpack_memcpy MPACK_MEMCPY
 #else
-    void* mpack_memcpy(void* MPACK_RESTRICT s1, const void* MPACK_RESTRICT s2, size_t n);
+void *mpack_memcpy(void *MPACK_RESTRICT s1, const void *MPACK_RESTRICT s2, size_t n);
 #endif
 
 #ifdef MPACK_MEMMOVE
-    #define mpack_memmove MPACK_MEMMOVE
+#define mpack_memmove MPACK_MEMMOVE
 #else
-    void* mpack_memmove(void* s1, const void* s2, size_t n);
+void *mpack_memmove(void *s1, const void *s2, size_t n);
 #endif
 
 #ifdef MPACK_MEMSET
-    #define mpack_memset MPACK_MEMSET
+#define mpack_memset MPACK_MEMSET
 #else
-    void* mpack_memset(void* s, int c, size_t n);
+void *mpack_memset(void *s, int c, size_t n);
 #endif
 
 #ifdef MPACK_STRLEN
-    #define mpack_strlen MPACK_STRLEN
+#define mpack_strlen MPACK_STRLEN
 #else
-    size_t mpack_strlen(const char* s);
+size_t mpack_strlen(const char *s);
 #endif
-
-
 
 #if MPACK_STDIO
-    #if defined(WIN32)
-        #define mpack_snprintf _snprintf
-    #else
-        #define mpack_snprintf snprintf
-    #endif
+#if defined(WIN32)
+#define mpack_snprintf _snprintf
+#else
+#define mpack_snprintf snprintf
 #endif
-
-
+#endif
 
 /* Debug logging */
 #if 0
-    #include <stdio.h>
-    #define mpack_log(...) (MPACK_EXPAND(printf(__VA_ARGS__)), fflush(stdout))
+#include <stdio.h>
+#define mpack_log(...) (MPACK_EXPAND(printf(__VA_ARGS__)), fflush(stdout))
 #else
-    #define mpack_log(...) ((void)0)
+#define mpack_log(...) ((void) 0)
 #endif
-
-
 
 /* Make sure our configuration makes sense */
 #ifndef MPACK_MALLOC
-    #if MPACK_STDIO
-        #error "MPACK_STDIO requires preprocessor definitions for MPACK_MALLOC and MPACK_FREE."
-    #endif
-    #if MPACK_READ_TRACKING
-        #error "MPACK_READ_TRACKING requires preprocessor definitions for MPACK_MALLOC and MPACK_FREE."
-    #endif
-    #if MPACK_WRITE_TRACKING
-        #error "MPACK_WRITE_TRACKING requires preprocessor definitions for MPACK_MALLOC and MPACK_FREE."
-    #endif
+#if MPACK_STDIO
+#error "MPACK_STDIO requires preprocessor definitions for MPACK_MALLOC and MPACK_FREE."
 #endif
-
-
+#if MPACK_READ_TRACKING
+#error "MPACK_READ_TRACKING requires preprocessor definitions for MPACK_MALLOC and MPACK_FREE."
+#endif
+#if MPACK_WRITE_TRACKING
+#error "MPACK_WRITE_TRACKING requires preprocessor definitions for MPACK_MALLOC and MPACK_FREE."
+#endif
+#endif
 
 /* Implement realloc if unavailable */
 #ifdef MPACK_MALLOC
-    #ifdef MPACK_REALLOC
-        MPACK_INLINE void* mpack_realloc(void* old_ptr, size_t used_size, size_t new_size) {
-            MPACK_UNUSED(used_size);
-            return MPACK_REALLOC(old_ptr, new_size);
-        }
-    #else
-        void* mpack_realloc(void* old_ptr, size_t used_size, size_t new_size);
-    #endif
+#ifdef MPACK_REALLOC
+MPACK_INLINE void *mpack_realloc(void *old_ptr, size_t used_size, size_t new_size) {
+    MPACK_UNUSED(used_size);
+    return MPACK_REALLOC(old_ptr, new_size);
+}
+#else
+void *mpack_realloc(void *old_ptr, size_t used_size, size_t new_size);
 #endif
-
-
+#endif
 
 /** @endcond */
 /**

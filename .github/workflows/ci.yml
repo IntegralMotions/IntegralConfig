@@ -25,11 +25,27 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure
-        run: make configure
-
       - name: Build
-        run: make build
+        run: make BUILD_TYPE=${{ matrix.build_type }} build
+
+      - name: C/C++ Lint (clang-format + clang-tidy)
+        uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: 'file'          
+          tidy-checks: ''        
+          database: build
+          file-annotations: true
+          thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
+          ignore: "tests/**|**/mpack/**"
+
+      - name: Fail on lint issues
+        if: |
+          steps.linter.outputs.clang-format-checks-failed > 0 ||
+          steps.linter.outputs.clang-tidy-checks-failed > 0
+        run: exit 1
 
       - name: Test
         id: test
