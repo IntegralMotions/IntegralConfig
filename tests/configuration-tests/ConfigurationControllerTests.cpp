@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ConfigurationController.h"
+#include "DefaultMessagePayloads.h"
 #include "IntegralCommunication/Communication.h"
 #include "IntegralCommunication/SevenBitEncodedCommunication.h"
 #include "MPackObject.hpp"
@@ -75,6 +76,8 @@ class ConfigurationControllerTests : public ::testing::Test {
         BoolSetting::registerMembers();
         NumberSetting<int>::registerMembers();
         StringSetting::registerMembers();
+
+        registerDefaultMessagePayloads();
     }
 
     static TestController &controller() {
@@ -134,7 +137,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesMessageAndCallsCallback) {
     mpack_write_cstr(&writer, "request");
 
     mpack_write_cstr(&writer, "opCode");
-    mpack_write_cstr(&writer, ReadKeys::ReadDevice);
+    mpack_write_cstr(&writer, DefaultReadKeys::ReadDevice);
 
     mpack_write_cstr(&writer, "payload");
     mpack_write_nil(&writer);
@@ -176,7 +179,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_cstr(&writer, "event");
 
     mpack_write_cstr(&writer, "opCode");
-    mpack_write_cstr(&writer, ReadKeys::WriteDevice);
+    mpack_write_cstr(&writer, DefaultReadKeys::WriteDevice);
 
     mpack_write_cstr(&writer, "payload");
 
