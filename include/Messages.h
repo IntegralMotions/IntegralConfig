@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Configuration.h"
 #include "MPackObject.hpp"
 #include "MPackObjectBase.h"
 #include "MessagePayloadRegistry.h"
@@ -31,11 +30,16 @@ class Message : public MPackObject<Message, 3> {
         return MsgType::Unknown;
     }
 
+    bool isOpCode(const char *value) const {
+        return std::strcmp(opCode, value) == 0;
+    }
+
   private:
     MPackObjectBase *createObject(const char * /*name*/) override {
         return MessagePayloadRegistry::create(opCode);
     }
 
+  public:
     char *msgType{};
     char *opCode{};
     MPackObjectBase *payload{nullptr};

@@ -56,7 +56,7 @@ class SettingValue : public MPackObject<TDerived, SETTING_VALUE_MEMBERS + AddedM
         return valueType;
     }
 
-  private:
+  public:
     uint32_t address;
     const char *id;
     const char *label;
@@ -81,7 +81,6 @@ class StringSetting : public SettingValue<StringSetting, const char *, 1> {
         registerMember("options", {CppType::Array, CppType::String}, &StringSetting::options);
     }
 
-  private:
     MPackArray<const char *> options;
 };
 
@@ -96,7 +95,6 @@ template <typename TValue> class NumberSetting : public SettingValue<NumberSetti
         Base::registerMember("options", {CppType::Array, Base::template getType<TValue>()}, &NumberSetting::options);
     }
 
-  private:
     MPackArray<TValue> options;
     TValue min;
     TValue max;

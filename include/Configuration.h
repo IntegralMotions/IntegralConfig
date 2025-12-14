@@ -32,7 +32,7 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
         return nullptr;
     }
 
-  private:
+  public:
     const char *type{};
     MPackObjectBase *value{};
 };
@@ -53,7 +53,7 @@ class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers
         return nullptr;
     }
 
-  private:
+  public:
     const char *id{};
     const char *label{};
     MPackArray<Setting *> settings{};
@@ -72,7 +72,7 @@ class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbe
         return new Group();
     }
 
-  private:
+  public:
     const char *id{};
     const char *label{};
     MPackArray<Group *> groups;
@@ -85,7 +85,6 @@ class DeviceInfo : public MPackObject<DeviceInfo, 2> { // NOLINT(readability-mag
         registerMember("firmwareVersion", {CppType::String, CppType::None}, &DeviceInfo::firmwareVersion);
     }
 
-  private:
     const char *model{};
     const char *firmwareVersion{};
 };
@@ -108,7 +107,7 @@ class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbe
         return nullptr;
     }
 
-  private:
+  public:
     DeviceInfo *deviceInfo{};
     MPackArray<Module *> modules;
 };
