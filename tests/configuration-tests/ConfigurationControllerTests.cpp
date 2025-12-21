@@ -15,6 +15,11 @@
 #include "SettingValues.h"
 #include "mpack/mpack-writer.h"
 
+struct ReceiveCtx {
+    bool &called;
+    MsgType &type;
+};
+
 class TestCommunication : public Communication {
   public:
     std::vector<uint8_t> outgoingBytes;
@@ -118,9 +123,17 @@ TEST_F(ConfigurationControllerTests, WriteSendsBytesThroughCommunication) {
 
 TEST_F(ConfigurationControllerTests, LoopDoesNothingWhenNoMessageAvailable) {
     bool callbackCalled = false;
+    MsgType receivedMessageType = MsgType::Unknown;
 
-    controller().setOnReceived([&](const Message &) { callbackCalled = true; });
+    ReceiveCtx ctx{callbackCalled, receivedMessageType};
 
+    controller().setOnReceived(
+        [](void *context, const Message &message) {
+            auto *ctx = static_cast<ReceiveCtx *>(context);
+            ctx->called = true;
+            ctx->type = message.getMsgType();
+        },
+        &ctx);
     controller().loop();
 
     EXPECT_FALSE(callbackCalled);
@@ -154,11 +167,15 @@ TEST_F(ConfigurationControllerTests, LoopParsesMessageAndCallsCallback) {
     bool callbackCalled = false;
     MsgType receivedMessageType = MsgType::Unknown;
 
-    controller().setOnReceived([&](const Message &message) {
-        callbackCalled = true;
-        receivedMessageType = message.getMsgType();
-    });
+    ReceiveCtx ctx{callbackCalled, receivedMessageType};
 
+    controller().setOnReceived(
+        [](void *context, const Message &message) {
+            auto *ctx = static_cast<ReceiveCtx *>(context);
+            ctx->called = true;
+            ctx->type = message.getMsgType();
+        },
+        &ctx);
     controller().loop();
 
     EXPECT_TRUE(callbackCalled);
@@ -312,11 +329,15 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     bool callbackCalled = false;
     MsgType receivedMessageType = MsgType::Unknown;
 
-    controller().setOnReceived([&](const Message &message) {
-        callbackCalled = true;
-        receivedMessageType = message.getMsgType();
-        // later you can assert on the payload when you expose it
-    });
+    ReceiveCtx ctx{callbackCalled, receivedMessageType};
+
+    controller().setOnReceived(
+        [](void *context, const Message &message) {
+            auto *ctx = static_cast<ReceiveCtx *>(context);
+            ctx->called = true;
+            ctx->type = message.getMsgType();
+        },
+        &ctx);
 
     controller().loop();
 
