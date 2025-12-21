@@ -7,12 +7,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <mpack/mpack.h>
 
 template <size_t TxSize, size_t RxSize> class ConfigurationController {
   public:
-    using ReceiveCallback = std::function<void(const Message &)>;
+    using ReceiveCallback = void (*)(void *context, const Message &);
 
     ConfigurationController(const ConfigurationController &) = delete;
     ConfigurationController &operator=(const ConfigurationController &) = delete;
@@ -20,7 +19,7 @@ template <size_t TxSize, size_t RxSize> class ConfigurationController {
     static void init(Communication &communication);
     static ConfigurationController &get();
 
-    void setOnReceived(ReceiveCallback callback);
+    void setOnReceived(ReceiveCallback callback, void *context = nullptr);
 
     bool write(const MPackObjectBase &object);
     void loop();
@@ -31,7 +30,9 @@ template <size_t TxSize, size_t RxSize> class ConfigurationController {
 
     SevenBitEncodedCommunication<TxSize, RxSize> _communication;
     mpack_reader_t _reader{};
+
     ReceiveCallback _onReceived;
+    void *_onReceivedContext = nullptr;
 
     static ConfigurationController *_instance;
 };
@@ -56,8 +57,9 @@ ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication &
     : _communication(communication) {}
 
 template <size_t TxSize, size_t RxSize>
-void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback callback) {
-    _onReceived = std::move(callback);
+void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback callback, void *context) {
+    _onReceived = callback;
+    _onReceivedContext = context;
 }
 
 template <size_t TxSize, size_t RxSize>
@@ -96,7 +98,7 @@ template <size_t TxSize, size_t RxSize> void ConfigurationController<TxSize, RxS
         return;
     }
 
-    if (_onReceived) {
-        _onReceived(message);
+    if (_onReceived != nullptr) {
+        _onReceived(_onReceivedContext, message);
     }
 }
