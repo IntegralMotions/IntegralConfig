@@ -40,7 +40,7 @@ class Message : public MPackObject<Message, 3> {
     }
 
   public:
-    char *msgType{};
-    char *opCode{};
+    const char *msgType{};
+    const char *opCode{};
     MPackObjectBase *payload{nullptr};
 };
