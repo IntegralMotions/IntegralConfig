@@ -25,7 +25,7 @@ template <typename Derived, size_t MaxMembers> class MPackObject : public MPackO
 };
 
 template <typename Derived, size_t MaxMembers> MPackObject<Derived, MaxMembers>::MPackObject() {
-    static_cast<Derived *>(this)->registerMembers();
+    Derived::registerMembers();
 }
 
 template <typename Derived, size_t MaxMembers>

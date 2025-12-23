@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+#include "Configuration.h"
 #include "ConfigurationController.h"
 #include "DefaultMessagePayloads.h"
 #include "IntegralCommunication/Communication.h"
