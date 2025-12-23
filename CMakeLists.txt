@@ -22,7 +22,7 @@ include(FetchContent)
 FetchContent_Declare(
     IntegralCommunication
     GIT_REPOSITORY https://github.com/IntegralMotions/IntegralCommunication.git
-    GIT_TAG        v1.0.0
+    GIT_TAG        v1.1.0
     GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(IntegralCommunication)
