@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-cmake_policy(SET CMP0135 NEW)
 
 project(IntegralConfig
     VERSION 1.0.0
@@ -23,7 +22,7 @@ include(FetchContent)
 FetchContent_Declare(
     IntegralCommunication
     GIT_REPOSITORY https://github.com/IntegralMotions/IntegralCommunication.git
-    GIT_TAG        v1.0.0
+    GIT_TAG        v1.1.0
     GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(IntegralCommunication)
@@ -59,6 +58,7 @@ if(INTEGRALCONFIG_BUILD_TESTS)
     FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)

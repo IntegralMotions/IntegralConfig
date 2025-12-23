@@ -37,8 +37,9 @@ class TestCommunication : public Communication {
     }
 
   protected:
-    void writeImpl(const uint8_t *data, size_t size) override {
+    size_t writeImpl(const uint8_t *data, size_t size) override {
         outgoingBytes.insert(outgoingBytes.end(), data, data + size);
+        return true;
     }
 
     size_t availableImpl() override {
@@ -48,8 +49,9 @@ class TestCommunication : public Communication {
     size_t readImpl(uint8_t *data, size_t size) override {
         size_t availableBytes = availableImpl();
         size_t countToRead = std::min(availableBytes, size);
-        if (countToRead == 0)
+        if (countToRead == 0) {
             return 0;
+        }
 
         std::copy(incomingBytes.begin() + readPosition, incomingBytes.begin() + readPosition + countToRead, data);
 
@@ -103,7 +105,7 @@ class ConfigurationControllerTests : public ::testing::Test {
 template <size_t TransmissionSize, size_t ReceptionSize>
 void injectEncodedMessage(TestCommunication &communication, const uint8_t *messageData, size_t messageLength) {
     TestCommunication temporaryCommunication;
-    SevenBitEncodedCommunication<TransmissionSize, ReceptionSize> encoder(temporaryCommunication);
+    SevenBitEncodedCommunication encoder(temporaryCommunication, TransmissionSize, ReceptionSize);
 
     bool success = encoder.writeMessage(messageData, messageLength);
     ASSERT_TRUE(success);
