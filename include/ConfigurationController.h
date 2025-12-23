@@ -28,7 +28,7 @@ template <size_t TxSize, size_t RxSize> class ConfigurationController {
     ConfigurationController(Communication &comm);
     ~ConfigurationController() = default;
 
-    SevenBitEncodedCommunication<TxSize, RxSize> _communication;
+    SevenBitEncodedCommunication _communication;
     mpack_reader_t _reader{};
 
     ReceiveCallback _onReceived;
@@ -54,7 +54,7 @@ ConfigurationController<TxSize, RxSize> &ConfigurationController<TxSize, RxSize>
 
 template <size_t TxSize, size_t RxSize>
 ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication &communication)
-    : _communication(communication) {}
+    : _communication(communication, TxSize, RxSize) {}
 
 template <size_t TxSize, size_t RxSize>
 void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback callback, void *context) {
