@@ -82,5 +82,5 @@ if(INTEGRALCONFIG_BUILD_TESTS)
     )
 
     include(GoogleTest)
-    gtest_discover_tests(IntegralConfigTests)
+    gtest_discover_tests(IntegralConfigTests PROPERTIES LABELS IntegralConfig)
 endif()

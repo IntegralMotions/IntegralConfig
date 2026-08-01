@@ -6,10 +6,12 @@ UseTab: Never
 
 ColumnLimit: 120
 BreakBeforeBraces: Attach
+BreakTemplateDeclarations: Yes
 AllowShortIfStatementsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 
 SortIncludes: true
 DerivePointerAlignment: false
+PointerAlignment: Left
 NamespaceIndentation: All
 SpaceAfterCStyleCast: true
