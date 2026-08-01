@@ -13,5 +13,8 @@ permissions:
 
 jobs:
   ci:
-    uses: IntegralMotions/CppTooling/.github/workflows/cpp-ci.yml@v0.1.0
+    uses: IntegralMotions/CppTooling/.github/workflows/cpp-ci.yml@v0.1.1
+    with:
+      ignore_tidy: 'tests/**|build/**|mpack/**'
+      ignore_format: 'tests/**|build/**|mpack/**'
     secrets: inherit
