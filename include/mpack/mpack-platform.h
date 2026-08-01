@@ -875,7 +875,7 @@
  * Asserts are only used when @ref MPACK_DEBUG is enabled, and can be
  * triggered by bugs in MPack or bugs due to incorrect usage of MPack.
  */
-void mpack_assert_fail(const char *message);
+void mpack_assert_fail(const char* message);
 /**
  * @}
  */
@@ -1596,9 +1596,9 @@ MPACK_EXTERN_C_BEGIN
  */
 
 #if MPACK_DEBUG
-MPACK_NORETURN(void mpack_assert_fail_wrapper(const char *message));
+MPACK_NORETURN(void mpack_assert_fail_wrapper(const char* message));
 #if MPACK_STDIO
-MPACK_NORETURN(void mpack_assert_fail_format(const char *format, ...));
+MPACK_NORETURN(void mpack_assert_fail_format(const char* format, ...));
 #define mpack_assert_fail_at(line, file, exprstr, format, ...)                                                         \
     MPACK_EXPAND(                                                                                                      \
         mpack_assert_fail_format("mpack assertion failed at " file ":" #line "\n%s\n" format, exprstr, __VA_ARGS__))
@@ -1629,9 +1629,9 @@ MPACK_NORETURN(void mpack_assert_fail_format(const char *format, ...));
              ? mpack_assert_fail_pos(__LINE__, __FILE__, MPACK_STRINGIFY_ARG0(__VA_ARGS__), __VA_ARGS__, "", NULL)     \
              : (void) 0))
 
-void mpack_break_hit(const char *message);
+void mpack_break_hit(const char* message);
 #if MPACK_STDIO
-void mpack_break_hit_format(const char *format, ...);
+void mpack_break_hit_format(const char* format, ...);
 #define mpack_break_hit_at(line, file, ...)                                                                            \
     MPACK_EXPAND(mpack_break_hit_format("mpack breakpoint hit at " file ":" #line "\n" __VA_ARGS__))
 #else
@@ -1673,31 +1673,31 @@ void mpack_break_hit_format(const char *format, ...);
 #ifdef MPACK_MEMCMP
 #define mpack_memcmp MPACK_MEMCMP
 #else
-int mpack_memcmp(const void *s1, const void *s2, size_t n);
+int mpack_memcmp(const void* s1, const void* s2, size_t n);
 #endif
 
 #ifdef MPACK_MEMCPY
 #define mpack_memcpy MPACK_MEMCPY
 #else
-void *mpack_memcpy(void *MPACK_RESTRICT s1, const void *MPACK_RESTRICT s2, size_t n);
+void* mpack_memcpy(void* MPACK_RESTRICT s1, const void* MPACK_RESTRICT s2, size_t n);
 #endif
 
 #ifdef MPACK_MEMMOVE
 #define mpack_memmove MPACK_MEMMOVE
 #else
-void *mpack_memmove(void *s1, const void *s2, size_t n);
+void* mpack_memmove(void* s1, const void* s2, size_t n);
 #endif
 
 #ifdef MPACK_MEMSET
 #define mpack_memset MPACK_MEMSET
 #else
-void *mpack_memset(void *s, int c, size_t n);
+void* mpack_memset(void* s, int c, size_t n);
 #endif
 
 #ifdef MPACK_STRLEN
 #define mpack_strlen MPACK_STRLEN
 #else
-size_t mpack_strlen(const char *s);
+size_t mpack_strlen(const char* s);
 #endif
 
 #if MPACK_STDIO
@@ -1732,12 +1732,12 @@ size_t mpack_strlen(const char *s);
 /* Implement realloc if unavailable */
 #ifdef MPACK_MALLOC
 #ifdef MPACK_REALLOC
-MPACK_INLINE void *mpack_realloc(void *old_ptr, size_t used_size, size_t new_size) {
+MPACK_INLINE void* mpack_realloc(void* old_ptr, size_t used_size, size_t new_size) {
     MPACK_UNUSED(used_size);
     return MPACK_REALLOC(old_ptr, new_size);
 }
 #else
-void *mpack_realloc(void *old_ptr, size_t used_size, size_t new_size);
+void* mpack_realloc(void* old_ptr, size_t used_size, size_t new_size);
 #endif
 #endif
 

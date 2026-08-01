@@ -9,65 +9,67 @@
 #include <cstdint>
 #include <mpack/mpack.h>
 
-template <size_t TxSize, size_t RxSize> class ConfigurationController {
+template <size_t TxSize, size_t RxSize>
+class ConfigurationController {
   public:
-    using ReceiveCallback = void (*)(void *context, const Message &);
+    using ReceiveCallback = void (*)(void* context, const Message&);
 
-    ConfigurationController(const ConfigurationController &) = delete;
-    ConfigurationController &operator=(const ConfigurationController &) = delete;
+    ConfigurationController(const ConfigurationController&) = delete;
+    ConfigurationController& operator=(const ConfigurationController&) = delete;
 
-    static void init(Communication &communication);
-    static ConfigurationController &get();
+    static void init(Communication& communication);
+    static ConfigurationController& get();
 
-    void setOnReceived(ReceiveCallback callback, void *context = nullptr);
+    void setOnReceived(ReceiveCallback callback, void* context = nullptr);
 
-    bool write(const MPackObjectBase &object);
+    bool write(const MPackObjectBase& object);
     void loop();
 
   private:
-    ConfigurationController(Communication &comm);
+    ConfigurationController(Communication& comm);
     ~ConfigurationController() = default;
 
     SevenBitEncodedCommunication _communication;
     mpack_reader_t _reader{};
 
     ReceiveCallback _onReceived;
-    void *_onReceivedContext = nullptr;
+    void* _onReceivedContext = nullptr;
 
-    static ConfigurationController *_instance;
+    static ConfigurationController* _instance;
 };
 
 // static member definition (important in a header for templates)
 template <size_t TxSize, size_t RxSize>
-ConfigurationController<TxSize, RxSize> *ConfigurationController<TxSize, RxSize>::_instance = nullptr;
+ConfigurationController<TxSize, RxSize>* ConfigurationController<TxSize, RxSize>::_instance = nullptr;
 
-template <size_t TxSize, size_t RxSize> void ConfigurationController<TxSize, RxSize>::init(Communication &comm) {
+template <size_t TxSize, size_t RxSize>
+void ConfigurationController<TxSize, RxSize>::init(Communication& comm) {
     if (_instance == nullptr) {
         _instance = new ConfigurationController(comm);
     }
 }
 
 template <size_t TxSize, size_t RxSize>
-ConfigurationController<TxSize, RxSize> &ConfigurationController<TxSize, RxSize>::get() {
+ConfigurationController<TxSize, RxSize>& ConfigurationController<TxSize, RxSize>::get() {
     return *_instance;
 }
 
 template <size_t TxSize, size_t RxSize>
-ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication &communication)
+ConfigurationController<TxSize, RxSize>::ConfigurationController(Communication& communication)
     : _communication(communication, TxSize, RxSize) {}
 
 template <size_t TxSize, size_t RxSize>
-void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback callback, void *context) {
+void ConfigurationController<TxSize, RxSize>::setOnReceived(ReceiveCallback callback, void* context) {
     _onReceived = callback;
     _onReceivedContext = context;
 }
 
 template <size_t TxSize, size_t RxSize>
-bool ConfigurationController<TxSize, RxSize>::write(const MPackObjectBase &object) {
+bool ConfigurationController<TxSize, RxSize>::write(const MPackObjectBase& object) {
     mpack_writer_t writer;
     std::array<uint8_t, TxSize> buffer;
 
-    mpack_writer_init(&writer, reinterpret_cast<char *>(buffer.data()), buffer.size());
+    mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
 
     object.write(writer);
     size_t len = mpack_writer_buffer_used(&writer);
@@ -79,7 +81,8 @@ bool ConfigurationController<TxSize, RxSize>::write(const MPackObjectBase &objec
     return _communication.writeMessage(buffer.data(), len);
 }
 
-template <size_t TxSize, size_t RxSize> void ConfigurationController<TxSize, RxSize>::loop() {
+template <size_t TxSize, size_t RxSize>
+void ConfigurationController<TxSize, RxSize>::loop() {
     std::array<uint8_t, RxSize> messageBytes;
     size_t messageLength;
 
@@ -88,7 +91,7 @@ template <size_t TxSize, size_t RxSize> void ConfigurationController<TxSize, RxS
     }
 
     mpack_reader_t reader;
-    mpack_reader_init_data(&reader, reinterpret_cast<const char *>(messageBytes.data()), messageLength);
+    mpack_reader_init_data(&reader, reinterpret_cast<const char*>(messageBytes.data()), messageLength);
 
     Message message;
     message.read(reader);

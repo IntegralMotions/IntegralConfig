@@ -29,7 +29,7 @@ MPACK_SILENCE_WARNINGS_BEGIN
 
 // Helpers
 
-MPACK_STATIC_INLINE uint8_t mpack_expect_native_u8(mpack_reader_t *reader) {
+MPACK_STATIC_INLINE uint8_t mpack_expect_native_u8(mpack_reader_t* reader) {
     if (mpack_reader_error(reader) != mpack_ok)
         return 0;
     uint8_t type;
@@ -41,7 +41,7 @@ MPACK_STATIC_INLINE uint8_t mpack_expect_native_u8(mpack_reader_t *reader) {
 }
 
 #if !MPACK_OPTIMIZE_FOR_SIZE
-MPACK_STATIC_INLINE uint16_t mpack_expect_native_u16(mpack_reader_t *reader) {
+MPACK_STATIC_INLINE uint16_t mpack_expect_native_u16(mpack_reader_t* reader) {
     if (mpack_reader_error(reader) != mpack_ok)
         return 0;
     uint16_t type;
@@ -52,7 +52,7 @@ MPACK_STATIC_INLINE uint16_t mpack_expect_native_u16(mpack_reader_t *reader) {
     return type;
 }
 
-MPACK_STATIC_INLINE uint32_t mpack_expect_native_u32(mpack_reader_t *reader) {
+MPACK_STATIC_INLINE uint32_t mpack_expect_native_u32(mpack_reader_t* reader) {
     if (mpack_reader_error(reader) != mpack_ok)
         return 0;
     uint32_t type;
@@ -64,14 +64,14 @@ MPACK_STATIC_INLINE uint32_t mpack_expect_native_u32(mpack_reader_t *reader) {
 }
 #endif
 
-MPACK_STATIC_INLINE uint8_t mpack_expect_type_byte(mpack_reader_t *reader) {
+MPACK_STATIC_INLINE uint8_t mpack_expect_type_byte(mpack_reader_t* reader) {
     mpack_reader_track_element(reader);
     return mpack_expect_native_u8(reader);
 }
 
 // Basic Number Functions
 
-uint8_t mpack_expect_u8(mpack_reader_t *reader) {
+uint8_t mpack_expect_u8(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         if (var.v.u <= MPACK_UINT8_MAX)
@@ -84,7 +84,7 @@ uint8_t mpack_expect_u8(mpack_reader_t *reader) {
     return 0;
 }
 
-uint16_t mpack_expect_u16(mpack_reader_t *reader) {
+uint16_t mpack_expect_u16(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         if (var.v.u <= MPACK_UINT16_MAX)
@@ -97,7 +97,7 @@ uint16_t mpack_expect_u16(mpack_reader_t *reader) {
     return 0;
 }
 
-uint32_t mpack_expect_u32(mpack_reader_t *reader) {
+uint32_t mpack_expect_u32(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         if (var.v.u <= MPACK_UINT32_MAX)
@@ -110,7 +110,7 @@ uint32_t mpack_expect_u32(mpack_reader_t *reader) {
     return 0;
 }
 
-uint64_t mpack_expect_u64(mpack_reader_t *reader) {
+uint64_t mpack_expect_u64(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         return var.v.u;
@@ -122,7 +122,7 @@ uint64_t mpack_expect_u64(mpack_reader_t *reader) {
     return 0;
 }
 
-int8_t mpack_expect_i8(mpack_reader_t *reader) {
+int8_t mpack_expect_i8(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         if (var.v.u <= MPACK_INT8_MAX)
@@ -135,7 +135,7 @@ int8_t mpack_expect_i8(mpack_reader_t *reader) {
     return 0;
 }
 
-int16_t mpack_expect_i16(mpack_reader_t *reader) {
+int16_t mpack_expect_i16(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         if (var.v.u <= MPACK_INT16_MAX)
@@ -148,7 +148,7 @@ int16_t mpack_expect_i16(mpack_reader_t *reader) {
     return 0;
 }
 
-int32_t mpack_expect_i32(mpack_reader_t *reader) {
+int32_t mpack_expect_i32(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         if (var.v.u <= MPACK_INT32_MAX)
@@ -161,7 +161,7 @@ int32_t mpack_expect_i32(mpack_reader_t *reader) {
     return 0;
 }
 
-int64_t mpack_expect_i64(mpack_reader_t *reader) {
+int64_t mpack_expect_i64(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint) {
         if (var.v.u <= MPACK_INT64_MAX)
@@ -174,7 +174,7 @@ int64_t mpack_expect_i64(mpack_reader_t *reader) {
 }
 
 #if MPACK_FLOAT
-float mpack_expect_float(mpack_reader_t *reader) {
+float mpack_expect_float(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint)
         return (float) var.v.u;
@@ -197,7 +197,7 @@ float mpack_expect_float(mpack_reader_t *reader) {
 #endif
 
 #if MPACK_DOUBLE
-double mpack_expect_double(mpack_reader_t *reader) {
+double mpack_expect_double(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_uint)
         return (double) var.v.u;
@@ -213,7 +213,7 @@ double mpack_expect_double(mpack_reader_t *reader) {
 #endif
 
 #if MPACK_FLOAT
-float mpack_expect_float_strict(mpack_reader_t *reader) {
+float mpack_expect_float_strict(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_float)
         return var.v.f;
@@ -223,7 +223,7 @@ float mpack_expect_float_strict(mpack_reader_t *reader) {
 #endif
 
 #if MPACK_DOUBLE
-double mpack_expect_double_strict(mpack_reader_t *reader) {
+double mpack_expect_double_strict(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_float)
         return (double) var.v.f;
@@ -235,7 +235,7 @@ double mpack_expect_double_strict(mpack_reader_t *reader) {
 #endif
 
 #if !MPACK_FLOAT
-uint32_t mpack_expect_raw_float(mpack_reader_t *reader) {
+uint32_t mpack_expect_raw_float(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_float)
         return var.v.f;
@@ -245,7 +245,7 @@ uint32_t mpack_expect_raw_float(mpack_reader_t *reader) {
 #endif
 
 #if !MPACK_DOUBLE
-uint64_t mpack_expect_raw_double(mpack_reader_t *reader) {
+uint64_t mpack_expect_raw_double(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_double)
         return var.v.d;
@@ -279,79 +279,79 @@ uint64_t mpack_expect_raw_double(mpack_reader_t *reader) {
                                                                                                                        \
     return val;
 
-uint8_t mpack_expect_u8_range(mpack_reader_t *reader, uint8_t min_value,
+uint8_t mpack_expect_u8_range(mpack_reader_t* reader, uint8_t min_value,
                               uint8_t max_value){MPACK_EXPECT_RANGE_IMPL(u8, uint8_t)} uint16_t
-    mpack_expect_u16_range(mpack_reader_t *reader, uint16_t min_value,
+    mpack_expect_u16_range(mpack_reader_t* reader, uint16_t min_value,
                            uint16_t max_value){MPACK_EXPECT_RANGE_IMPL(u16, uint16_t)} uint32_t
-    mpack_expect_u32_range(mpack_reader_t *reader, uint32_t min_value,
+    mpack_expect_u32_range(mpack_reader_t* reader, uint32_t min_value,
                            uint32_t max_value){MPACK_EXPECT_RANGE_IMPL(u32, uint32_t)} uint64_t
-    mpack_expect_u64_range(mpack_reader_t *reader, uint64_t min_value,
+    mpack_expect_u64_range(mpack_reader_t* reader, uint64_t min_value,
                            uint64_t max_value){MPACK_EXPECT_RANGE_IMPL(u64, uint64_t)}
 
-int8_t mpack_expect_i8_range(mpack_reader_t *reader, int8_t min_value,
+int8_t mpack_expect_i8_range(mpack_reader_t* reader, int8_t min_value,
                              int8_t max_value){MPACK_EXPECT_RANGE_IMPL(i8, int8_t)} int16_t
-    mpack_expect_i16_range(mpack_reader_t *reader, int16_t min_value,
+    mpack_expect_i16_range(mpack_reader_t* reader, int16_t min_value,
                            int16_t max_value){MPACK_EXPECT_RANGE_IMPL(i16, int16_t)} int32_t
-    mpack_expect_i32_range(mpack_reader_t *reader, int32_t min_value,
+    mpack_expect_i32_range(mpack_reader_t* reader, int32_t min_value,
                            int32_t max_value){MPACK_EXPECT_RANGE_IMPL(i32, int32_t)} int64_t
-    mpack_expect_i64_range(mpack_reader_t *reader, int64_t min_value, int64_t max_value) {
+    mpack_expect_i64_range(mpack_reader_t* reader, int64_t min_value, int64_t max_value) {
     MPACK_EXPECT_RANGE_IMPL(i64, int64_t)
 }
 
 #if MPACK_FLOAT
-float mpack_expect_float_range(mpack_reader_t *reader, float min_value, float max_value) {
+float mpack_expect_float_range(mpack_reader_t* reader, float min_value, float max_value) {
     MPACK_EXPECT_RANGE_IMPL(float, float)
 }
 #endif
 #if MPACK_DOUBLE
-double mpack_expect_double_range(mpack_reader_t *reader, double min_value,
+double mpack_expect_double_range(mpack_reader_t* reader, double min_value,
                                  double max_value){MPACK_EXPECT_RANGE_IMPL(double, double)}
 #endif
 
-uint32_t mpack_expect_map_range(mpack_reader_t *reader, uint32_t min_value,
+uint32_t mpack_expect_map_range(mpack_reader_t* reader, uint32_t min_value,
                                 uint32_t max_value){MPACK_EXPECT_RANGE_IMPL(map, uint32_t)} uint32_t
-    mpack_expect_array_range(mpack_reader_t *reader, uint32_t min_value, uint32_t max_value) {
+    mpack_expect_array_range(mpack_reader_t* reader, uint32_t min_value, uint32_t max_value) {
     MPACK_EXPECT_RANGE_IMPL(array, uint32_t)
 }
 
 // Matching Number Functions
 
-void mpack_expect_uint_match(mpack_reader_t *reader, uint64_t value) {
+void mpack_expect_uint_match(mpack_reader_t* reader, uint64_t value) {
     if (mpack_expect_u64(reader) != value)
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
-void mpack_expect_int_match(mpack_reader_t *reader, int64_t value) {
+void mpack_expect_int_match(mpack_reader_t* reader, int64_t value) {
     if (mpack_expect_i64(reader) != value)
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
 // Other Basic Types
 
-void mpack_expect_nil(mpack_reader_t *reader) {
+void mpack_expect_nil(mpack_reader_t* reader) {
     if (mpack_expect_type_byte(reader) != 0xc0)
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
-bool mpack_expect_bool(mpack_reader_t *reader) {
+bool mpack_expect_bool(mpack_reader_t* reader) {
     uint8_t type = mpack_expect_type_byte(reader);
     if ((type & ~1) != 0xc2)
         mpack_reader_flag_error(reader, mpack_error_type);
     return (bool) (type & 1);
 }
 
-void mpack_expect_true(mpack_reader_t *reader) {
+void mpack_expect_true(mpack_reader_t* reader) {
     if (mpack_expect_bool(reader) != true)
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
-void mpack_expect_false(mpack_reader_t *reader) {
+void mpack_expect_false(mpack_reader_t* reader) {
     if (mpack_expect_bool(reader) != false)
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
 #if MPACK_EXTENSIONS
-mpack_timestamp_t mpack_expect_timestamp(mpack_reader_t *reader) {
+mpack_timestamp_t mpack_expect_timestamp(mpack_reader_t* reader) {
     mpack_timestamp_t zero = {0, 0};
 
     mpack_tag_t tag = mpack_read_tag(reader);
@@ -367,14 +367,14 @@ mpack_timestamp_t mpack_expect_timestamp(mpack_reader_t *reader) {
     return mpack_read_timestamp(reader, mpack_tag_ext_length(&tag));
 }
 
-int64_t mpack_expect_timestamp_truncate(mpack_reader_t *reader) {
+int64_t mpack_expect_timestamp_truncate(mpack_reader_t* reader) {
     return mpack_expect_timestamp(reader).seconds;
 }
 #endif
 
 // Compound Types
 
-uint32_t mpack_expect_map(mpack_reader_t *reader) {
+uint32_t mpack_expect_map(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_map)
         return var.v.n;
@@ -382,12 +382,12 @@ uint32_t mpack_expect_map(mpack_reader_t *reader) {
     return 0;
 }
 
-void mpack_expect_map_match(mpack_reader_t *reader, uint32_t count) {
+void mpack_expect_map_match(mpack_reader_t* reader, uint32_t count) {
     if (mpack_expect_map(reader) != count)
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
-bool mpack_expect_map_or_nil(mpack_reader_t *reader, uint32_t *count) {
+bool mpack_expect_map_or_nil(mpack_reader_t* reader, uint32_t* count) {
     mpack_assert(count != NULL, "count cannot be NULL");
 
     mpack_tag_t var = mpack_read_tag(reader);
@@ -404,7 +404,7 @@ bool mpack_expect_map_or_nil(mpack_reader_t *reader, uint32_t *count) {
     return false;
 }
 
-bool mpack_expect_map_max_or_nil(mpack_reader_t *reader, uint32_t max_count, uint32_t *count) {
+bool mpack_expect_map_max_or_nil(mpack_reader_t* reader, uint32_t max_count, uint32_t* count) {
     mpack_assert(count != NULL, "count cannot be NULL");
 
     bool has_map = mpack_expect_map_or_nil(reader, count);
@@ -416,7 +416,7 @@ bool mpack_expect_map_max_or_nil(mpack_reader_t *reader, uint32_t max_count, uin
     return has_map;
 }
 
-uint32_t mpack_expect_array(mpack_reader_t *reader) {
+uint32_t mpack_expect_array(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_array)
         return var.v.n;
@@ -424,12 +424,12 @@ uint32_t mpack_expect_array(mpack_reader_t *reader) {
     return 0;
 }
 
-void mpack_expect_array_match(mpack_reader_t *reader, uint32_t count) {
+void mpack_expect_array_match(mpack_reader_t* reader, uint32_t count) {
     if (mpack_expect_array(reader) != count)
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
-bool mpack_expect_array_or_nil(mpack_reader_t *reader, uint32_t *count) {
+bool mpack_expect_array_or_nil(mpack_reader_t* reader, uint32_t* count) {
     mpack_assert(count != NULL, "count cannot be NULL");
 
     mpack_tag_t var = mpack_read_tag(reader);
@@ -446,7 +446,7 @@ bool mpack_expect_array_or_nil(mpack_reader_t *reader, uint32_t *count) {
     return false;
 }
 
-bool mpack_expect_array_max_or_nil(mpack_reader_t *reader, uint32_t max_count, uint32_t *count) {
+bool mpack_expect_array_max_or_nil(mpack_reader_t* reader, uint32_t max_count, uint32_t* count) {
     mpack_assert(count != NULL, "count cannot be NULL");
 
     bool has_array = mpack_expect_array_or_nil(reader, count);
@@ -459,8 +459,8 @@ bool mpack_expect_array_max_or_nil(mpack_reader_t *reader, uint32_t max_count, u
 }
 
 #ifdef MPACK_MALLOC
-void *mpack_expect_array_alloc_impl(mpack_reader_t *reader, size_t element_size, uint32_t max_count,
-                                    uint32_t *out_count, bool allow_nil) {
+void* mpack_expect_array_alloc_impl(mpack_reader_t* reader, size_t element_size, uint32_t max_count,
+                                    uint32_t* out_count, bool allow_nil) {
     mpack_assert(out_count != NULL, "out_count cannot be NULL");
     *out_count = 0;
 
@@ -483,7 +483,7 @@ void *mpack_expect_array_alloc_impl(mpack_reader_t *reader, size_t element_size,
         return NULL;
     }
 
-    void *p = MPACK_MALLOC(element_size * count);
+    void* p = MPACK_MALLOC(element_size * count);
     if (p == NULL) {
         mpack_reader_flag_error(reader, mpack_error_memory);
         return NULL;
@@ -496,7 +496,7 @@ void *mpack_expect_array_alloc_impl(mpack_reader_t *reader, size_t element_size,
 
 // Str, Bin and Ext Functions
 
-uint32_t mpack_expect_str(mpack_reader_t *reader) {
+uint32_t mpack_expect_str(mpack_reader_t* reader) {
 #if MPACK_OPTIMIZE_FOR_SIZE
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_str)
@@ -527,7 +527,7 @@ uint32_t mpack_expect_str(mpack_reader_t *reader) {
 #endif
 }
 
-size_t mpack_expect_str_buf(mpack_reader_t *reader, char *buf, size_t bufsize) {
+size_t mpack_expect_str_buf(mpack_reader_t* reader, char* buf, size_t bufsize) {
     mpack_assert(buf != NULL, "buf cannot be NULL");
 
     size_t length = mpack_expect_str(reader);
@@ -547,7 +547,7 @@ size_t mpack_expect_str_buf(mpack_reader_t *reader, char *buf, size_t bufsize) {
     return length;
 }
 
-size_t mpack_expect_utf8(mpack_reader_t *reader, char *buf, size_t size) {
+size_t mpack_expect_utf8(mpack_reader_t* reader, char* buf, size_t size) {
     mpack_assert(buf != NULL, "buf cannot be NULL");
 
     size_t length = mpack_expect_str_buf(reader, buf, size);
@@ -560,7 +560,7 @@ size_t mpack_expect_utf8(mpack_reader_t *reader, char *buf, size_t size) {
     return length;
 }
 
-uint32_t mpack_expect_bin(mpack_reader_t *reader) {
+uint32_t mpack_expect_bin(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_bin)
         return var.v.l;
@@ -568,7 +568,7 @@ uint32_t mpack_expect_bin(mpack_reader_t *reader) {
     return 0;
 }
 
-size_t mpack_expect_bin_buf(mpack_reader_t *reader, char *buf, size_t bufsize) {
+size_t mpack_expect_bin_buf(mpack_reader_t* reader, char* buf, size_t bufsize) {
     mpack_assert(buf != NULL, "buf cannot be NULL");
 
     size_t binsize = mpack_expect_bin(reader);
@@ -585,7 +585,7 @@ size_t mpack_expect_bin_buf(mpack_reader_t *reader, char *buf, size_t bufsize) {
     return binsize;
 }
 
-void mpack_expect_bin_size_buf(mpack_reader_t *reader, char *buf, uint32_t size) {
+void mpack_expect_bin_size_buf(mpack_reader_t* reader, char* buf, uint32_t size) {
     mpack_assert(buf != NULL, "buf cannot be NULL");
     mpack_expect_bin_size(reader, size);
     mpack_read_bytes(reader, buf, size);
@@ -593,7 +593,7 @@ void mpack_expect_bin_size_buf(mpack_reader_t *reader, char *buf, uint32_t size)
 }
 
 #if MPACK_EXTENSIONS
-uint32_t mpack_expect_ext(mpack_reader_t *reader, int8_t *type) {
+uint32_t mpack_expect_ext(mpack_reader_t* reader, int8_t* type) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (var.type == mpack_type_ext) {
         *type = mpack_tag_ext_exttype(&var);
@@ -604,7 +604,7 @@ uint32_t mpack_expect_ext(mpack_reader_t *reader, int8_t *type) {
     return 0;
 }
 
-size_t mpack_expect_ext_buf(mpack_reader_t *reader, int8_t *type, char *buf, size_t bufsize) {
+size_t mpack_expect_ext_buf(mpack_reader_t* reader, int8_t* type, char* buf, size_t bufsize) {
     mpack_assert(buf != NULL, "buf cannot be NULL");
 
     size_t extsize = mpack_expect_ext(reader, type);
@@ -625,20 +625,20 @@ size_t mpack_expect_ext_buf(mpack_reader_t *reader, int8_t *type, char *buf, siz
 }
 #endif
 
-void mpack_expect_cstr(mpack_reader_t *reader, char *buf, size_t bufsize) {
+void mpack_expect_cstr(mpack_reader_t* reader, char* buf, size_t bufsize) {
     uint32_t length = mpack_expect_str(reader);
     mpack_read_cstr(reader, buf, bufsize, length);
     mpack_done_str(reader);
 }
 
-void mpack_expect_utf8_cstr(mpack_reader_t *reader, char *buf, size_t bufsize) {
+void mpack_expect_utf8_cstr(mpack_reader_t* reader, char* buf, size_t bufsize) {
     uint32_t length = mpack_expect_str(reader);
     mpack_read_utf8_cstr(reader, buf, bufsize, length);
     mpack_done_str(reader);
 }
 
 #ifdef MPACK_MALLOC
-static char *mpack_expect_cstr_alloc_unchecked(mpack_reader_t *reader, size_t maxsize, size_t *out_length) {
+static char* mpack_expect_cstr_alloc_unchecked(mpack_reader_t* reader, size_t maxsize, size_t* out_length) {
     mpack_assert(out_length != NULL, "out_length cannot be NULL");
     *out_length = 0;
 
@@ -658,7 +658,7 @@ static char *mpack_expect_cstr_alloc_unchecked(mpack_reader_t *reader, size_t ma
     }
 
     size_t length = mpack_expect_str_max(reader, (uint32_t) maxsize - 1);
-    char *str = mpack_read_bytes_alloc_impl(reader, length, true);
+    char* str = mpack_read_bytes_alloc_impl(reader, length, true);
     mpack_done_str(reader);
 
     if (str)
@@ -666,9 +666,9 @@ static char *mpack_expect_cstr_alloc_unchecked(mpack_reader_t *reader, size_t ma
     return str;
 }
 
-char *mpack_expect_cstr_alloc(mpack_reader_t *reader, size_t maxsize) {
+char* mpack_expect_cstr_alloc(mpack_reader_t* reader, size_t maxsize) {
     size_t length;
-    char *str = mpack_expect_cstr_alloc_unchecked(reader, maxsize, &length);
+    char* str = mpack_expect_cstr_alloc_unchecked(reader, maxsize, &length);
 
     if (str && !mpack_str_check_no_null(str, length)) {
         MPACK_FREE(str);
@@ -679,9 +679,9 @@ char *mpack_expect_cstr_alloc(mpack_reader_t *reader, size_t maxsize) {
     return str;
 }
 
-char *mpack_expect_utf8_cstr_alloc(mpack_reader_t *reader, size_t maxsize) {
+char* mpack_expect_utf8_cstr_alloc(mpack_reader_t* reader, size_t maxsize) {
     size_t length;
-    char *str = mpack_expect_cstr_alloc_unchecked(reader, maxsize, &length);
+    char* str = mpack_expect_cstr_alloc_unchecked(reader, maxsize, &length);
 
     if (str && !mpack_utf8_check_no_null(str, length)) {
         MPACK_FREE(str);
@@ -693,7 +693,7 @@ char *mpack_expect_utf8_cstr_alloc(mpack_reader_t *reader, size_t maxsize) {
 }
 #endif
 
-void mpack_expect_str_match(mpack_reader_t *reader, const char *str, size_t len) {
+void mpack_expect_str_match(mpack_reader_t* reader, const char* str, size_t len) {
     mpack_assert(str != NULL, "str cannot be NULL");
 
     // expect a str the correct length
@@ -715,14 +715,14 @@ void mpack_expect_str_match(mpack_reader_t *reader, const char *str, size_t len)
     mpack_done_str(reader);
 }
 
-void mpack_expect_tag(mpack_reader_t *reader, mpack_tag_t expected) {
+void mpack_expect_tag(mpack_reader_t* reader, mpack_tag_t expected) {
     mpack_tag_t actual = mpack_read_tag(reader);
     if (!mpack_tag_equal(actual, expected))
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
 #ifdef MPACK_MALLOC
-char *mpack_expect_bin_alloc(mpack_reader_t *reader, size_t maxsize, size_t *size) {
+char* mpack_expect_bin_alloc(mpack_reader_t* reader, size_t maxsize, size_t* size) {
     mpack_assert(size != NULL, "size cannot be NULL");
     *size = 0;
 
@@ -738,7 +738,7 @@ char *mpack_expect_bin_alloc(mpack_reader_t *reader, size_t maxsize, size_t *siz
     if (mpack_reader_error(reader))
         return NULL;
 
-    char *data = mpack_read_bytes_alloc(reader, length);
+    char* data = mpack_read_bytes_alloc(reader, length);
     mpack_done_bin(reader);
 
     if (data)
@@ -748,7 +748,7 @@ char *mpack_expect_bin_alloc(mpack_reader_t *reader, size_t maxsize, size_t *siz
 #endif
 
 #if MPACK_EXTENSIONS && defined(MPACK_MALLOC)
-char *mpack_expect_ext_alloc(mpack_reader_t *reader, int8_t *type, size_t maxsize, size_t *size) {
+char* mpack_expect_ext_alloc(mpack_reader_t* reader, int8_t* type, size_t maxsize, size_t* size) {
     mpack_assert(size != NULL, "size cannot be NULL");
     *size = 0;
 
@@ -764,7 +764,7 @@ char *mpack_expect_ext_alloc(mpack_reader_t *reader, int8_t *type, size_t maxsiz
     if (mpack_reader_error(reader))
         return NULL;
 
-    char *data = mpack_read_bytes_alloc(reader, length);
+    char* data = mpack_read_bytes_alloc(reader, length);
     mpack_done_ext(reader);
 
     if (data) {
@@ -776,11 +776,11 @@ char *mpack_expect_ext_alloc(mpack_reader_t *reader, int8_t *type, size_t maxsiz
 }
 #endif
 
-size_t mpack_expect_enum(mpack_reader_t *reader, const char *strings[], size_t count) {
+size_t mpack_expect_enum(mpack_reader_t* reader, const char* strings[], size_t count) {
 
     // read the string in-place
     size_t keylen = mpack_expect_str(reader);
-    const char *key = mpack_read_bytes_inplace(reader, keylen);
+    const char* key = mpack_read_bytes_inplace(reader, keylen);
     mpack_done_str(reader);
     if (mpack_reader_error(reader) != mpack_ok)
         return count;
@@ -788,7 +788,7 @@ size_t mpack_expect_enum(mpack_reader_t *reader, const char *strings[], size_t c
     // find what key it matches
     size_t i;
     for (i = 0; i < count; ++i) {
-        const char *other = strings[i];
+        const char* other = strings[i];
         size_t otherlen = mpack_strlen(other);
         if (keylen == otherlen && mpack_memcmp(key, other, keylen) == 0)
             return i;
@@ -799,7 +799,7 @@ size_t mpack_expect_enum(mpack_reader_t *reader, const char *strings[], size_t c
     return count;
 }
 
-size_t mpack_expect_enum_optional(mpack_reader_t *reader, const char *strings[], size_t count) {
+size_t mpack_expect_enum_optional(mpack_reader_t* reader, const char* strings[], size_t count) {
     if (mpack_reader_error(reader) != mpack_ok)
         return count;
 
@@ -814,7 +814,7 @@ size_t mpack_expect_enum_optional(mpack_reader_t *reader, const char *strings[],
 
     // read the string in-place
     size_t keylen = mpack_expect_str(reader);
-    const char *key = mpack_read_bytes_inplace(reader, keylen);
+    const char* key = mpack_read_bytes_inplace(reader, keylen);
     mpack_done_str(reader);
     if (mpack_reader_error(reader) != mpack_ok)
         return count;
@@ -822,7 +822,7 @@ size_t mpack_expect_enum_optional(mpack_reader_t *reader, const char *strings[],
     // find what key it matches
     size_t i;
     for (i = 0; i < count; ++i) {
-        const char *other = strings[i];
+        const char* other = strings[i];
         size_t otherlen = mpack_strlen(other);
         if (keylen == otherlen && mpack_memcmp(key, other, keylen) == 0)
             return i;
@@ -832,7 +832,7 @@ size_t mpack_expect_enum_optional(mpack_reader_t *reader, const char *strings[],
     return count;
 }
 
-size_t mpack_expect_key_uint(mpack_reader_t *reader, bool found[], size_t count) {
+size_t mpack_expect_key_uint(mpack_reader_t* reader, bool found[], size_t count) {
     if (mpack_reader_error(reader) != mpack_ok)
         return count;
 
@@ -868,7 +868,7 @@ size_t mpack_expect_key_uint(mpack_reader_t *reader, bool found[], size_t count)
     return (size_t) value;
 }
 
-size_t mpack_expect_key_cstr(mpack_reader_t *reader, const char *keys[], bool found[], size_t count) {
+size_t mpack_expect_key_cstr(mpack_reader_t* reader, const char* keys[], bool found[], size_t count) {
     size_t i = mpack_expect_enum_optional(reader, keys, count);
 
     // unrecognized keys are fine, we just return count
