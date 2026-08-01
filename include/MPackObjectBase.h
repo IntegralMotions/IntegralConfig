@@ -23,7 +23,7 @@ class MPackObjectBase {
     void write(mpack_writer_t& writer, int depth = 0) const;
 
   protected:
-    [[nodiscard]] virtual const MPackObjectMember* members() const = 0;
+    [[nodiscard]] virtual const MPackObjectMember* getMembers() const = 0;
     [[nodiscard]] virtual size_t memberCount() const = 0;
     [[nodiscard]] virtual void* getMemberAddress(const MPackObjectMember& member) const = 0;
 

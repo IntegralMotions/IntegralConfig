@@ -16,13 +16,13 @@ class MPackObject : public MPackObjectBase {
     template <typename Class, typename Member>
     static void registerMember(const char* name, const MPackObjectType& type, Member Class::* memberPtr);
 
-    [[nodiscard]] const MPackObjectMember* members() const override;
+    [[nodiscard]] const MPackObjectMember* getMembers() const override;
     [[nodiscard]] size_t memberCount() const override;
     [[nodiscard]] void* getMemberAddress(const MPackObjectMember& member) const override;
 
   private:
-    static inline std::array<MPackObjectMember, MaxMembers> _members{};
-    static inline size_t _memberIndex = 0;
+    static inline std::array<MPackObjectMember, MaxMembers> members{};
+    static inline size_t memberIndex = 0;
 };
 
 template <typename Derived, size_t MaxMembers>
@@ -36,22 +36,22 @@ void MPackObject<Derived, MaxMembers>::registerMember(const char* name, const MP
                                                       Member Class::* memberPtr) {
     static_assert(std::is_base_of_v<Class, Derived>, "Class must be a base of Derived");
 
-    if (_memberIndex >= MaxMembers) {
+    if (memberIndex >= MaxMembers) {
         return;
     }
 
-    const auto offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
+    const auto Offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
 
-    _members[_memberIndex++] = {name, type, offset};
+    members[memberIndex++] = {name, type, Offset};
 }
 template <typename Derived, size_t MaxMembers>
-const MPackObjectMember* MPackObject<Derived, MaxMembers>::members() const {
-    return _members.data();
+const MPackObjectMember* MPackObject<Derived, MaxMembers>::getMembers() const {
+    return members.data();
 }
 
 template <typename Derived, size_t MaxMembers>
 size_t MPackObject<Derived, MaxMembers>::memberCount() const {
-    return _memberIndex;
+    return memberIndex;
 }
 
 template <typename Derived, size_t MaxMembers>

@@ -35,23 +35,23 @@ class ConfigurationController {
     ReceiveCallback _onReceived;
     void* _onReceivedContext = nullptr;
 
-    static ConfigurationController* _instance;
+    static ConfigurationController* instance;
 };
 
 // static member definition (important in a header for templates)
 template <size_t TxSize, size_t RxSize>
-ConfigurationController<TxSize, RxSize>* ConfigurationController<TxSize, RxSize>::_instance = nullptr;
+ConfigurationController<TxSize, RxSize>* ConfigurationController<TxSize, RxSize>::instance = nullptr;
 
 template <size_t TxSize, size_t RxSize>
 void ConfigurationController<TxSize, RxSize>::init(Communication& comm) {
-    if (_instance == nullptr) {
-        _instance = new ConfigurationController(comm);
+    if (instance == nullptr) {
+        instance = new ConfigurationController(comm);
     }
 }
 
 template <size_t TxSize, size_t RxSize>
 ConfigurationController<TxSize, RxSize>& ConfigurationController<TxSize, RxSize>::get() {
-    return *_instance;
+    return *instance;
 }
 
 template <size_t TxSize, size_t RxSize>

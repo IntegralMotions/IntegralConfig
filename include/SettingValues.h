@@ -5,17 +5,17 @@
 #include <cstddef>
 #include <cstdint>
 
-constexpr size_t SETTING_VALUE_MEMBERS = 6;
+constexpr size_t SettingValueMembers = 6;
 
 template <typename TDerived, typename TValue, size_t AddedMembers>
-class SettingValue : public MPackObject<TDerived, SETTING_VALUE_MEMBERS + AddedMembers> {
+class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMembers> {
   private:
     SettingValue() = default;
     friend TDerived;
 
   public:
     static void registerMembers() {
-        using Obj = MPackObject<TDerived, SETTING_VALUE_MEMBERS + AddedMembers>;
+        using Obj = MPackObject<TDerived, SettingValueMembers + AddedMembers>;
         Obj::registerMember("address", CppType::U32, &TDerived::address);
         Obj::registerMember("id", CppType::String, &TDerived::id);
         Obj::registerMember("label", CppType::String, &TDerived::label);
