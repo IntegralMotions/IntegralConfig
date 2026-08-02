@@ -30,6 +30,7 @@ struct MPackObjectType {
 
     MPackObjectType(CppType type) : type(type) {}
 
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     MPackObjectType(CppType type, CppType inner) : type(type), innerType(std::make_unique<MPackObjectType>(inner)) {}
 
     MPackObjectType(CppType type, const MPackObjectType& inner)

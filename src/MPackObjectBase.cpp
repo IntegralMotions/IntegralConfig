@@ -429,7 +429,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const char* name, const 
     case CppType::ObjectPtr: {
         auto* arr = reinterpret_cast<MPackArray<MPackObjectBase*>*>(address);
         arr->size = count;
-        arr->p = (count != 0U) ? reinterpret_cast<void*>(new MPackObjectBase*[count]{}) : nullptr;
+        arr->p = (count != 0U) ? reinterpret_cast<void*>(new MPackObjectBase* [count] {}) : nullptr;
         for (size_t i = 0; i < count; ++i) {
             if (nextIsNil(reader)) {
                 mpack_expect_nil(&reader);
