@@ -26,14 +26,26 @@ void MPackObjectBase::read(mpack_reader_t& reader, int depth) {
             return;
         }
 
-        char* key = new char[keyHeader.countOrLength + 1];
+        if (keyHeader.countOrLength >= MPACK_MAX_STRING) {
+            mpack_reader_flag_error(&reader, mpack_error_too_big);
+            return;
+        }
+
+        char* key = new char[keyHeader.countOrLength + 1U];
         if (keyHeader.countOrLength != 0U) {
             mpack_read_bytes(&reader, key, keyHeader.countOrLength);
         }
         key[keyHeader.countOrLength] = '\0';
         mpack_done_str(&reader);
+        if (!ok(reader)) {
+            delete[] key;
+            return;
+        }
 
-        readValue(reader, key, depth);
+        if (!readValue(reader, key, depth)) {
+            delete[] key;
+            return;
+        }
 
         delete[] key;
         if (!ok(reader)) {
@@ -55,7 +67,9 @@ void MPackObjectBase::write(mpack_writer_t& writer, int depth) const {
     mpack_start_map(&writer, MemberCount);
 
     for (size_t i = 0; i < MemberCount; i++) {
-        writeMember(writer, members[i].name, members[i].type, getMemberAddress(members[i]));
+        if (!writeMember(writer, members[i].name, members[i].type, getMemberAddress(members[i]), depth)) {
+            return;
+        }
     }
 
     mpack_finish_map(&writer);
@@ -82,62 +96,11 @@ bool MPackObjectBase::nextIsNil(mpack_reader_t& reader) {
     return tag.type == mpack_type_nil;
 }
 
-void* MPackObjectBase::createArray(const CppType& type, size_t length) {
-    void* array;
-
-    switch (type) {
-    case CppType::I8:
-        array = new int8_t[length];
-        break;
-    case CppType::U8:
-        array = new uint8_t[length];
-        break;
-    case CppType::I16:
-        array = new int16_t[length];
-        break;
-    case CppType::U16:
-        array = new uint16_t[length];
-        break;
-    case CppType::I32:
-        array = new int32_t[length];
-        break;
-    case CppType::U32:
-        array = new uint32_t[length];
-        break;
-    case CppType::I64:
-        array = new int64_t[length];
-        break;
-    case CppType::U64:
-        array = new uint64_t[length];
-        break;
-    case CppType::F32:
-        array = new float[length];
-        break;
-    case CppType::F64:
-        array = new double[length];
-        break;
-    case CppType::Bool:
-        array = new bool[length];
-        break;
-    case CppType::String:
-        array = reinterpret_cast<void*>(new const char*[length]);
-        break;
-    case CppType::ObjectPtr:
-    case CppType::Array:
-        array = reinterpret_cast<void*>(new void*[length]);
-        break;
-    default:
-        array = nullptr;
-    }
-
-    return array;
-}
-
-inline bool MPackObjectBase::ok(mpack_reader_t& reader) {
+bool MPackObjectBase::ok(mpack_reader_t& reader) {
     return mpack_reader_error(&reader) == mpack_ok;
 }
 
-inline bool MPackObjectBase::ok(mpack_writer_t& writer) {
+bool MPackObjectBase::ok(mpack_writer_t& writer) {
     return mpack_writer_error(&writer) == mpack_ok;
 }
 
@@ -173,7 +136,8 @@ bool MPackObjectBase::readHeader(mpack_reader_t& reader, MPackHeader& header) {
 bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int depth) {
     MPackObjectMember member;
     if (!getMember(name, member)) {
-        return false;
+        mpack_discard(&reader);
+        return ok(reader);
     }
 
     switch (member.type.type) {
@@ -261,10 +225,14 @@ bool MPackObjectBase::readBool(mpack_reader_t& reader, bool& value) {
 }
 
 bool MPackObjectBase::readString(mpack_reader_t& reader, char*& value) {
-    value = nullptr;
-    MPackHeader header;
-    readHeader(reader, header);
-    if (!ok(reader)) {
+    if (nextIsNil(reader)) {
+        mpack_expect_nil(&reader);
+        value = nullptr;
+        return ok(reader);
+    }
+
+    MPackHeader header{};
+    if (!readHeader(reader, header)) {
         return false;
     }
 
@@ -273,25 +241,41 @@ bool MPackObjectBase::readString(mpack_reader_t& reader, char*& value) {
         return false;
     }
 
-    if (header.countOrLength > (MPACK_MAX_STRING - 1)) {
+    if (header.countOrLength > (MPACK_MAX_STRING - 1U)) {
         mpack_reader_flag_error(&reader, mpack_error_memory);
         return false;
     }
 
-    value = new char[header.countOrLength + 1];
+    auto* newValue = new char[header.countOrLength + 1U];
     if (header.countOrLength != 0U) {
-        mpack_read_bytes(&reader, value, header.countOrLength);
+        mpack_read_bytes(&reader, newValue, header.countOrLength);
     }
-    value[header.countOrLength] = '\0';
+    newValue[header.countOrLength] = '\0';
     mpack_done_str(&reader);
 
+    if (!ok(reader)) {
+        delete[] newValue;
+        return false;
+    }
+
+    value = newValue;
     return true;
 }
 
+// The explicit type dispatch mirrors the runtime CppType metadata and is intentionally kept in one place.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity, readability-function-size)
 bool MPackObjectBase::readArray(mpack_reader_t& reader, const char* name, const MPackObjectType& type, void* address,
                                 int depth) {
+    if (depth > MPACK_MAX_DEPTH) {
+        mpack_reader_flag_error(&reader, mpack_error_too_big);
+        return false;
+    }
+
     if (nextIsNil(reader)) {
         mpack_expect_nil(&reader);
+        auto* array = static_cast<MPackArrayBase*>(address);
+        array->size = 0;
+        array->p = nullptr;
         return ok(reader);
     }
 
@@ -445,9 +429,21 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const char* name, const 
     case CppType::ObjectPtr: {
         auto* arr = reinterpret_cast<MPackArray<MPackObjectBase*>*>(address);
         arr->size = count;
-        arr->p = (count != 0U) ? reinterpret_cast<void*>(new MPackObjectBase*[count]) : nullptr;
+        arr->p = (count != 0U) ? reinterpret_cast<void*>(new MPackObjectBase*[count]{}) : nullptr;
         for (size_t i = 0; i < count; ++i) {
+            if (nextIsNil(reader)) {
+                mpack_expect_nil(&reader);
+                if (!ok(reader)) {
+                    return false;
+                }
+                continue;
+            }
+
             MPackObjectBase* obj = createObject(name);
+            if (obj == nullptr) {
+                mpack_reader_flag_error(&reader, mpack_error_data);
+                return false;
+            }
             obj->read(reader, depth + 1);
             if (!ok(reader)) {
                 return false;
@@ -552,8 +548,15 @@ bool MPackObjectBase::writeMember(mpack_writer_t& writer, const char* name, cons
     return mpack_writer_error(&writer) == mpack_ok;
 }
 
+// The explicit type dispatch mirrors the runtime CppType metadata and is intentionally kept in one place.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity, readability-function-size)
 bool MPackObjectBase::writeArray(mpack_writer_t& writer, const char* name, const MPackObjectType& type, void* address,
                                  int depth) const {
+    if (depth > MPACK_MAX_DEPTH) {
+        mpack_writer_flag_error(&writer, mpack_error_too_big);
+        return false;
+    }
+
     MPackObjectType* innerType = type.innerType.get();
     if (innerType == nullptr) {
         mpack_writer_flag_error(&writer, mpack_error_type);

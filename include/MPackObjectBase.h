@@ -30,10 +30,9 @@ class MPackObjectBase {
   private:
     bool getMember(const char* name, MPackObjectMember& member) const;
     static bool nextIsNil(mpack_reader_t& reader);
-    static void* createArray(const CppType& type, size_t length);
 
-    static inline bool ok(mpack_reader_t& reader);
-    static inline bool ok(mpack_writer_t& writer);
+    static bool ok(mpack_reader_t& reader);
+    static bool ok(mpack_writer_t& writer);
     static bool readHeader(mpack_reader_t& reader, MPackHeader& header);
     bool readValue(mpack_reader_t& reader, const char* name, int depth = 0);
 
