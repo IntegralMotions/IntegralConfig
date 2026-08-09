@@ -418,7 +418,7 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const char* name, const 
     case CppType::String: {
         auto* arr = reinterpret_cast<MPackArray<char*>*>(address);
         arr->size = count;
-        arr->p = (count != 0U) ? reinterpret_cast<void*>(new char*[count]) : nullptr;
+        arr->p = (count != 0U) ? reinterpret_cast<void*>(new char*[count]{}) : nullptr;
         for (size_t i = 0; i < count; ++i) {
             if (!readString(reader, (*arr)[i])) {
                 return false;
@@ -444,11 +444,12 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const char* name, const 
                 mpack_reader_flag_error(&reader, mpack_error_data);
                 return false;
             }
+
+            (*arr)[i] = obj;
             obj->read(reader, depth + 1);
             if (!ok(reader)) {
                 return false;
             }
-            (*arr)[i] = obj;
         }
     } break;
 

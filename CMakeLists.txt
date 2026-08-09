@@ -16,6 +16,7 @@ endif()
 
 option(INTEGRALCONFIG_BUILD_TESTS "Build IntegralConfig tests" ${INTEGRALCONFIG_IS_TOP_LEVEL})
 option(INTEGRALCONFIG_BUILD_EXAMPLES "Build IntegralConfig examples" ${INTEGRALCONFIG_IS_TOP_LEVEL})
+option(INTEGRAL_BUILD_DEPENDENCY_TESTS "Build tests for IntegralMotions dependencies" OFF)
 
 include(FetchContent)
 
