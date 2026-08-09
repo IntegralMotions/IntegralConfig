@@ -12,31 +12,35 @@
 class MessagePayloadRegistry {
   public:
     struct Entry {
-        const char *opCode;
-        MPackObjectBase *(*createFn)();
+        const char* opCode;
+        MPackObjectBase* (*createFn)();
     };
 
-    template <typename T> static bool registerType(const char *opCode);
+    template <typename T>
+    static bool registerType(const char* opCode);
 
-    static MPackObjectBase *create(const char *opCode);
+    static MPackObjectBase* create(const char* opCode);
 
   private:
-    template <typename T> static MPackObjectBase *createImpl();
+    template <typename T>
+    static MPackObjectBase* createImpl();
 
-    static std::array<Entry, MAX_MESSAGE_PAYLOAD_ENTRIES> _entries;
-    static std::size_t _count;
+    static std::array<Entry, MAX_MESSAGE_PAYLOAD_ENTRIES> entries;
+    static std::size_t count;
 };
 
 // ---------- template definitions (must stay in header) ----------
 
-template <typename T> inline MPackObjectBase *MessagePayloadRegistry::createImpl() {
+template <typename T>
+inline MPackObjectBase* MessagePayloadRegistry::createImpl() {
     return new T();
 }
 
-template <typename T> inline bool MessagePayloadRegistry::registerType(const char *opCode) {
-    const bool canAdd = _count < MAX_MESSAGE_PAYLOAD_ENTRIES;
-    if (canAdd) {
-        _entries[_count++] = Entry{opCode, &createImpl<T>};
+template <typename T>
+inline bool MessagePayloadRegistry::registerType(const char* opCode) {
+    const bool CanAdd = count < MAX_MESSAGE_PAYLOAD_ENTRIES;
+    if (CanAdd) {
+        entries[count++] = Entry{opCode, &createImpl<T>};
     }
-    return canAdd;
+    return CanAdd;
 }

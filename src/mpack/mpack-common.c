@@ -25,7 +25,7 @@
 
 MPACK_SILENCE_WARNINGS_BEGIN
 
-const char *mpack_error_to_string(mpack_error_t error) {
+const char* mpack_error_to_string(mpack_error_t error) {
 #if MPACK_STRINGS
     switch (error) {
 #define MPACK_ERROR_STRING_CASE(e)                                                                                     \
@@ -51,7 +51,7 @@ const char *mpack_error_to_string(mpack_error_t error) {
 #endif
 }
 
-const char *mpack_type_to_string(mpack_type_t type) {
+const char* mpack_type_to_string(mpack_type_t type) {
 #if MPACK_STRINGS
     switch (type) {
 #define MPACK_TYPE_STRING_CASE(e)                                                                                      \
@@ -164,8 +164,8 @@ static char mpack_hex_char(uint8_t hex_value) {
     return (char) ((hex_value < 10) ? (char) ('0' + hex_value) : (char) ('a' + (hex_value - 10)));
 }
 
-static void mpack_tag_debug_complete_bin_ext(mpack_tag_t tag, size_t string_length, char *buffer, size_t buffer_size,
-                                             const char *prefix, size_t prefix_size) {
+static void mpack_tag_debug_complete_bin_ext(mpack_tag_t tag, size_t string_length, char* buffer, size_t buffer_size,
+                                             const char* prefix, size_t prefix_size) {
     // If at any point in this function we run out of space in the buffer, we
     // bail out. The outer tag print wrapper will make sure we have a
     // null-terminator.
@@ -202,7 +202,7 @@ static void mpack_tag_debug_complete_bin_ext(mpack_tag_t tag, size_t string_leng
         mpack_snprintf(buffer, buffer_size, "%s>", (total > hex_bytes) ? "..." : "");
 }
 
-static void mpack_tag_debug_pseudo_json_bin(mpack_tag_t tag, char *buffer, size_t buffer_size, const char *prefix,
+static void mpack_tag_debug_pseudo_json_bin(mpack_tag_t tag, char* buffer, size_t buffer_size, const char* prefix,
                                             size_t prefix_size) {
     mpack_assert(mpack_tag_type(&tag) == mpack_type_bin);
     size_t length = (size_t) mpack_snprintf(buffer, buffer_size, "<binary data of length %" PRIu32 "", tag.v.l);
@@ -210,7 +210,7 @@ static void mpack_tag_debug_pseudo_json_bin(mpack_tag_t tag, char *buffer, size_
 }
 
 #if MPACK_EXTENSIONS
-static void mpack_tag_debug_pseudo_json_ext(mpack_tag_t tag, char *buffer, size_t buffer_size, const char *prefix,
+static void mpack_tag_debug_pseudo_json_ext(mpack_tag_t tag, char* buffer, size_t buffer_size, const char* prefix,
                                             size_t prefix_size) {
     mpack_assert(mpack_tag_type(&tag) == mpack_type_ext);
     size_t length = (size_t) mpack_snprintf(buffer, buffer_size, "<ext data of type %i and length %" PRIu32 "",
@@ -219,7 +219,7 @@ static void mpack_tag_debug_pseudo_json_ext(mpack_tag_t tag, char *buffer, size_
 }
 #endif
 
-static void mpack_tag_debug_pseudo_json_impl(mpack_tag_t tag, char *buffer, size_t buffer_size, const char *prefix,
+static void mpack_tag_debug_pseudo_json_impl(mpack_tag_t tag, char* buffer, size_t buffer_size, const char* prefix,
                                              size_t prefix_size) {
     switch (tag.type) {
     case mpack_type_missing:
@@ -275,7 +275,7 @@ static void mpack_tag_debug_pseudo_json_impl(mpack_tag_t tag, char *buffer, size
     mpack_snprintf(buffer, buffer_size, "<unknown!>");
 }
 
-void mpack_tag_debug_pseudo_json(mpack_tag_t tag, char *buffer, size_t buffer_size, const char *prefix,
+void mpack_tag_debug_pseudo_json(mpack_tag_t tag, char* buffer, size_t buffer_size, const char* prefix,
                                  size_t prefix_size) {
     mpack_assert(buffer_size > 0, "buffer size cannot be zero!");
     buffer[0] = 0;
@@ -287,7 +287,7 @@ void mpack_tag_debug_pseudo_json(mpack_tag_t tag, char *buffer, size_t buffer_si
     buffer[buffer_size - 1] = 0;
 }
 
-static void mpack_tag_debug_describe_impl(mpack_tag_t tag, char *buffer, size_t buffer_size) {
+static void mpack_tag_debug_describe_impl(mpack_tag_t tag, char* buffer, size_t buffer_size) {
     switch (tag.type) {
     case mpack_type_missing:
         mpack_snprintf(buffer, buffer_size, "missing");
@@ -341,7 +341,7 @@ static void mpack_tag_debug_describe_impl(mpack_tag_t tag, char *buffer, size_t 
     mpack_snprintf(buffer, buffer_size, "unknown!");
 }
 
-void mpack_tag_debug_describe(mpack_tag_t tag, char *buffer, size_t buffer_size) {
+void mpack_tag_debug_describe(mpack_tag_t tag, char* buffer, size_t buffer_size) {
     mpack_assert(buffer_size > 0, "buffer size cannot be zero!");
     buffer[0] = 0;
 
@@ -361,22 +361,22 @@ void mpack_tag_debug_describe(mpack_tag_t tag, char *buffer, size_t buffer_size)
 #define MPACK_TRACKING_INITIAL_CAPACITY 8
 #endif
 
-mpack_error_t mpack_track_init(mpack_track_t *track) {
+mpack_error_t mpack_track_init(mpack_track_t* track) {
     track->count = 0;
     track->capacity = MPACK_TRACKING_INITIAL_CAPACITY;
-    track->elements = (mpack_track_element_t *) MPACK_MALLOC(sizeof(mpack_track_element_t) * track->capacity);
+    track->elements = (mpack_track_element_t*) MPACK_MALLOC(sizeof(mpack_track_element_t) * track->capacity);
     if (track->elements == NULL)
         return mpack_error_memory;
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_grow(mpack_track_t *track) {
+mpack_error_t mpack_track_grow(mpack_track_t* track) {
     mpack_assert(track->elements, "null track elements!");
     mpack_assert(track->count == track->capacity, "incorrect growing?");
 
     size_t new_capacity = track->capacity * 2;
 
-    mpack_track_element_t *new_elements = (mpack_track_element_t *) mpack_realloc(
+    mpack_track_element_t* new_elements = (mpack_track_element_t*) mpack_realloc(
         track->elements, sizeof(mpack_track_element_t) * track->count, sizeof(mpack_track_element_t) * new_capacity);
     if (new_elements == NULL)
         return mpack_error_memory;
@@ -386,7 +386,7 @@ mpack_error_t mpack_track_grow(mpack_track_t *track) {
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_push(mpack_track_t *track, mpack_type_t type, uint32_t count) {
+mpack_error_t mpack_track_push(mpack_track_t* track, mpack_type_t type, uint32_t count) {
     mpack_assert(track->elements, "null track elements!");
     mpack_log("track pushing %s count %i\n", mpack_type_to_string(type), (int) count);
 
@@ -407,7 +407,7 @@ mpack_error_t mpack_track_push(mpack_track_t *track, mpack_type_t type, uint32_t
 }
 
 // TODO dedupe this
-mpack_error_t mpack_track_push_builder(mpack_track_t *track, mpack_type_t type) {
+mpack_error_t mpack_track_push_builder(mpack_track_t* track, mpack_type_t type) {
     mpack_assert(track->elements, "null track elements!");
     mpack_log("track pushing %s builder\n", mpack_type_to_string(type));
 
@@ -427,7 +427,7 @@ mpack_error_t mpack_track_push_builder(mpack_track_t *track, mpack_type_t type) 
     return mpack_ok;
 }
 
-static mpack_error_t mpack_track_pop_impl(mpack_track_t *track, mpack_type_t type, bool builder) {
+static mpack_error_t mpack_track_pop_impl(mpack_track_t* track, mpack_type_t type, bool builder) {
     mpack_assert(track->elements, "null track elements!");
     mpack_log("track popping %s\n", mpack_type_to_string(type));
 
@@ -436,7 +436,7 @@ static mpack_error_t mpack_track_pop_impl(mpack_track_t *track, mpack_type_t typ
         return mpack_error_bug;
     }
 
-    mpack_track_element_t *element = &track->elements[track->count - 1];
+    mpack_track_element_t* element = &track->elements[track->count - 1];
 
     if (element->type != type) {
         mpack_break("attempting to close a %s but the open element is a %s!", mpack_type_to_string(type),
@@ -466,15 +466,15 @@ static mpack_error_t mpack_track_pop_impl(mpack_track_t *track, mpack_type_t typ
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_pop(mpack_track_t *track, mpack_type_t type) {
+mpack_error_t mpack_track_pop(mpack_track_t* track, mpack_type_t type) {
     return mpack_track_pop_impl(track, type, false);
 }
 
-mpack_error_t mpack_track_pop_builder(mpack_track_t *track, mpack_type_t type) {
+mpack_error_t mpack_track_pop_builder(mpack_track_t* track, mpack_type_t type) {
     return mpack_track_pop_impl(track, type, true);
 }
 
-mpack_error_t mpack_track_peek_element(mpack_track_t *track, bool read) {
+mpack_error_t mpack_track_peek_element(mpack_track_t* track, bool read) {
     MPACK_UNUSED(read);
     mpack_assert(track->elements, "null track elements!");
 
@@ -482,7 +482,7 @@ mpack_error_t mpack_track_peek_element(mpack_track_t *track, bool read) {
     if (track->count == 0)
         return mpack_ok;
 
-    mpack_track_element_t *element = &track->elements[track->count - 1];
+    mpack_track_element_t* element = &track->elements[track->count - 1];
 
     if (element->type != mpack_type_map && element->type != mpack_type_array) {
         mpack_break("elements cannot be %s within an %s", read ? "read" : "written",
@@ -498,12 +498,12 @@ mpack_error_t mpack_track_peek_element(mpack_track_t *track, bool read) {
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_element(mpack_track_t *track, bool read) {
+mpack_error_t mpack_track_element(mpack_track_t* track, bool read) {
     mpack_error_t error = mpack_track_peek_element(track, read);
     if (track->count == 0 || error != mpack_ok)
         return error;
 
-    mpack_track_element_t *element = &track->elements[track->count - 1];
+    mpack_track_element_t* element = &track->elements[track->count - 1];
 
     if (element->type == mpack_type_map) {
         if (!element->key_needs_value) {
@@ -518,7 +518,7 @@ mpack_error_t mpack_track_element(mpack_track_t *track, bool read) {
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_bytes(mpack_track_t *track, bool read, size_t count) {
+mpack_error_t mpack_track_bytes(mpack_track_t* track, bool read, size_t count) {
     MPACK_UNUSED(read);
     mpack_assert(track->elements, "null track elements!");
 
@@ -532,7 +532,7 @@ mpack_error_t mpack_track_bytes(mpack_track_t *track, bool read, size_t count) {
         return mpack_error_bug;
     }
 
-    mpack_track_element_t *element = &track->elements[track->count - 1];
+    mpack_track_element_t* element = &track->elements[track->count - 1];
 
     if (element->type == mpack_type_map || element->type == mpack_type_array) {
         mpack_break("bytes cannot be %s within an %s", read ? "read" : "written", mpack_type_to_string(element->type));
@@ -548,12 +548,12 @@ mpack_error_t mpack_track_bytes(mpack_track_t *track, bool read, size_t count) {
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_str_bytes_all(mpack_track_t *track, bool read, size_t count) {
+mpack_error_t mpack_track_str_bytes_all(mpack_track_t* track, bool read, size_t count) {
     mpack_error_t error = mpack_track_bytes(track, read, count);
     if (error != mpack_ok)
         return error;
 
-    mpack_track_element_t *element = &track->elements[track->count - 1];
+    mpack_track_element_t* element = &track->elements[track->count - 1];
 
     if (element->type != mpack_type_str) {
         mpack_break("the open type must be a string, not a %s", mpack_type_to_string(element->type));
@@ -568,7 +568,7 @@ mpack_error_t mpack_track_str_bytes_all(mpack_track_t *track, bool read, size_t 
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_check_empty(mpack_track_t *track) {
+mpack_error_t mpack_track_check_empty(mpack_track_t* track) {
     if (track->count != 0) {
         mpack_break("unclosed %s", mpack_type_to_string(track->elements[0].type));
         return mpack_error_bug;
@@ -576,7 +576,7 @@ mpack_error_t mpack_track_check_empty(mpack_track_t *track) {
     return mpack_ok;
 }
 
-mpack_error_t mpack_track_destroy(mpack_track_t *track, bool cancel) {
+mpack_error_t mpack_track_destroy(mpack_track_t* track, bool cancel) {
     mpack_error_t error = cancel ? mpack_ok : mpack_track_check_empty(track);
     if (track->elements) {
         MPACK_FREE(track->elements);
@@ -586,7 +586,7 @@ mpack_error_t mpack_track_destroy(mpack_track_t *track, bool cancel) {
 }
 #endif
 
-static bool mpack_utf8_check_impl(const uint8_t *str, size_t count, bool allow_null) {
+static bool mpack_utf8_check_impl(const uint8_t* str, size_t count, bool allow_null) {
     while (count > 0) {
         uint8_t lead = str[0];
 
@@ -672,15 +672,15 @@ static bool mpack_utf8_check_impl(const uint8_t *str, size_t count, bool allow_n
     return true;
 }
 
-bool mpack_utf8_check(const char *str, size_t bytes) {
-    return mpack_utf8_check_impl((const uint8_t *) str, bytes, true);
+bool mpack_utf8_check(const char* str, size_t bytes) {
+    return mpack_utf8_check_impl((const uint8_t*) str, bytes, true);
 }
 
-bool mpack_utf8_check_no_null(const char *str, size_t bytes) {
-    return mpack_utf8_check_impl((const uint8_t *) str, bytes, false);
+bool mpack_utf8_check_no_null(const char* str, size_t bytes) {
+    return mpack_utf8_check_impl((const uint8_t*) str, bytes, false);
 }
 
-bool mpack_str_check_no_null(const char *str, size_t bytes) {
+bool mpack_str_check_no_null(const char* str, size_t bytes) {
     size_t i;
     for (i = 0; i < bytes; ++i)
         if (str[i] == '\0')
@@ -689,7 +689,7 @@ bool mpack_str_check_no_null(const char *str, size_t bytes) {
 }
 
 #if MPACK_DEBUG && MPACK_STDIO
-void mpack_print_append(mpack_print_t *print, const char *data, size_t count) {
+void mpack_print_append(mpack_print_t* print, const char* data, size_t count) {
 
     // copy whatever fits into the buffer
     size_t copy = print->size - print->count;
@@ -718,15 +718,15 @@ void mpack_print_append(mpack_print_t *print, const char *data, size_t count) {
     }
 }
 
-void mpack_print_flush(mpack_print_t *print) {
+void mpack_print_flush(mpack_print_t* print) {
     if (print->count > 0 && print->callback != NULL) {
         print->callback(print->context, print->buffer, print->count);
         print->count = 0;
     }
 }
 
-void mpack_print_file_callback(void *context, const char *data, size_t count) {
-    FILE *file = (FILE *) context;
+void mpack_print_file_callback(void* context, const char* data, size_t count) {
+    FILE* file = (FILE*) context;
     fwrite(data, 1, count, file);
 }
 #endif

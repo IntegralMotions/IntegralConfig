@@ -13,7 +13,7 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
     }
 
   protected:
-    MPackObjectBase *createObject(const char * /*name*/) override {
+    MPackObjectBase* createObject(const char* /*name*/) override {
         if (std::strcmp(type, "bool") == 0) {
             return new BoolSetting();
         }
@@ -33,8 +33,8 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
     }
 
   public:
-    const char *type{};
-    MPackObjectBase *value{};
+    const char* type{};
+    MPackObjectBase* value{};
 };
 
 class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers)
@@ -46,7 +46,7 @@ class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers
     }
 
   protected:
-    MPackObjectBase *createObject(const char *name) override {
+    MPackObjectBase* createObject(const char* name) override {
         if (std::strcmp(name, "settings") == 0) {
             return new Setting();
         }
@@ -54,9 +54,9 @@ class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers
     }
 
   public:
-    const char *id{};
-    const char *label{};
-    MPackArray<Setting *> settings{};
+    const char* id{};
+    const char* label{};
+    MPackArray<Setting*> settings{};
 };
 
 class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbers)
@@ -68,14 +68,14 @@ class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbe
     }
 
   protected:
-    MPackObjectBase *createObject(const char * /*name*/) override {
+    MPackObjectBase* createObject(const char* /*name*/) override {
         return new Group();
     }
 
   public:
-    const char *id{};
-    const char *label{};
-    MPackArray<Group *> groups;
+    const char* id{};
+    const char* label{};
+    MPackArray<Group*> groups;
 };
 
 class DeviceInfo : public MPackObject<DeviceInfo, 2> { // NOLINT(readability-magic-numbers)
@@ -85,8 +85,8 @@ class DeviceInfo : public MPackObject<DeviceInfo, 2> { // NOLINT(readability-mag
         registerMember("firmwareVersion", {CppType::String, CppType::None}, &DeviceInfo::firmwareVersion);
     }
 
-    const char *model{};
-    const char *firmwareVersion{};
+    const char* model{};
+    const char* firmwareVersion{};
 };
 
 class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbers)
@@ -97,7 +97,7 @@ class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbe
     }
 
   protected:
-    MPackObjectBase *createObject(const char *name) override {
+    MPackObjectBase* createObject(const char* name) override {
         if (std::strcmp(name, "deviceInfo") == 0) {
             return new DeviceInfo();
         }
@@ -108,6 +108,6 @@ class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbe
     }
 
   public:
-    DeviceInfo *deviceInfo{};
-    MPackArray<Module *> modules;
+    DeviceInfo* deviceInfo{};
+    MPackArray<Module*> modules;
 };

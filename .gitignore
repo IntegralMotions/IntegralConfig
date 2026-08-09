@@ -17,3 +17,6 @@ build
 .vscode/
 .idea/
 .vs/
+
+# MacOS
+.DS_Store

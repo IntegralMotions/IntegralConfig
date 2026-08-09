@@ -27,9 +27,9 @@ MPACK_SILENCE_WARNINGS_BEGIN
 
 #if MPACK_READER
 
-static void mpack_reader_skip_using_fill(mpack_reader_t *reader, size_t count);
+static void mpack_reader_skip_using_fill(mpack_reader_t* reader, size_t count);
 
-void mpack_reader_init(mpack_reader_t *reader, char *buffer, size_t size, size_t count) {
+void mpack_reader_init(mpack_reader_t* reader, char* buffer, size_t size, size_t count) {
     mpack_assert(buffer != NULL, "buffer is NULL");
 
     mpack_memset(reader, 0, sizeof(*reader));
@@ -46,7 +46,7 @@ void mpack_reader_init(mpack_reader_t *reader, char *buffer, size_t size, size_t
     mpack_log("initializing reader with buffer size %i\n", (int) size);
 }
 
-void mpack_reader_init_error(mpack_reader_t *reader, mpack_error_t error) {
+void mpack_reader_init_error(mpack_reader_t* reader, mpack_error_t error) {
     mpack_memset(reader, 0, sizeof(*reader));
     reader->error = error;
 
@@ -54,7 +54,7 @@ void mpack_reader_init_error(mpack_reader_t *reader, mpack_error_t error) {
     mpack_log("initializing reader error state %i\n", (int) error);
 }
 
-void mpack_reader_init_data(mpack_reader_t *reader, const char *data, size_t count) {
+void mpack_reader_init_data(mpack_reader_t* reader, const char* data, size_t count) {
     mpack_assert(data != NULL, "data is NULL");
 
     mpack_memset(reader, 0, sizeof(*reader));
@@ -69,7 +69,7 @@ void mpack_reader_init_data(mpack_reader_t *reader, const char *data, size_t cou
     mpack_log("initializing reader with data size %i\n", (int) count);
 }
 
-void mpack_reader_set_fill(mpack_reader_t *reader, mpack_reader_fill_t fill) {
+void mpack_reader_set_fill(mpack_reader_t* reader, mpack_reader_fill_t fill) {
     MPACK_STATIC_ASSERT(MPACK_READER_MINIMUM_BUFFER_SIZE >= MPACK_MAXIMUM_TAG_SIZE,
                         "minimum buffer size must fit any tag!");
 
@@ -89,24 +89,24 @@ void mpack_reader_set_fill(mpack_reader_t *reader, mpack_reader_fill_t fill) {
     reader->fill = fill;
 }
 
-void mpack_reader_set_skip(mpack_reader_t *reader, mpack_reader_skip_t skip) {
+void mpack_reader_set_skip(mpack_reader_t* reader, mpack_reader_skip_t skip) {
     mpack_assert(reader->size != 0, "cannot use skip function without a writeable buffer!");
     reader->skip = skip;
 }
 
 #if MPACK_STDIO
-static size_t mpack_file_reader_fill(mpack_reader_t *reader, char *buffer, size_t count) {
-    if (feof((FILE *) reader->context)) {
+static size_t mpack_file_reader_fill(mpack_reader_t* reader, char* buffer, size_t count) {
+    if (feof((FILE*) reader->context)) {
         mpack_reader_flag_error(reader, mpack_error_eof);
         return 0;
     }
-    return fread((void *) buffer, 1, count, (FILE *) reader->context);
+    return fread((void*) buffer, 1, count, (FILE*) reader->context);
 }
 
-static void mpack_file_reader_skip(mpack_reader_t *reader, size_t count) {
+static void mpack_file_reader_skip(mpack_reader_t* reader, size_t count) {
     if (mpack_reader_error(reader) != mpack_ok)
         return;
-    FILE *file = (FILE *) reader->context;
+    FILE* file = (FILE*) reader->context;
 
     // We call ftell() to test whether the stream is seekable
     // without causing a file error.
@@ -125,7 +125,7 @@ static void mpack_file_reader_skip(mpack_reader_t *reader, size_t count) {
     mpack_reader_skip_using_fill(reader, count);
 }
 
-static void mpack_file_reader_teardown(mpack_reader_t *reader) {
+static void mpack_file_reader_teardown(mpack_reader_t* reader) {
     MPACK_FREE(reader->buffer);
     reader->buffer = NULL;
     reader->context = NULL;
@@ -135,8 +135,8 @@ static void mpack_file_reader_teardown(mpack_reader_t *reader) {
     reader->teardown = NULL;
 }
 
-static void mpack_file_reader_teardown_close(mpack_reader_t *reader) {
-    FILE *file = (FILE *) reader->context;
+static void mpack_file_reader_teardown_close(mpack_reader_t* reader) {
+    FILE* file = (FILE*) reader->context;
 
     if (file) {
         int ret = fclose(file);
@@ -147,11 +147,11 @@ static void mpack_file_reader_teardown_close(mpack_reader_t *reader) {
     mpack_file_reader_teardown(reader);
 }
 
-void mpack_reader_init_stdfile(mpack_reader_t *reader, FILE *file, bool close_when_done) {
+void mpack_reader_init_stdfile(mpack_reader_t* reader, FILE* file, bool close_when_done) {
     mpack_assert(file != NULL, "file is NULL");
 
     size_t capacity = MPACK_BUFFER_SIZE;
-    char *buffer = (char *) MPACK_MALLOC(capacity);
+    char* buffer = (char*) MPACK_MALLOC(capacity);
     if (buffer == NULL) {
         mpack_reader_init_error(reader, mpack_error_memory);
         if (close_when_done) {
@@ -167,10 +167,10 @@ void mpack_reader_init_stdfile(mpack_reader_t *reader, FILE *file, bool close_wh
     mpack_reader_set_teardown(reader, close_when_done ? mpack_file_reader_teardown_close : mpack_file_reader_teardown);
 }
 
-void mpack_reader_init_filename(mpack_reader_t *reader, const char *filename) {
+void mpack_reader_init_filename(mpack_reader_t* reader, const char* filename) {
     mpack_assert(filename != NULL, "filename is NULL");
 
-    FILE *file = fopen(filename, "rb");
+    FILE* file = fopen(filename, "rb");
     if (file == NULL) {
         mpack_reader_init_error(reader, mpack_error_io);
         return;
@@ -180,7 +180,7 @@ void mpack_reader_init_filename(mpack_reader_t *reader, const char *filename) {
 }
 #endif
 
-mpack_error_t mpack_reader_destroy(mpack_reader_t *reader) {
+mpack_error_t mpack_reader_destroy(mpack_reader_t* reader) {
 
 // clean up tracking, asserting if we're not already in an error state
 #if MPACK_READ_TRACKING
@@ -194,7 +194,7 @@ mpack_error_t mpack_reader_destroy(mpack_reader_t *reader) {
     return reader->error;
 }
 
-size_t mpack_reader_remaining(mpack_reader_t *reader, const char **data) {
+size_t mpack_reader_remaining(mpack_reader_t* reader, const char** data) {
     if (mpack_reader_error(reader) != mpack_ok)
         return 0;
 
@@ -208,8 +208,8 @@ size_t mpack_reader_remaining(mpack_reader_t *reader, const char **data) {
     return (size_t) (reader->end - reader->data);
 }
 
-void mpack_reader_flag_error(mpack_reader_t *reader, mpack_error_t error) {
-    mpack_log("reader %p setting error %i: %s\n", (void *) reader, (int) error, mpack_error_to_string(error));
+void mpack_reader_flag_error(mpack_reader_t* reader, mpack_error_t error) {
+    mpack_log("reader %p setting error %i: %s\n", (void*) reader, (int) error, mpack_error_to_string(error));
 
     if (reader->error == mpack_ok) {
         reader->error = error;
@@ -221,7 +221,7 @@ void mpack_reader_flag_error(mpack_reader_t *reader, mpack_error_t error) {
 
 // Loops on the fill function, reading between the minimum and
 // maximum number of bytes and flagging an error if it fails.
-MPACK_NOINLINE static size_t mpack_fill_range(mpack_reader_t *reader, char *p, size_t min_bytes, size_t max_bytes) {
+MPACK_NOINLINE static size_t mpack_fill_range(mpack_reader_t* reader, char* p, size_t min_bytes, size_t max_bytes) {
     mpack_assert(reader->fill != NULL, "mpack_fill_range() called with no fill function?");
     mpack_assert(min_bytes > 0, "cannot fill zero bytes!");
     mpack_assert(max_bytes >= min_bytes, "min_bytes %i cannot be larger than max_bytes %i!", (int) min_bytes,
@@ -245,7 +245,7 @@ MPACK_NOINLINE static size_t mpack_fill_range(mpack_reader_t *reader, char *p, s
     return count;
 }
 
-MPACK_NOINLINE bool mpack_reader_ensure_straddle(mpack_reader_t *reader, size_t count) {
+MPACK_NOINLINE bool mpack_reader_ensure_straddle(mpack_reader_t* reader, size_t count) {
     mpack_assert(count != 0, "cannot ensure zero bytes!");
     mpack_assert(reader->error == mpack_ok, "reader cannot be in an error state!");
 
@@ -288,7 +288,7 @@ MPACK_NOINLINE bool mpack_reader_ensure_straddle(mpack_reader_t *reader, size_t 
 
 // Reads count bytes into p. Used when there are not enough bytes
 // left in the buffer to satisfy a read.
-MPACK_NOINLINE void mpack_read_native_straddle(mpack_reader_t *reader, char *p, size_t count) {
+MPACK_NOINLINE void mpack_read_native_straddle(mpack_reader_t* reader, char* p, size_t count) {
     mpack_assert(count == 0 || p != NULL, "data pointer for %i bytes is NULL", (int) count);
 
     if (mpack_reader_error(reader) != mpack_ok) {
@@ -358,7 +358,7 @@ MPACK_NOINLINE void mpack_read_native_straddle(mpack_reader_t *reader, char *p, 
     }
 }
 
-MPACK_NOINLINE static void mpack_skip_bytes_straddle(mpack_reader_t *reader, size_t count) {
+MPACK_NOINLINE static void mpack_skip_bytes_straddle(mpack_reader_t* reader, size_t count) {
 
     // we'll need at least a fill function to skip more data. if there's
     // no fill function, the buffer should contain an entire MessagePack
@@ -389,7 +389,7 @@ MPACK_NOINLINE static void mpack_skip_bytes_straddle(mpack_reader_t *reader, siz
     mpack_reader_skip_using_fill(reader, count);
 }
 
-void mpack_skip_bytes(mpack_reader_t *reader, size_t count) {
+void mpack_skip_bytes(mpack_reader_t* reader, size_t count) {
     if (mpack_reader_error(reader) != mpack_ok)
         return;
     mpack_log("skip requested for %i bytes\n", (int) count);
@@ -407,7 +407,7 @@ void mpack_skip_bytes(mpack_reader_t *reader, size_t count) {
     mpack_skip_bytes_straddle(reader, count);
 }
 
-MPACK_NOINLINE static void mpack_reader_skip_using_fill(mpack_reader_t *reader, size_t count) {
+MPACK_NOINLINE static void mpack_reader_skip_using_fill(mpack_reader_t* reader, size_t count) {
     mpack_assert(reader->fill != NULL, "missing fill function!");
     mpack_assert(reader->data == reader->end, "there are bytes left in the buffer!");
     mpack_assert(reader->error == mpack_ok, "should not have called this in an error state (%i)", reader->error);
@@ -435,13 +435,13 @@ MPACK_NOINLINE static void mpack_reader_skip_using_fill(mpack_reader_t *reader, 
     reader->data += count;
 }
 
-void mpack_read_bytes(mpack_reader_t *reader, char *p, size_t count) {
+void mpack_read_bytes(mpack_reader_t* reader, char* p, size_t count) {
     mpack_assert(p != NULL, "destination for read of %i bytes is NULL", (int) count);
     mpack_reader_track_bytes(reader, count);
     mpack_read_native(reader, p, count);
 }
 
-void mpack_read_utf8(mpack_reader_t *reader, char *p, size_t byte_count) {
+void mpack_read_utf8(mpack_reader_t* reader, char* p, size_t byte_count) {
     mpack_assert(p != NULL, "destination for read of %i bytes is NULL", (int) byte_count);
     mpack_reader_track_str_bytes_all(reader, byte_count);
     mpack_read_native(reader, p, byte_count);
@@ -450,7 +450,7 @@ void mpack_read_utf8(mpack_reader_t *reader, char *p, size_t byte_count) {
         mpack_reader_flag_error(reader, mpack_error_type);
 }
 
-static void mpack_read_cstr_unchecked(mpack_reader_t *reader, char *buf, size_t buffer_size, size_t byte_count) {
+static void mpack_read_cstr_unchecked(mpack_reader_t* reader, char* buf, size_t buffer_size, size_t byte_count) {
     mpack_assert(buf != NULL, "destination for read of %i bytes is NULL", (int) byte_count);
     mpack_assert(buffer_size >= 1, "buffer size is zero; you must have room for at least a null-terminator");
 
@@ -470,7 +470,7 @@ static void mpack_read_cstr_unchecked(mpack_reader_t *reader, char *buf, size_t 
     buf[byte_count] = 0;
 }
 
-void mpack_read_cstr(mpack_reader_t *reader, char *buf, size_t buffer_size, size_t byte_count) {
+void mpack_read_cstr(mpack_reader_t* reader, char* buf, size_t buffer_size, size_t byte_count) {
     mpack_read_cstr_unchecked(reader, buf, buffer_size, byte_count);
 
     // check for null bytes
@@ -480,7 +480,7 @@ void mpack_read_cstr(mpack_reader_t *reader, char *buf, size_t buffer_size, size
     }
 }
 
-void mpack_read_utf8_cstr(mpack_reader_t *reader, char *buf, size_t buffer_size, size_t byte_count) {
+void mpack_read_utf8_cstr(mpack_reader_t* reader, char* buf, size_t buffer_size, size_t byte_count) {
     mpack_read_cstr_unchecked(reader, buf, buffer_size, byte_count);
 
     // check encoding
@@ -494,7 +494,7 @@ void mpack_read_utf8_cstr(mpack_reader_t *reader, char *buf, size_t buffer_size,
 // Reads native bytes with error callback disabled. This allows MPack reader functions
 // to hold an allocated buffer and read native data into it without leaking it in
 // case of a non-local jump (longjmp, throw) out of an error handler.
-static void mpack_read_native_noerrorfn(mpack_reader_t *reader, char *p, size_t count) {
+static void mpack_read_native_noerrorfn(mpack_reader_t* reader, char* p, size_t count) {
     mpack_assert(reader->error == mpack_ok, "cannot call if an error is already flagged!");
     mpack_reader_error_t error_fn = reader->error_fn;
     reader->error_fn = NULL;
@@ -502,7 +502,7 @@ static void mpack_read_native_noerrorfn(mpack_reader_t *reader, char *p, size_t 
     reader->error_fn = error_fn;
 }
 
-char *mpack_read_bytes_alloc_impl(mpack_reader_t *reader, size_t count, bool null_terminated) {
+char* mpack_read_bytes_alloc_impl(mpack_reader_t* reader, size_t count, bool null_terminated) {
 
     // track the bytes first in case it jumps
     mpack_reader_track_bytes(reader, count);
@@ -514,7 +514,7 @@ char *mpack_read_bytes_alloc_impl(mpack_reader_t *reader, size_t count, bool nul
         return NULL;
 
     // allocate data
-    char *data = (char *) MPACK_MALLOC(count + (null_terminated ? 1 : 0)); // TODO: can this overflow?
+    char* data = (char*) MPACK_MALLOC(count + (null_terminated ? 1 : 0)); // TODO: can this overflow?
     if (data == NULL) {
         mpack_reader_flag_error(reader, mpack_error_memory);
         return NULL;
@@ -539,13 +539,13 @@ char *mpack_read_bytes_alloc_impl(mpack_reader_t *reader, size_t count, bool nul
 
 // read inplace without tracking (since there are different
 // tracking modes for different inplace readers)
-static const char *mpack_read_bytes_inplace_notrack(mpack_reader_t *reader, size_t count) {
+static const char* mpack_read_bytes_inplace_notrack(mpack_reader_t* reader, size_t count) {
     if (mpack_reader_error(reader) != mpack_ok)
         return NULL;
 
     // if we have enough bytes already in the buffer, we can return it directly.
     if ((size_t) (reader->end - reader->data) >= count) {
-        const char *bytes = reader->data;
+        const char* bytes = reader->data;
         reader->data += count;
         return bytes;
     }
@@ -553,19 +553,19 @@ static const char *mpack_read_bytes_inplace_notrack(mpack_reader_t *reader, size
     if (!mpack_reader_ensure(reader, count))
         return NULL;
 
-    const char *bytes = reader->data;
+    const char* bytes = reader->data;
     reader->data += count;
     return bytes;
 }
 
-const char *mpack_read_bytes_inplace(mpack_reader_t *reader, size_t count) {
+const char* mpack_read_bytes_inplace(mpack_reader_t* reader, size_t count) {
     mpack_reader_track_bytes(reader, count);
     return mpack_read_bytes_inplace_notrack(reader, count);
 }
 
-const char *mpack_read_utf8_inplace(mpack_reader_t *reader, size_t count) {
+const char* mpack_read_utf8_inplace(mpack_reader_t* reader, size_t count) {
     mpack_reader_track_str_bytes_all(reader, count);
-    const char *str = mpack_read_bytes_inplace_notrack(reader, count);
+    const char* str = mpack_read_bytes_inplace_notrack(reader, count);
 
     if (mpack_reader_error(reader) == mpack_ok && !mpack_utf8_check(str, count)) {
         mpack_reader_flag_error(reader, mpack_error_type);
@@ -575,7 +575,7 @@ const char *mpack_read_utf8_inplace(mpack_reader_t *reader, size_t count) {
     return str;
 }
 
-static size_t mpack_parse_tag(mpack_reader_t *reader, mpack_tag_t *tag) {
+static size_t mpack_parse_tag(mpack_reader_t* reader, mpack_tag_t* tag) {
     mpack_assert(reader->error == mpack_ok, "reader cannot be in an error state!");
 
     if (!mpack_reader_ensure(reader, 1))
@@ -1131,7 +1131,7 @@ static size_t mpack_parse_tag(mpack_reader_t *reader, mpack_tag_t *tag) {
     return 0;
 }
 
-mpack_tag_t mpack_read_tag(mpack_reader_t *reader) {
+mpack_tag_t mpack_read_tag(mpack_reader_t* reader) {
     mpack_log("reading tag\n");
 
     // make sure we can read a tag
@@ -1174,7 +1174,7 @@ mpack_tag_t mpack_read_tag(mpack_reader_t *reader) {
     return tag;
 }
 
-mpack_tag_t mpack_peek_tag(mpack_reader_t *reader) {
+mpack_tag_t mpack_peek_tag(mpack_reader_t* reader) {
     mpack_log("peeking tag\n");
 
     // make sure we can peek a tag
@@ -1189,7 +1189,7 @@ mpack_tag_t mpack_peek_tag(mpack_reader_t *reader) {
     return tag;
 }
 
-void mpack_discard(mpack_reader_t *reader) {
+void mpack_discard(mpack_reader_t* reader) {
     mpack_tag_t var = mpack_read_tag(reader);
     if (mpack_reader_error(reader))
         return;
@@ -1233,7 +1233,7 @@ void mpack_discard(mpack_reader_t *reader) {
 }
 
 #if MPACK_EXTENSIONS
-mpack_timestamp_t mpack_read_timestamp(mpack_reader_t *reader, size_t size) {
+mpack_timestamp_t mpack_read_timestamp(mpack_reader_t* reader, size_t size) {
     mpack_timestamp_t timestamp = {0, 0};
 
     if (size != 4 && size != 8 && size != 12) {
@@ -1280,14 +1280,14 @@ mpack_timestamp_t mpack_read_timestamp(mpack_reader_t *reader, size_t size) {
 #endif
 
 #if MPACK_READ_TRACKING
-void mpack_done_type(mpack_reader_t *reader, mpack_type_t type) {
+void mpack_done_type(mpack_reader_t* reader, mpack_type_t type) {
     if (mpack_reader_error(reader) == mpack_ok)
         mpack_reader_flag_if_error(reader, mpack_track_pop(&reader->track, type));
 }
 #endif
 
 #if MPACK_DEBUG && MPACK_STDIO
-static size_t mpack_print_read_prefix(mpack_reader_t *reader, size_t length, char *buffer, size_t buffer_size) {
+static size_t mpack_print_read_prefix(mpack_reader_t* reader, size_t length, char* buffer, size_t buffer_size) {
     if (length == 0)
         return 0;
 
@@ -1300,7 +1300,7 @@ static size_t mpack_print_read_prefix(mpack_reader_t *reader, size_t length, cha
     return read;
 }
 
-static void mpack_print_element(mpack_reader_t *reader, mpack_print_t *print, size_t depth) {
+static void mpack_print_element(mpack_reader_t* reader, mpack_print_t* print, size_t depth) {
     mpack_tag_t val = mpack_read_tag(reader);
     if (mpack_reader_error(reader) != mpack_ok)
         return;
@@ -1401,7 +1401,7 @@ static void mpack_print_element(mpack_reader_t *reader, mpack_print_t *print, si
     mpack_print_append_cstr(print, buf);
 }
 
-static void mpack_print_and_destroy(mpack_reader_t *reader, mpack_print_t *print, size_t depth) {
+static void mpack_print_and_destroy(mpack_reader_t* reader, mpack_print_t* print, size_t depth) {
     size_t i;
     for (i = 0; i < depth; ++i)
         mpack_print_append_cstr(print, "    ");
@@ -1422,13 +1422,13 @@ static void mpack_print_and_destroy(mpack_reader_t *reader, mpack_print_t *print
     }
 }
 
-static void mpack_print_data(const char *data, size_t len, mpack_print_t *print, size_t depth) {
+static void mpack_print_data(const char* data, size_t len, mpack_print_t* print, size_t depth) {
     mpack_reader_t reader;
     mpack_reader_init_data(&reader, data, len);
     mpack_print_and_destroy(&reader, print, depth);
 }
 
-void mpack_print_data_to_buffer(const char *data, size_t data_size, char *buffer, size_t buffer_size) {
+void mpack_print_data_to_buffer(const char* data, size_t data_size, char* buffer, size_t buffer_size) {
     if (buffer_size == 0) {
         mpack_assert(false, "buffer size is zero!");
         return;
@@ -1447,7 +1447,7 @@ void mpack_print_data_to_buffer(const char *data, size_t data_size, char *buffer
     print.buffer[print.size - 1] = '\0';
 }
 
-void mpack_print_data_to_callback(const char *data, size_t size, mpack_print_callback_t callback, void *context) {
+void mpack_print_data_to_callback(const char* data, size_t size, mpack_print_callback_t callback, void* context) {
     char buffer[1024];
     mpack_print_t print;
     mpack_memset(&print, 0, sizeof(print));
@@ -1459,7 +1459,7 @@ void mpack_print_data_to_callback(const char *data, size_t size, mpack_print_cal
     mpack_print_flush(&print);
 }
 
-void mpack_print_data_to_file(const char *data, size_t len, FILE *file) {
+void mpack_print_data_to_file(const char* data, size_t len, FILE* file) {
     mpack_assert(data != NULL, "data is NULL");
     mpack_assert(file != NULL, "file is NULL");
 
@@ -1476,7 +1476,7 @@ void mpack_print_data_to_file(const char *data, size_t len, FILE *file) {
     mpack_print_flush(&print);
 }
 
-void mpack_print_stdfile_to_callback(FILE *file, mpack_print_callback_t callback, void *context) {
+void mpack_print_stdfile_to_callback(FILE* file, mpack_print_callback_t callback, void* context) {
     char buffer[1024];
     mpack_print_t print;
     mpack_memset(&print, 0, sizeof(print));

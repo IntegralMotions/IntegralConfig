@@ -30,17 +30,17 @@ class Message : public MPackObject<Message, 3> {
         return MsgType::Unknown;
     }
 
-    bool isOpCode(const char *value) const {
+    bool isOpCode(const char* value) const {
         return std::strcmp(opCode, value) == 0;
     }
 
   private:
-    MPackObjectBase *createObject(const char * /*name*/) override {
+    MPackObjectBase* createObject(const char* /*name*/) override {
         return MessagePayloadRegistry::create(opCode);
     }
 
   public:
-    const char *msgType{};
-    const char *opCode{};
-    MPackObjectBase *payload{nullptr};
+    const char* msgType{};
+    const char* opCode{};
+    MPackObjectBase* payload{nullptr};
 };
