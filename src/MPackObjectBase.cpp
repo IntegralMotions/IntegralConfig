@@ -209,7 +209,7 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
 
 bool MPackObjectBase::readBool(mpack_reader_t& reader, bool& value) {
     value = false;
-    MPackHeader header;
+    MPackHeader header{};
     readHeader(reader, header);
     if (!ok(reader)) {
         return false;
