@@ -58,10 +58,10 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
     }
 
   public:
-    uint32_t address;
-    const char* id;
-    const char* label;
-    const char* unit;
+    uint32_t address = 0;
+    const char* id = nullptr;
+    const char* label = nullptr;
+    const char* unit = nullptr;
     TValue value;
     bool readonly = false;
 };

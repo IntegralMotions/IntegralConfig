@@ -32,7 +32,7 @@ class ConfigurationController {
     SevenBitEncodedCommunication _communication;
     mpack_reader_t _reader{};
 
-    ReceiveCallback _onReceived;
+    ReceiveCallback _onReceived = nullptr;
     void* _onReceivedContext = nullptr;
 
     static ConfigurationController* instance;

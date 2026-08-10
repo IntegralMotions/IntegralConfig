@@ -53,7 +53,7 @@ class MPackObjectBase {
 template <typename T>
 bool MPackObjectBase::readNumeric(mpack_reader_t& reader, T& value) {
     value = static_cast<T>(0);
-    MPackHeader header;
+    MPackHeader header{};
     readHeader(reader, header);
     if (!ok(reader)) {
         return false;
