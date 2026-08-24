@@ -153,7 +153,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesMessageAndCallsCallback) {
     mpack_write_cstr(&writer, "request");
 
     mpack_write_cstr(&writer, "opCode");
-    mpack_write_cstr(&writer, DefaultReadKeys::ReadDevice);
+    mpack_write_cstr(&writer, DefaultReadKeys::readDevice);
 
     mpack_write_cstr(&writer, "payload");
     mpack_write_nil(&writer);
@@ -199,7 +199,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_cstr(&writer, "event");
 
     mpack_write_cstr(&writer, "opCode");
-    mpack_write_cstr(&writer, DefaultReadKeys::WriteDevice);
+    mpack_write_cstr(&writer, DefaultReadKeys::writeDevice);
 
     mpack_write_cstr(&writer, "payload");
 

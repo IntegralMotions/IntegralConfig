@@ -94,7 +94,7 @@ static Message makeReadDeviceResponse() {
 
     Message toSend;
     toSend.msgType = "response";
-    toSend.opCode = DefaultReadKeys::ReadDevice;
+    toSend.opCode = DefaultReadKeys::readDevice;
     toSend.payload = device;
     return toSend;
 }

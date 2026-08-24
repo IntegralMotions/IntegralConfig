@@ -40,9 +40,9 @@ void MPackObject<Derived, MaxMembers>::registerMember(const char* name, const MP
         return;
     }
 
-    const auto Offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
+    const auto offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
 
-    members[memberIndex++] = {name, type, Offset};
+    members[memberIndex++] = {name, type, offset};
 }
 template <typename Derived, size_t MaxMembers>
 const MPackObjectMember* MPackObject<Derived, MaxMembers>::getMembers() const {

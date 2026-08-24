@@ -38,9 +38,9 @@ inline MPackObjectBase* MessagePayloadRegistry::createImpl() {
 
 template <typename T>
 inline bool MessagePayloadRegistry::registerType(const char* opCode) {
-    const bool CanAdd = count < MAX_MESSAGE_PAYLOAD_ENTRIES;
-    if (CanAdd) {
+    const bool canAdd = count < MAX_MESSAGE_PAYLOAD_ENTRIES;
+    if (canAdd) {
         entries[count++] = Entry{opCode, &createImpl<T>};
     }
-    return CanAdd;
+    return canAdd;
 }
