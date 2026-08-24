@@ -5,6 +5,6 @@
 
 bool registerDefaultMessagePayloads() {
     bool success = true;
-    success &= MessagePayloadRegistry::registerType<Device>(DefaultReadKeys::WriteDevice);
+    success &= MessagePayloadRegistry::registerType<Device>(DefaultReadKeys::writeDevice);
     return success;
 }

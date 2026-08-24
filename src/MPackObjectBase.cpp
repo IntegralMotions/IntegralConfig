@@ -63,10 +63,10 @@ void MPackObjectBase::write(mpack_writer_t& writer, int depth) const {
     }
 
     const MPackObjectMember* members = this->getMembers();
-    const size_t MemberCount = this->memberCount();
-    mpack_start_map(&writer, MemberCount);
+    const size_t memberCount = this->memberCount();
+    mpack_start_map(&writer, memberCount);
 
-    for (size_t i = 0; i < MemberCount; i++) {
+    for (size_t i = 0; i < memberCount; i++) {
         if (!writeMember(writer, members[i].name, members[i].type, getMemberAddress(members[i]), depth)) {
             return;
         }
@@ -77,9 +77,9 @@ void MPackObjectBase::write(mpack_writer_t& writer, int depth) const {
 
 bool MPackObjectBase::getMember(const char* name, MPackObjectMember& member) const {
     const MPackObjectMember* members = this->getMembers();
-    const size_t MemberCount = this->memberCount();
+    const size_t memberCount = this->memberCount();
 
-    for (size_t i = 0; i < MemberCount; i++) {
+    for (size_t i = 0; i < memberCount; i++) {
         if (strcmp(members[i].name, name) == 0) {
             member = members[i];
             return true;
