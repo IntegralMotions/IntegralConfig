@@ -9,6 +9,7 @@
 #include "Configuration.h"
 #include "ConfigurationController.h"
 #include "DefaultMessagePayloads.h"
+#include "IntegralCommunication/CobsEncodedCommunication.h"
 #include "IntegralCommunication/Communication.h"
 #include "IntegralCommunication/SevenBitEncodedCommunication.h"
 #include "MPackObject.hpp"
@@ -17,8 +18,8 @@
 #include "mpack/mpack-writer.h"
 
 struct ReceiveCtx {
-    bool &called;
-    MsgType &type;
+    bool& called;
+    MsgType& type;
 };
 
 class TestCommunication : public Communication {
@@ -26,7 +27,7 @@ class TestCommunication : public Communication {
     std::vector<uint8_t> outgoingBytes;
     std::vector<uint8_t> incomingBytes;
 
-    void injectIncomingBytes(const uint8_t *data, size_t size) {
+    void injectIncomingBytes(const uint8_t* data, size_t size) {
         incomingBytes.insert(incomingBytes.end(), data, data + size);
     }
 
@@ -37,7 +38,7 @@ class TestCommunication : public Communication {
     }
 
   protected:
-    size_t writeImpl(const uint8_t *data, size_t size) override {
+    size_t writeImpl(const uint8_t* data, size_t size) override {
         outgoingBytes.insert(outgoingBytes.end(), data, data + size);
         return true;
     }
@@ -46,7 +47,7 @@ class TestCommunication : public Communication {
         return incomingBytes.size() - readPosition;
     }
 
-    size_t readImpl(uint8_t *data, size_t size) override {
+    size_t readImpl(uint8_t* data, size_t size) override {
         size_t availableBytes = availableImpl();
         size_t countToRead = std::min(availableBytes, size);
         if (countToRead == 0) {
@@ -88,7 +89,7 @@ class ConfigurationControllerTests : public ::testing::Test {
         registerDefaultMessagePayloads();
     }
 
-    static TestController &controller() {
+    static TestController& controller() {
         return TestController::get();
     }
 
@@ -103,9 +104,9 @@ class ConfigurationControllerTests : public ::testing::Test {
 };
 
 template <size_t TransmissionSize, size_t ReceptionSize>
-void injectEncodedMessage(TestCommunication &communication, const uint8_t *messageData, size_t messageLength) {
+void injectEncodedMessage(TestCommunication& communication, const uint8_t* messageData, size_t messageLength) {
     TestCommunication temporaryCommunication;
-    SevenBitEncodedCommunication encoder(temporaryCommunication, TransmissionSize, ReceptionSize);
+    CobsEncodedCommunication encoder(temporaryCommunication, TransmissionSize, ReceptionSize);
 
     bool success = encoder.writeMessage(messageData, messageLength);
     ASSERT_TRUE(success);
@@ -131,8 +132,8 @@ TEST_F(ConfigurationControllerTests, LoopDoesNothingWhenNoMessageAvailable) {
     ReceiveCtx ctx{callbackCalled, receivedMessageType};
 
     controller().setOnReceived(
-        [](void *context, const Message &message) {
-            auto *ctx = static_cast<ReceiveCtx *>(context);
+        [](void* context, const Message& message) {
+            auto* ctx = static_cast<ReceiveCtx*>(context);
             ctx->called = true;
             ctx->type = message.getMsgType();
         },
@@ -145,7 +146,7 @@ TEST_F(ConfigurationControllerTests, LoopDoesNothingWhenNoMessageAvailable) {
 TEST_F(ConfigurationControllerTests, LoopParsesMessageAndCallsCallback) {
     std::array<uint8_t, 256> buffer;
     mpack_writer_t writer;
-    mpack_writer_init(&writer, reinterpret_cast<char *>(buffer.data()), buffer.size());
+    mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
 
     mpack_build_map(&writer);
 
@@ -173,8 +174,8 @@ TEST_F(ConfigurationControllerTests, LoopParsesMessageAndCallsCallback) {
     ReceiveCtx ctx{callbackCalled, receivedMessageType};
 
     controller().setOnReceived(
-        [](void *context, const Message &message) {
-            auto *ctx = static_cast<ReceiveCtx *>(context);
+        [](void* context, const Message& message) {
+            auto* ctx = static_cast<ReceiveCtx*>(context);
             ctx->called = true;
             ctx->type = message.getMsgType();
         },
@@ -188,7 +189,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesMessageAndCallsCallback) {
 TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructure) {
     std::array<uint8_t, 512> buffer{};
     mpack_writer_t writer;
-    mpack_writer_init(&writer, reinterpret_cast<char *>(buffer.data()), buffer.size());
+    mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
 
     ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
 
@@ -335,8 +336,8 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     ReceiveCtx ctx{callbackCalled, receivedMessageType};
 
     controller().setOnReceived(
-        [](void *context, const Message &message) {
-            auto *ctx = static_cast<ReceiveCtx *>(context);
+        [](void* context, const Message& message) {
+            auto* ctx = static_cast<ReceiveCtx*>(context);
             ctx->called = true;
             ctx->type = message.getMsgType();
         },
