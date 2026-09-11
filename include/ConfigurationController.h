@@ -1,7 +1,7 @@
 #pragma once
 
+#include "IntegralCommunication/CobsEncodedCommunication.h"
 #include "IntegralCommunication/Communication.h"
-#include "IntegralCommunication/SevenBitEncodedCommunication.h"
 #include "MPackObjectBase.h"
 #include "Messages.h"
 #include <array>
@@ -29,7 +29,7 @@ class ConfigurationController {
     ConfigurationController(Communication& comm);
     ~ConfigurationController() = default;
 
-    SevenBitEncodedCommunication _communication;
+    CobsEncodedCommunication _communication;
     mpack_reader_t _reader{};
 
     ReceiveCallback _onReceived = nullptr;
