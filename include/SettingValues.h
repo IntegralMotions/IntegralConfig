@@ -97,13 +97,14 @@ class StringSetting : public SettingValue<StringSetting, const char*, 1> {
 };
 
 template <typename TValue>
-class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 4> {
+class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 5> {
   public:
     static void registerMembers() {
-        using Base = SettingValue<NumberSetting<TValue>, TValue, 4>;
+        using Base = SettingValue<NumberSetting<TValue>, TValue, 5>;
         Base::registerMembers();
         Base::registerMember("min", Base::template getType<TValue>(), &NumberSetting::min);
         Base::registerMember("max", Base::template getType<TValue>(), &NumberSetting::max);
+        Base::registerMember("step", Base::template getType<TValue>(), &NumberSetting::step);
         Base::registerMember("isRange", CppType::Bool, &NumberSetting::isRange);
         Base::registerMember("options", {CppType::Array, Base::template getType<TValue>()}, &NumberSetting::options);
     }
