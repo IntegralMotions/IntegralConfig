@@ -13,7 +13,7 @@ This library is designed to be **platform-independent**, supporting:
 
 ## ✨ Features
 - Encode/decode configuration data to/from byte arrays
-- Cross-platform (C++17) – works on STM32, Arduino, Linux, Windows, macOS
+- Cross-platform (C++20) – works on STM32, Arduino, Linux, Windows, macOS
 - Web configuration support via the Integral Motion Configurator
 - Lightweight (no STL heap usage if disabled)
 - Header-only or minimal `src/` implementation
@@ -64,6 +64,38 @@ cmake --build build
 ctest --test-dir build -V
 ```
 
+## Typed settings
+
+Settings declare their own persistence policy. The configurator only requests a save; the registry routes each dirty
+value to the frequently-changing or long-term store.
+
+```cpp
+#include "Settings/MemorySettingsStore.h"
+#include "Settings/SettingsRegistry.h"
+
+using namespace IntegralMotions::Config;
+
+SettingsRegistry<32> registry;
+int32_t speed = 0;
+
+SettingDefinition<int32_t> speedDefinition{
+    .key = {SettingEndpoint::MotorController, SettingScope::Motor, 0, 1},
+    .moduleId = "motor.0",
+    .groupId = "control",
+    .id = "speed",
+    .label = "Speed",
+    .unit = "rpm",
+    .defaultValue = 1000,
+    .minimum = 0,
+    .maximum = 2000,
+    .step = 100,
+    .persistence = PersistencePolicy::LongTerm,
+};
+
+auto [result, speedSetting] = registry.add(speedDefinition, speed);
+speedSetting.set(1200);
+```
+
 ---
 
 ## 🔌 PlatformIO / Arduino
@@ -77,7 +109,7 @@ lib_deps = https://github.com/IntegralMotion/IntegralConfig.git
 ## 💡 STM32CubeIDE Integration
 1. Add as a git submodule under `external/IntegralConfig`
 2. In CubeIDE: link the `include/` and `src/` folders
-3. Add include path and standard flags (`-std=c++17`, `-ffunction-sections`, `-Os`)
+3. Add include path and standard flags (`-std=c++20`, `-ffunction-sections`, `-Os`)
 
 ---
 

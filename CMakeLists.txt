@@ -5,7 +5,7 @@ project(IntegralConfig
     LANGUAGES C CXX
 )
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -19,6 +19,14 @@ option(INTEGRALCONFIG_BUILD_EXAMPLES "Build IntegralConfig examples" ${INTEGRALC
 option(INTEGRAL_BUILD_DEPENDENCY_TESTS "Build tests for IntegralMotions dependencies" OFF)
 
 include(FetchContent)
+
+FetchContent_Declare(
+    IntegralCoreUtilities
+    GIT_REPOSITORY https://github.com/IntegralMotions/IntegralCoreUtilities.git
+    GIT_TAG        v0.2.0
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(IntegralCoreUtilities)
 
 FetchContent_Declare(
     IntegralCommunication
@@ -43,10 +51,11 @@ target_include_directories(IntegralConfig
         $<INSTALL_INTERFACE:include>
 )
 
-target_compile_features(IntegralConfig PUBLIC cxx_std_17)
+target_compile_features(IntegralConfig PUBLIC cxx_std_20)
 
 target_link_libraries(IntegralConfig
     PUBLIC
+        IntegralCoreUtilities::IntegralCoreUtilities
         IntegralCommunication::IntegralCommunication
 )
 
