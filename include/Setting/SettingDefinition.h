@@ -11,7 +11,6 @@ namespace IntegralMotions::Config {
     inline constexpr uint8_t ModuleNameMaxLength = 64;
     inline constexpr uint8_t GroupNameMaxLength = 64;
     inline constexpr uint8_t UnitNameMaxLength = 16;
-    inline constexpr uint8_t LabelMaxLength = 64;
 
     template <SupportedSettingType T>
     struct SettingDefinition {

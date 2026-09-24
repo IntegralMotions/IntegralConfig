@@ -66,34 +66,41 @@ ctest --test-dir build -V
 
 ## Typed settings
 
-Settings declare their own persistence policy. The configurator only requests a save; the registry routes each dirty
-value to the frequently-changing or long-term store.
+Settings declare their persistence policy. `Memory` values are RAM-only; `Frequent` and `LongTerm` values are written
+immediately to their configured `SettingsStore`.
 
 ```cpp
-#include "Settings/MemorySettingsStore.h"
-#include "Settings/SettingsRegistry.h"
+#include "Setting/SettingDefinition.h"
+#include "Setting/SettingRegistry.h"
 
 using namespace IntegralMotions::Config;
 
-SettingsRegistry<32> registry;
 int32_t speed = 0;
 
 SettingDefinition<int32_t> speedDefinition{
-    .key = {SettingEndpoint::MotorController, SettingScope::Motor, 0, 1},
-    .moduleId = "motor.0",
-    .groupId = "control",
-    .id = "speed",
-    .label = "Speed",
-    .unit = "rpm",
+    .key = {.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 0},
     .defaultValue = 1000,
-    .minimum = 0,
-    .maximum = 2000,
-    .step = 100,
-    .persistence = PersistencePolicy::LongTerm,
+    .limits = {.minimum = 0, .maximum = 2000, .step = 100},
+    .persistencePolicy = PersistencePolicy::LongTerm,
 };
 
-auto [result, speedSetting] = registry.add(speedDefinition, speed);
-speedSetting.set(1200);
+speedDefinition.label.assign("Speed");
+speedDefinition.unit.assign("rpm");
+speedDefinition.limits.options[0].value = 500;
+speedDefinition.limits.options[0].label.assign("Low speed");
+speedDefinition.limits.options[1].value = 1500;
+speedDefinition.limits.options[1].label.assign("High speed");
+speedDefinition.limits.optionCount = 2;
+
+SettingsRegistry<32> registry;
+registry.add(speedDefinition, speed);
+registry.set(speedDefinition.key, 1200);
+```
+
+Each option has a machine value and a human-readable label. MessagePack `options` arrays use the same shape:
+
+```text
+[{ "value": 500, "label": "Low speed" }]
 ```
 
 ---

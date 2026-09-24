@@ -133,7 +133,7 @@ namespace IntegralMotions::Config {
         }
 
         if (std::to_integer<uint8_t>(bytes[0]) != bankMagic) {
-            return SettingsStoreResult::InvalidArgument;
+            return SettingsStoreResult::CorruptData;
         }
         if (std::to_integer<uint8_t>(bytes[1]) != bankVersion) {
             return SettingsStoreResult::UnsupportedVersion;
@@ -147,7 +147,7 @@ namespace IntegralMotions::Config {
                                    (static_cast<uint16_t>(std::to_integer<uint8_t>(bytes[7])) << 8U);
         if (!IntegralMotions::Math::CRC::validate(reinterpret_cast<const uint8_t*>(bytes.data()),
                                                   bankHeaderSizeUnaligned - 2, storedCrc)) {
-            return SettingsStoreResult::Ok;
+            return SettingsStoreResult::CorruptData;
         }
 
         return SettingsStoreResult::Ok;
@@ -217,19 +217,19 @@ namespace IntegralMotions::Config {
 
         BankHeader headerA{};
         BankHeader headerB{};
-        bool validA = false;
-        bool validB = false;
-        auto result = readBankHeader(_bankA, headerA, validA);
-        if (result != SettingsStoreResult::Ok) {
-            return result;
+        auto resultA = readBankHeader(_bankA, headerA);
+        if (resultA != SettingsStoreResult::Ok && resultA != SettingsStoreResult::CorruptData) {
+            return resultA;
         }
-        result = readBankHeader(_bankB, headerB, validB);
-        if (result != SettingsStoreResult::Ok) {
-            return result;
+        const auto resultB = readBankHeader(_bankB, headerB);
+        if (resultB != SettingsStoreResult::Ok && resultB != SettingsStoreResult::CorruptData) {
+            return resultB;
         }
+        const bool validA = resultA == SettingsStoreResult::Ok;
+        const bool validB = resultB == SettingsStoreResult::Ok;
 
         if (!validA && !validB) {
-            result = clearBank(_bankA);
+            auto result = clearBank(_bankA);
             if (result != SettingsStoreResult::Ok) {
                 return result;
             }
@@ -247,7 +247,7 @@ namespace IntegralMotions::Config {
             _generation = headerB.generation;
         }
 
-        result = scanActiveBank();
+        const auto result = scanActiveBank();
         if (result == SettingsStoreResult::Ok) {
             _open = true;
         }

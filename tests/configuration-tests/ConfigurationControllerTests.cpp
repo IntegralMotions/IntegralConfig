@@ -283,9 +283,9 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_cstr(&writer, "int");
     mpack_write_cstr(&writer, "value");
 
-    // NumberSetting<int>: 10 entries
-    // address, id, label, unit, value, readonly, min, max, isRange, options
-    mpack_start_map(&writer, 10);
+    // NumberSetting<int>: 11 entries
+    // address, id, label, unit, value, readonly, min, max, step, isRange, options
+    mpack_start_map(&writer, 11);
     mpack_write_cstr(&writer, "address");
     mpack_write_u32(&writer, 2);
     mpack_write_cstr(&writer, "id");
@@ -302,12 +302,24 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_i32(&writer, 0);
     mpack_write_cstr(&writer, "max");
     mpack_write_i32(&writer, 2000);
+    mpack_write_cstr(&writer, "step");
+    mpack_write_i32(&writer, 100);
     mpack_write_cstr(&writer, "isRange");
     mpack_write_bool(&writer, false);
     mpack_write_cstr(&writer, "options");
     mpack_start_array(&writer, 2);
+    mpack_start_map(&writer, 2);
+    mpack_write_cstr(&writer, "value");
     mpack_write_i32(&writer, 500);
+    mpack_write_cstr(&writer, "label");
+    mpack_write_cstr(&writer, "Low speed");
+    mpack_finish_map(&writer);
+    mpack_start_map(&writer, 2);
+    mpack_write_cstr(&writer, "value");
     mpack_write_i32(&writer, 1500);
+    mpack_write_cstr(&writer, "label");
+    mpack_write_cstr(&writer, "High speed");
+    mpack_finish_map(&writer);
     mpack_finish_array(&writer); // options
     mpack_finish_map(&writer);   // NumberSetting<int>
     mpack_finish_map(&writer);   // Setting 2
@@ -330,16 +342,34 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
 
     injectEncodedMessage<1024, 1024>(globalCommunication, buffer.data(), usedBytes);
 
+    struct OptionReceiveCtx {
+        bool& called;
+        MsgType& type;
+        size_t& optionCount;
+        int& optionValue;
+        const char*& optionLabel;
+    };
+
     bool callbackCalled = false;
     MsgType receivedMessageType = MsgType::Unknown;
+    size_t optionCount = 0;
+    int optionValue = 0;
+    const char* optionLabel = nullptr;
 
-    ReceiveCtx ctx{callbackCalled, receivedMessageType};
+    OptionReceiveCtx ctx{callbackCalled, receivedMessageType, optionCount, optionValue, optionLabel};
 
     controller().setOnReceived(
         [](void* context, const Message& message) {
-            auto* ctx = static_cast<ReceiveCtx*>(context);
+            auto* ctx = static_cast<OptionReceiveCtx*>(context);
             ctx->called = true;
             ctx->type = message.getMsgType();
+
+            const auto* device = static_cast<const Device*>(message.payload);
+            const auto* numberSetting =
+                static_cast<const NumberSetting<int>*>(device->modules[0]->groups[0]->settings[1]->value);
+            ctx->optionCount = numberSetting->options.size;
+            ctx->optionValue = numberSetting->options[1]->value;
+            ctx->optionLabel = numberSetting->options[1]->label;
         },
         &ctx);
 
@@ -347,4 +377,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
 
     EXPECT_TRUE(callbackCalled);
     EXPECT_EQ(receivedMessageType, MsgType::Event);
+    EXPECT_EQ(optionCount, 2);
+    EXPECT_EQ(optionValue, 1500);
+    EXPECT_STREQ(optionLabel, "High speed");
 }

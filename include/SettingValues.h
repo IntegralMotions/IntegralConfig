@@ -8,6 +8,44 @@
 
 constexpr size_t SettingValueMembers = 6;
 
+template <typename T>
+CppType settingValueCppType() {
+    using Unqualified = std::remove_cv_t<T>;
+    if constexpr (std::is_same_v<Unqualified, bool>) {
+        return CppType::Bool;
+    } else if constexpr (std::is_same_v<Unqualified, const char*>) {
+        return CppType::String;
+    } else if constexpr (std::is_floating_point_v<Unqualified>) {
+        if constexpr (sizeof(Unqualified) == sizeof(double)) {
+            return CppType::F64;
+        } else {
+            return CppType::F32;
+        }
+    } else if constexpr (std::is_integral_v<Unqualified> && std::is_signed_v<Unqualified>) {
+        if constexpr (sizeof(Unqualified) == sizeof(int8_t)) {
+            return CppType::I8;
+        } else if constexpr (sizeof(Unqualified) == sizeof(int16_t)) {
+            return CppType::I16;
+        } else if constexpr (sizeof(Unqualified) == sizeof(int32_t)) {
+            return CppType::I32;
+        } else {
+            return CppType::I64;
+        }
+    } else if constexpr (std::is_integral_v<Unqualified> && std::is_unsigned_v<Unqualified>) {
+        if constexpr (sizeof(Unqualified) == sizeof(uint8_t)) {
+            return CppType::U8;
+        } else if constexpr (sizeof(Unqualified) == sizeof(uint16_t)) {
+            return CppType::U16;
+        } else if constexpr (sizeof(Unqualified) == sizeof(uint32_t)) {
+            return CppType::U32;
+        } else {
+            return CppType::U64;
+        }
+    } else {
+        return CppType::None;
+    }
+}
+
 template <typename TDerived, typename TValue, size_t AddedMembers>
 class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMembers> {
   private:
@@ -25,47 +63,10 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
         Obj::registerMember("readonly", CppType::Bool, &TDerived::readonly);
     }
 
-  protected:
+  public:
     template <typename T>
     static CppType getType() {
-        using Unqualified = std::remove_cv_t<T>;
-        CppType valueType = CppType::None;
-        if constexpr (std::is_same_v<Unqualified, bool>) {
-            valueType = CppType::Bool;
-        } else if constexpr (std::is_same_v<Unqualified, const char*>) {
-            valueType = CppType::String;
-        } else if constexpr (std::is_floating_point_v<Unqualified>) {
-            if constexpr (sizeof(Unqualified) == sizeof(double)) {
-                valueType = CppType::F64;
-            } else {
-                valueType = CppType::F32;
-            }
-        } else if constexpr (std::is_integral_v<Unqualified>) {
-            static_assert(std::is_signed_v<Unqualified> || std::is_unsigned_v<Unqualified>, "unexpected integral type");
-            if constexpr (std::is_signed_v<Unqualified>) {
-                if constexpr (sizeof(Unqualified) == sizeof(int8_t)) {
-                    valueType = CppType::I8;
-                } else if constexpr (sizeof(Unqualified) == sizeof(int16_t)) {
-                    valueType = CppType::I16;
-                } else if constexpr (sizeof(Unqualified) == sizeof(int32_t)) {
-                    valueType = CppType::I32;
-                } else if constexpr (sizeof(Unqualified) == sizeof(int64_t)) {
-                    valueType = CppType::I64;
-                }
-            } else {
-                if constexpr (sizeof(Unqualified) == sizeof(uint8_t)) {
-                    valueType = CppType::U8;
-                } else if constexpr (sizeof(Unqualified) == sizeof(uint16_t)) {
-                    valueType = CppType::U16;
-                } else if constexpr (sizeof(Unqualified) == sizeof(uint32_t)) {
-                    valueType = CppType::U32;
-                } else if constexpr (sizeof(Unqualified) == sizeof(uint64_t)) {
-                    valueType = CppType::U64;
-                }
-            }
-        }
-
-        return valueType;
+        return settingValueCppType<T>();
     }
 
   public:
@@ -75,6 +76,20 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
     const char* unit = nullptr;
     TValue value;
     bool readonly = false;
+};
+
+template <typename TValue>
+class MessageSettingOption : public MPackObject<MessageSettingOption<TValue>, 2> {
+  public:
+    static void registerMembers() {
+        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("value", settingValueCppType<TValue>(),
+                                                                     &MessageSettingOption::value);
+        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("label", CppType::String,
+                                                                     &MessageSettingOption::label);
+    }
+
+    TValue value{};
+    const char* label{};
 };
 
 class BoolSetting : public SettingValue<BoolSetting, bool, 0> {
@@ -90,10 +105,16 @@ class StringSetting : public SettingValue<StringSetting, const char*, 1> {
     static void registerMembers() {
         using Base = SettingValue<StringSetting, const char*, 1>;
         Base::registerMembers();
-        registerMember("options", {CppType::Array, CppType::String}, &StringSetting::options);
+        registerMember("options", {CppType::Array, CppType::ObjectPtr}, &StringSetting::options);
     }
 
-    MPackArray<const char*> options;
+  protected:
+    MPackObjectBase* createObject(const char* /*name*/) override {
+        return new MessageSettingOption<const char*>();
+    }
+
+  public:
+    MPackArray<MessageSettingOption<const char*>*> options;
 };
 
 template <typename TValue>
@@ -106,10 +127,16 @@ class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 5> {
         Base::registerMember("max", Base::template getType<TValue>(), &NumberSetting::max);
         Base::registerMember("step", Base::template getType<TValue>(), &NumberSetting::step);
         Base::registerMember("isRange", CppType::Bool, &NumberSetting::isRange);
-        Base::registerMember("options", {CppType::Array, Base::template getType<TValue>()}, &NumberSetting::options);
+        Base::registerMember("options", {CppType::Array, CppType::ObjectPtr}, &NumberSetting::options);
     }
 
-    MPackArray<TValue> options;
+  protected:
+    MPackObjectBase* createObject(const char* /*name*/) override {
+        return new MessageSettingOption<TValue>();
+    }
+
+  public:
+    MPackArray<MessageSettingOption<TValue>*> options;
     TValue min;
     TValue max;
     TValue step;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SupportedSettingType.h"
+#include "SettingOption.h"
 
 #include <array>
 #include <cstdint>
@@ -15,7 +15,7 @@ namespace IntegralMotions::Config {
         std::optional<T> minimum{};
         std::optional<T> maximum{};
         std::optional<T> step{};
-        std::array<T, MaxOptions> options{};
+        std::array<SettingOption<T>, MaxOptions> options{};
         uint8_t optionCount = 0;
     };
 

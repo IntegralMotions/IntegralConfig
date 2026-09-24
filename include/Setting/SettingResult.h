@@ -25,6 +25,7 @@ namespace IntegralMotions::Config {
         InvalidOption = 13,
 
         ReentrantOperation = 14,
+        StorageError = 15,
     };
 
 } // namespace IntegralMotions::Config
