@@ -23,6 +23,7 @@ namespace IntegralMotions::Config {
                 .defaultValue = 100,
                 .persistencePolicy = PersistencePolicy::Frequent,
             };
+
             int32_t value = 0;
             SettingsRegistry<2> registry;
             registry.configureFrequentStore(store);

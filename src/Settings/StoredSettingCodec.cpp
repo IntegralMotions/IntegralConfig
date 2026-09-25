@@ -305,6 +305,7 @@ namespace IntegralMotions::Config {
             break;
         }
 
+        
         return StoredSettingResult::Ok;
     }
 
