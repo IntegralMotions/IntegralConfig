@@ -7,7 +7,12 @@
 template <size_t Capacity>
 class FixedString {
   public:
-    bool assign(std::string_view text);
+    constexpr FixedString() = default;
+
+    template <size_t Length>
+    constexpr FixedString(const char (&text)[Length]); // NOLINT(modernize-avoid-c-arrays)
+
+    constexpr bool assign(std::string_view text);
     void clear();
 
     [[nodiscard]] const char* cStr() const;
@@ -24,7 +29,14 @@ class FixedString {
 };
 
 template <size_t Capacity>
-bool FixedString<Capacity>::assign(std::string_view text) {
+template <size_t Length>
+constexpr FixedString<Capacity>::FixedString(const char (&text)[Length]) { // NOLINT(modernize-avoid-c-arrays)
+    static_assert(Length - 1 <= Capacity);
+    assign(std::string_view{text, Length - 1});
+}
+
+template <size_t Capacity>
+constexpr bool FixedString<Capacity>::assign(std::string_view text) {
     if (text.size() > Capacity) {
         return false;
     }
