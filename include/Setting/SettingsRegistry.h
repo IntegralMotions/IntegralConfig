@@ -32,6 +32,7 @@ namespace IntegralMotions::Config {
 
         void configureLongTermStore(SettingsStore<Capacity>& store);
         void configureFrequentStore(SettingsStore<Capacity>& store);
+        void applyAtStartup();
 
       private:
         struct Entry {
@@ -40,6 +41,7 @@ namespace IntegralMotions::Config {
             SettingKey key{};
             SettingType type{};
             PersistencePolicy persistencePolicy = PersistencePolicy::Memory;
+            ApplyPolicy applyPolicy = ApplyPolicy::Immediate;
             bool readonly = false;
 
             const void* definition = nullptr;
@@ -48,8 +50,7 @@ namespace IntegralMotions::Config {
             SettingResult (*validate)(const void* definition, const SettingValue& candidate) = nullptr;
             SettingResult (*read)(void* context, SettingValue& output) = nullptr;
             SettingResult (*write)(void* context, const SettingValue& candidate) = nullptr;
-
-            bool dirty = true;
+            void (*apply)(const void* definition, const SettingValue& value) = nullptr;
         };
 
         template <SupportedSettingType T>
@@ -63,6 +64,9 @@ namespace IntegralMotions::Config {
 
         template <SupportedSettingType T>
         static SettingResult writeLocal(void* context, const SettingValue& input);
+
+        template <SupportedSettingType T>
+        static void applyDefinition(const void* definition, const SettingValue& value);
 
         Entry* find(const SettingKey& key);
         const Entry* find(const SettingKey& key) const;
@@ -222,6 +226,16 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t Capacity>
+    template <SupportedSettingType T>
+    void SettingsRegistry<Capacity>::applyDefinition(const void* definition, const SettingValue& value) {
+        const auto* settingDefinition = static_cast<const SettingDefinition<T>*>(definition);
+        const auto* typedValue = std::get_if<T>(&value);
+        if (settingDefinition->apply && typedValue != nullptr) {
+            settingDefinition->apply(*typedValue);
+        }
+    }
+
+    template <size_t Capacity>
     const typename SettingsRegistry<Capacity>::Entry* SettingsRegistry<Capacity>::find(const SettingKey& key) const {
         for (size_t i = 0; i < _size; ++i) {
             if (_entries[i].key == key) {
@@ -258,12 +272,14 @@ namespace IntegralMotions::Config {
         entry.key = definition.key;
         entry.type = settingTypeOf<T>();
         entry.persistencePolicy = definition.persistencePolicy;
+        entry.applyPolicy = definition.applyPolicy;
         entry.readonly = definition.readonly;
         entry.definition = &definition;
         entry.context = &value;
         entry.validate = &validateLocal<T>;
         entry.read = &readLocal<T>;
         entry.write = &writeLocal<T>;
+        entry.apply = &applyDefinition<T>;
 
         value = definition.defaultValue;
         if (entry.persistencePolicy != PersistencePolicy::Memory) {
@@ -315,9 +331,22 @@ namespace IntegralMotions::Config {
 
         const auto writeResult = entry->write(entry->context, candidate);
         if (writeResult == SettingResult::Ok) {
-            entry->dirty = false;
+            if (entry->applyPolicy != ApplyPolicy::OnRestart) {
+                entry->apply(entry->definition, candidate);
+            }
         }
         return writeResult;
+    }
+
+    template <size_t Capacity>
+    void SettingsRegistry<Capacity>::applyAtStartup() {
+        for (size_t i = 0; i < _size; ++i) {
+            auto& entry = _entries[i];
+            SettingValue value{};
+            if (entry.read(entry.context, value) == SettingResult::Ok) {
+                entry.apply(entry.definition, value);
+            }
+        }
     }
 
     template <size_t Capacity>

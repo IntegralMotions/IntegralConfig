@@ -1,6 +1,8 @@
 #pragma once
 
-#include "../FixedString.h"
+#include "Containers/FixedString.h"
+#include "Functional/Delegate.h"
+#include "ApplyPolicy.h"
 #include "PersistencePolicy.h"
 #include "SettingKey.h"
 #include "SettingLimits.h"
@@ -15,14 +17,16 @@ namespace IntegralMotions::Config {
     template <SupportedSettingType T>
     struct SettingDefinition {
         SettingKey key{};
-        FixedString<ModuleNameMaxLength> module;
-        FixedString<GroupNameMaxLength> group;
-        FixedString<UnitNameMaxLength> unit;
-        FixedString<LabelMaxLength> label;
+        IntegralMotions::Containers::FixedString<ModuleNameMaxLength> module;
+        IntegralMotions::Containers::FixedString<GroupNameMaxLength> group;
+        IntegralMotions::Containers::FixedString<UnitNameMaxLength> unit;
+        IntegralMotions::Containers::FixedString<LabelMaxLength> label;
         T defaultValue{};
         SettingLimits<T> limits{};
         bool readonly = false;
         PersistencePolicy persistencePolicy = PersistencePolicy::Memory;
+        ApplyPolicy applyPolicy = ApplyPolicy::Immediate;
+        IntegralMotions::Functional::Delegate<void(const T&)> apply{};
     };
 
 } // namespace IntegralMotions::Config

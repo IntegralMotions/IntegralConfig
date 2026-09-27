@@ -4,8 +4,8 @@
 #include "SettingKey.h"
 #include "SettingStoreResult.h"
 #include "SettingValue.h"
-#include "StorageDevice.h"
-#include "StorageRegion.h"
+#include "Storage/StorageDevice.h"
+#include "Storage/StorageRegion.h"
 #include "StoredSettingCodec.h"
 
 #include <algorithm>
@@ -20,13 +20,18 @@ namespace IntegralMotions::Config {
     template <size_t MaxSettings>
     class SettingsStore {
       public:
-        SettingsStore(StorageDevice& storage, StorageRegion bankA, StorageRegion bankB);
+        SettingsStore(IntegralMotions::Storage::StorageDevice& storage, IntegralMotions::Storage::StorageRegion bankA,
+                      IntegralMotions::Storage::StorageRegion bankB);
 
         SettingsStoreResult open();
         SettingsStoreResult store(const SettingKey& key, const SettingValue& value);
         SettingsStoreResult load(const SettingKey& key, SettingValue& value) const;
 
       private:
+        using StorageDevice = IntegralMotions::Storage::StorageDevice;
+        using StorageRegion = IntegralMotions::Storage::StorageRegion;
+        using StorageResult = IntegralMotions::Storage::StorageResult;
+
         static constexpr uint8_t bankMagic = 0xB6;
         static constexpr uint8_t bankVersion = 0;
         static constexpr size_t bankHeaderSizeUnaligned = 8;
@@ -74,7 +79,9 @@ namespace IntegralMotions::Config {
     };
 
     template <size_t MaxSettings>
-    SettingsStore<MaxSettings>::SettingsStore(StorageDevice& storage, StorageRegion bankA, StorageRegion bankB)
+    SettingsStore<MaxSettings>::SettingsStore(IntegralMotions::Storage::StorageDevice& storage,
+                                              IntegralMotions::Storage::StorageRegion bankA,
+                                              IntegralMotions::Storage::StorageRegion bankB)
         : _storage(storage), _bankA(bankA), _bankB(bankB) {}
 
     template <size_t MaxSettings>
@@ -120,7 +127,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t MaxSettings>
-    StorageRegion SettingsStore<MaxSettings>::inactiveBank() const {
+    IntegralMotions::Storage::StorageRegion SettingsStore<MaxSettings>::inactiveBank() const {
         return _activeBank.offset == _bankA.offset ? _bankB : _bankA;
     }
 

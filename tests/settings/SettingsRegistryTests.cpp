@@ -1,6 +1,6 @@
-#include "Setting/MemoryStorageDevice.h"
 #include "Setting/SettingDefinition.h"
-#include "Setting/SettingRegistry.h"
+#include "Setting/SettingsRegistry.h"
+#include "Storage/MemoryStorageDevice.h"
 
 #include <cstdint>
 #include <gtest/gtest.h>
@@ -8,10 +8,23 @@
 namespace IntegralMotions::Config {
     namespace {
 
+        using namespace IntegralMotions::Storage;
+
         constexpr StorageRegion BankA{.offset = 0, .size = 64};
         constexpr StorageRegion BankB{.offset = 64, .size = 64};
         constexpr SettingKey FrequentKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 0};
         constexpr SettingKey MemoryKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 1};
+        constexpr SettingKey RestartKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 2};
+
+        struct ApplyRecorder {
+            void record(const int32_t& value) {
+                latestValue = value;
+                ++callCount;
+            }
+
+            int32_t latestValue = 0;
+            size_t callCount = 0;
+        };
 
         TEST(SettingsRegistry, PersistsAndRestoresFrequentValues) {
             MemoryStorageDevice<128> storage;
@@ -164,6 +177,58 @@ namespace IntegralMotions::Config {
             int32_t value = 0;
             SettingsRegistry<1> registry;
             EXPECT_EQ(registry.add(definition, value), SettingResult::InvalidDefinition);
+        }
+
+        TEST(SettingsRegistry, AppliesImmediatelyAndAtStartupAccordingToPolicy) {
+            ApplyRecorder immediateRecorder;
+            ApplyRecorder disabledRecorder;
+            ApplyRecorder restartRecorder;
+            const SettingDefinition<int32_t> immediateDefinition{
+                .key = FrequentKey,
+                .defaultValue = 10,
+                .apply = IntegralMotions::Functional::Delegate<void(const int32_t&)>::bind<&ApplyRecorder::record>(
+                    immediateRecorder),
+            };
+            const SettingDefinition<int32_t> disabledDefinition{
+                .key = MemoryKey,
+                .defaultValue = 20,
+                .applyPolicy = ApplyPolicy::WhenDisabled,
+                .apply = IntegralMotions::Functional::Delegate<void(const int32_t&)>::bind<&ApplyRecorder::record>(
+                    disabledRecorder),
+            };
+            const SettingDefinition<int32_t> restartDefinition{
+                .key = RestartKey,
+                .defaultValue = 30,
+                .applyPolicy = ApplyPolicy::OnRestart,
+                .apply = IntegralMotions::Functional::Delegate<void(const int32_t&)>::bind<&ApplyRecorder::record>(
+                    restartRecorder),
+            };
+            int32_t immediateValue = 0;
+            int32_t disabledValue = 0;
+            int32_t restartValue = 0;
+            SettingsRegistry<3> registry;
+
+            ASSERT_EQ(registry.add(immediateDefinition, immediateValue), SettingResult::Ok);
+            ASSERT_EQ(registry.add(disabledDefinition, disabledValue), SettingResult::Ok);
+            ASSERT_EQ(registry.add(restartDefinition, restartValue), SettingResult::Ok);
+            ASSERT_EQ(registry.set(FrequentKey, int32_t{11}), SettingResult::Ok);
+            ASSERT_EQ(registry.set(MemoryKey, int32_t{21}), SettingResult::Ok);
+            ASSERT_EQ(registry.set(RestartKey, int32_t{31}), SettingResult::Ok);
+
+            EXPECT_EQ(immediateRecorder.latestValue, 11);
+            EXPECT_EQ(immediateRecorder.callCount, 1);
+            EXPECT_EQ(disabledRecorder.latestValue, 21);
+            EXPECT_EQ(disabledRecorder.callCount, 1);
+            EXPECT_EQ(restartRecorder.callCount, 0);
+
+            registry.applyAtStartup();
+
+            EXPECT_EQ(immediateRecorder.latestValue, 11);
+            EXPECT_EQ(immediateRecorder.callCount, 2);
+            EXPECT_EQ(disabledRecorder.latestValue, 21);
+            EXPECT_EQ(disabledRecorder.callCount, 2);
+            EXPECT_EQ(restartRecorder.latestValue, 31);
+            EXPECT_EQ(restartRecorder.callCount, 1);
         }
 
     } // namespace

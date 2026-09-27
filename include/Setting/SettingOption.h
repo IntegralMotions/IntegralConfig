@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../FixedString.h"
+#include "Containers/FixedString.h"
 #include "SupportedSettingType.h"
 
 #include <cstdint>
@@ -12,7 +12,7 @@ namespace IntegralMotions::Config {
     template <SupportedSettingType T>
     struct SettingOption {
         T value{};
-        FixedString<LabelMaxLength> label{};
+        IntegralMotions::Containers::FixedString<LabelMaxLength> label{};
     };
 
 } // namespace IntegralMotions::Config

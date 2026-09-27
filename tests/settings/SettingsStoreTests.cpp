@@ -1,5 +1,5 @@
-#include "Setting/MemoryStorageDevice.h"
 #include "Setting/SettingsStore.h"
+#include "Storage/MemoryStorageDevice.h"
 
 #include <array>
 #include <cstddef>
@@ -9,6 +9,8 @@
 
 namespace IntegralMotions::Config {
     namespace {
+
+        using namespace IntegralMotions::Storage;
 
         constexpr StorageRegion BankA{.offset = 0, .size = 64};
         constexpr StorageRegion BankB{.offset = 64, .size = 64};
@@ -134,7 +136,6 @@ namespace IntegralMotions::Config {
                 .readAlignment = 1,
                 .writeAlignment = 1,
                 .eraseBlockSize = 64,
-                .atomicWriteSize = 1,
                 .erasedValue = std::byte{0xFF},
             };
             MemoryStorageDevice<128> storage{geometry};
@@ -185,7 +186,6 @@ namespace IntegralMotions::Config {
                 .readAlignment = 4,
                 .writeAlignment = 4,
                 .eraseBlockSize = 0,
-                .atomicWriteSize = 4,
                 .erasedValue = std::byte{0xFF},
             };
             MemoryStorageDevice<128> storage{geometry};

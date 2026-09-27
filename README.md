@@ -71,7 +71,7 @@ immediately to their configured `SettingsStore`.
 
 ```cpp
 #include "Setting/SettingDefinition.h"
-#include "Setting/SettingRegistry.h"
+#include "Setting/SettingsRegistry.h"
 
 using namespace IntegralMotions::Config;
 
