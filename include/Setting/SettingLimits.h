@@ -2,6 +2,7 @@
 
 #include "SettingOption.h"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -15,6 +16,7 @@ namespace IntegralMotions::Config {
         std::optional<T> minimum{};
         std::optional<T> maximum{};
         std::optional<T> step{};
+        bool isRange = false;
         std::array<SettingOption<T>, MaxOptions> options{};
         uint8_t optionCount = 0;
     };

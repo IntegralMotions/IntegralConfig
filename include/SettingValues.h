@@ -2,11 +2,13 @@
 
 #include "MPackArray.h"
 #include "MPackObject.hpp"
+#include "Setting/SupportedSettingType.h"
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 
-constexpr size_t SettingValueMembers = 6;
+constexpr size_t SettingValueMembers = 4;
 
 template <typename T>
 CppType settingValueCppType() {
@@ -55,24 +57,18 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
   public:
     static void registerMembers() {
         using Obj = MPackObject<TDerived, SettingValueMembers + AddedMembers>;
-        Obj::registerMember("address", CppType::U32, &TDerived::address);
         Obj::registerMember("id", CppType::String, &TDerived::id);
-        Obj::registerMember("label", CppType::String, &TDerived::label);
         Obj::registerMember("unit", CppType::String, &TDerived::unit);
         Obj::registerMember("value", getType<TValue>(), &TDerived::value);
         Obj::registerMember("readonly", CppType::Bool, &TDerived::readonly);
     }
 
-  public:
     template <typename T>
     static CppType getType() {
         return settingValueCppType<T>();
     }
 
-  public:
-    uint32_t address = 0;
     const char* id = nullptr;
-    const char* label = nullptr;
     const char* unit = nullptr;
     TValue value;
     bool readonly = false;
@@ -84,20 +80,48 @@ class MessageSettingOption : public MPackObject<MessageSettingOption<TValue>, 2>
     static void registerMembers() {
         MPackObject<MessageSettingOption<TValue>, 2>::registerMember("value", settingValueCppType<TValue>(),
                                                                      &MessageSettingOption::value);
-        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("label", CppType::String,
-                                                                     &MessageSettingOption::label);
+        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("id", CppType::String,
+                                                                      &MessageSettingOption::id);
     }
 
     TValue value{};
-    const char* label{};
+    const char* id{};
 };
 
-class BoolSetting : public SettingValue<BoolSetting, bool, 0> {
+template <typename TValue>
+class MessageSettingLimits : public MPackObject<MessageSettingLimits<TValue>, 5> {
   public:
     static void registerMembers() {
-        using Base = SettingValue<BoolSetting, bool, 0>;
-        Base::registerMembers();
+        using Obj = MPackObject<MessageSettingLimits<TValue>, 5>;
+        Obj::registerOptionalMember("min", settingValueCppType<TValue>(), &MessageSettingLimits::minimum);
+        Obj::registerOptionalMember("max", settingValueCppType<TValue>(), &MessageSettingLimits::maximum);
+        Obj::registerOptionalMember("step", settingValueCppType<TValue>(), &MessageSettingLimits::step);
+        Obj::registerMember("isRange", CppType::Bool, &MessageSettingLimits::isRange);
+        Obj::registerMember("options", {CppType::Array, CppType::ObjectPtr}, &MessageSettingLimits::options);
     }
+
+  protected:
+    MPackObjectBase* createObject(const char* /*name*/) override {
+        return new MessageSettingOption<TValue>();
+    }
+
+  public:
+    std::optional<TValue> minimum{};
+    std::optional<TValue> maximum{};
+    std::optional<TValue> step{};
+    bool isRange = false;
+    MPackArray<MessageSettingOption<TValue>*> options;
+};
+
+class BoolSetting : public SettingValue<BoolSetting, bool, 1> {
+  public:
+    static void registerMembers() {
+        using Base = SettingValue<BoolSetting, bool, 1>;
+        Base::registerMembers();
+        Base::registerMember("limits", CppType::Object, &BoolSetting::limits);
+    }
+
+    MessageSettingLimits<bool> limits{};
 };
 
 class StringSetting : public SettingValue<StringSetting, const char*, 1> {
@@ -118,27 +142,14 @@ class StringSetting : public SettingValue<StringSetting, const char*, 1> {
 };
 
 template <typename TValue>
-class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 5> {
+class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 1> {
   public:
     static void registerMembers() {
-        using Base = SettingValue<NumberSetting<TValue>, TValue, 5>;
+        using Base = SettingValue<NumberSetting<TValue>, TValue, 1>;
         Base::registerMembers();
-        Base::registerMember("min", Base::template getType<TValue>(), &NumberSetting::min);
-        Base::registerMember("max", Base::template getType<TValue>(), &NumberSetting::max);
-        Base::registerMember("step", Base::template getType<TValue>(), &NumberSetting::step);
-        Base::registerMember("isRange", CppType::Bool, &NumberSetting::isRange);
-        Base::registerMember("options", {CppType::Array, CppType::ObjectPtr}, &NumberSetting::options);
-    }
-
-  protected:
-    MPackObjectBase* createObject(const char* /*name*/) override {
-        return new MessageSettingOption<TValue>();
+        Base::registerMember("limits", CppType::Object, &NumberSetting::limits);
     }
 
   public:
-    MPackArray<MessageSettingOption<TValue>*> options;
-    TValue min;
-    TValue max;
-    TValue step;
-    bool isRange = false;
+    MessageSettingLimits<TValue> limits{};
 };

@@ -224,12 +224,10 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_cstr(&writer, "modules");
     mpack_start_array(&writer, 1);
 
-    // module: 3 entries: id, label, groups
-    mpack_start_map(&writer, 3);
+    // module: 2 entries: id, groups
+    mpack_start_map(&writer, 2);
     mpack_write_cstr(&writer, "id");
     mpack_write_cstr(&writer, "motor");
-    mpack_write_cstr(&writer, "label");
-    mpack_write_cstr(&writer, "Motor Module");
 
     ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
 
@@ -237,12 +235,10 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_cstr(&writer, "groups");
     mpack_start_array(&writer, 1);
 
-    // group: 3 entries: id, label, settings
-    mpack_start_map(&writer, 3);
+    // group: 2 entries: id, settings
+    mpack_start_map(&writer, 2);
     mpack_write_cstr(&writer, "id");
     mpack_write_cstr(&writer, "group1");
-    mpack_write_cstr(&writer, "label");
-    mpack_write_cstr(&writer, "Main Group");
 
     ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
 
@@ -257,20 +253,20 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_cstr(&writer, "bool");
     mpack_write_cstr(&writer, "value");
 
-    // BoolSetting: 6 entries
-    mpack_start_map(&writer, 6);
-    mpack_write_cstr(&writer, "address");
-    mpack_write_u32(&writer, 1);
+    // BoolSetting: id, value, limits
+    mpack_start_map(&writer, 3);
     mpack_write_cstr(&writer, "id");
     mpack_write_cstr(&writer, "enable");
-    mpack_write_cstr(&writer, "label");
-    mpack_write_cstr(&writer, "Enable");
-    mpack_write_cstr(&writer, "unit");
-    mpack_write_cstr(&writer, "");
     mpack_write_cstr(&writer, "value");
     mpack_write_bool(&writer, true);
-    mpack_write_cstr(&writer, "readonly");
+    mpack_write_cstr(&writer, "limits");
+    mpack_start_map(&writer, 2);
+    mpack_write_cstr(&writer, "isRange");
     mpack_write_bool(&writer, false);
+    mpack_write_cstr(&writer, "options");
+    mpack_start_array(&writer, 0);
+    mpack_finish_array(&writer);
+    mpack_finish_map(&writer);
     mpack_finish_map(&writer); // BoolSetting
     mpack_finish_map(&writer); // Setting 1
 
@@ -283,21 +279,16 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_write_cstr(&writer, "int");
     mpack_write_cstr(&writer, "value");
 
-    // NumberSetting<int>: 11 entries
-    // address, id, label, unit, value, readonly, min, max, step, isRange, options
-    mpack_start_map(&writer, 11);
-    mpack_write_cstr(&writer, "address");
-    mpack_write_u32(&writer, 2);
+    // NumberSetting<int>: id, unit, value, limits
+    mpack_start_map(&writer, 4);
     mpack_write_cstr(&writer, "id");
     mpack_write_cstr(&writer, "speed");
-    mpack_write_cstr(&writer, "label");
-    mpack_write_cstr(&writer, "Speed");
     mpack_write_cstr(&writer, "unit");
     mpack_write_cstr(&writer, "rpm");
     mpack_write_cstr(&writer, "value");
     mpack_write_i32(&writer, 1000);
-    mpack_write_cstr(&writer, "readonly");
-    mpack_write_bool(&writer, false);
+    mpack_write_cstr(&writer, "limits");
+    mpack_start_map(&writer, 5);
     mpack_write_cstr(&writer, "min");
     mpack_write_i32(&writer, 0);
     mpack_write_cstr(&writer, "max");
@@ -311,16 +302,17 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_start_map(&writer, 2);
     mpack_write_cstr(&writer, "value");
     mpack_write_i32(&writer, 500);
-    mpack_write_cstr(&writer, "label");
-    mpack_write_cstr(&writer, "Low speed");
+    mpack_write_cstr(&writer, "id");
+    mpack_write_cstr(&writer, "low-speed");
     mpack_finish_map(&writer);
     mpack_start_map(&writer, 2);
     mpack_write_cstr(&writer, "value");
     mpack_write_i32(&writer, 1500);
-    mpack_write_cstr(&writer, "label");
-    mpack_write_cstr(&writer, "High speed");
+    mpack_write_cstr(&writer, "id");
+    mpack_write_cstr(&writer, "high-speed");
     mpack_finish_map(&writer);
     mpack_finish_array(&writer); // options
+    mpack_finish_map(&writer);   // limits
     mpack_finish_map(&writer);   // NumberSetting<int>
     mpack_finish_map(&writer);   // Setting 2
 
@@ -347,16 +339,16 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
         MsgType& type;
         size_t& optionCount;
         int& optionValue;
-        const char*& optionLabel;
+        const char*& optionId;
     };
 
     bool callbackCalled = false;
     MsgType receivedMessageType = MsgType::Unknown;
     size_t optionCount = 0;
     int optionValue = 0;
-    const char* optionLabel = nullptr;
+    const char* optionId = nullptr;
 
-    OptionReceiveCtx ctx{callbackCalled, receivedMessageType, optionCount, optionValue, optionLabel};
+    OptionReceiveCtx ctx{callbackCalled, receivedMessageType, optionCount, optionValue, optionId};
 
     controller().setOnReceived(
         [](void* context, const Message& message) {
@@ -367,9 +359,9 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
             const auto* device = static_cast<const Device*>(message.payload);
             const auto* numberSetting =
                 static_cast<const NumberSetting<int>*>(device->modules[0]->groups[0]->settings[1]->value);
-            ctx->optionCount = numberSetting->options.size;
-            ctx->optionValue = numberSetting->options[1]->value;
-            ctx->optionLabel = numberSetting->options[1]->label;
+            ctx->optionCount = numberSetting->limits.options.size;
+            ctx->optionValue = numberSetting->limits.options[1]->value;
+            ctx->optionId = numberSetting->limits.options[1]->id;
         },
         &ctx);
 
@@ -379,5 +371,5 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     EXPECT_EQ(receivedMessageType, MsgType::Event);
     EXPECT_EQ(optionCount, 2);
     EXPECT_EQ(optionValue, 1500);
-    EXPECT_STREQ(optionLabel, "High speed");
+    EXPECT_STREQ(optionId, "high-speed");
 }

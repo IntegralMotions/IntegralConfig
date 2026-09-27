@@ -84,12 +84,14 @@ SettingDefinition<int32_t> speedDefinition{
     .persistencePolicy = PersistencePolicy::LongTerm,
 };
 
-speedDefinition.label.assign("Speed");
+speedDefinition.moduleId.assign("drive");
+speedDefinition.groupId.assign("motion");
+speedDefinition.id.assign("speed");
 speedDefinition.unit.assign("rpm");
 speedDefinition.limits.options[0].value = 500;
-speedDefinition.limits.options[0].label.assign("Low speed");
+speedDefinition.limits.options[0].id.assign("low-speed");
 speedDefinition.limits.options[1].value = 1500;
-speedDefinition.limits.options[1].label.assign("High speed");
+speedDefinition.limits.options[1].id.assign("high-speed");
 speedDefinition.limits.optionCount = 2;
 
 SettingsRegistry<32> registry;
@@ -97,10 +99,10 @@ registry.add(speedDefinition, speed);
 registry.set(speedDefinition.key, 1200);
 ```
 
-Each option has a machine value and a human-readable label. MessagePack `options` arrays use the same shape:
+Each option has a machine value and a stable ID. MessagePack `options` arrays use the same shape:
 
 ```text
-[{ "value": 500, "label": "Low speed" }]
+[{ "value": 500, "id": "low-speed" }]
 ```
 
 ---

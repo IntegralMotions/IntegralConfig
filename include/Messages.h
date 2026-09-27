@@ -3,11 +3,8 @@
 #include "MPackObject.hpp"
 #include "MPackObjectBase.h"
 #include "MessagePayloadRegistry.h"
-#include <cstdint>
 #include <cstring>
 #include <mpack/mpack.h>
-
-enum class MsgType : uint8_t { Request, Response, Event, Unknown };
 
 class Message : public MPackObject<Message, 3> {
   public:
@@ -36,7 +33,7 @@ class Message : public MPackObject<Message, 3> {
 
   private:
     MPackObjectBase* createObject(const char* /*name*/) override {
-        return MessagePayloadRegistry::create(opCode);
+        return MessagePayloadRegistry::create(getMsgType(), opCode);
     }
 
   public:

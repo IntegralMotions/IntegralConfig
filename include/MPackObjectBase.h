@@ -4,9 +4,11 @@
 #include "MPackObjectMember.h"
 #include "MPackObjectType.h"
 #include "mpack/mpack-common.h"
+#include "mpack/mpack-expect.h"
 #include "mpack/mpack-reader.h"
 #include "mpack/mpack-writer.h"
 #include <cstddef>
+#include <optional>
 
 #ifndef MPACK_MAX_STRING
 #define MPACK_MAX_STRING 1024
@@ -38,12 +40,16 @@ class MPackObjectBase {
 
     template <typename T>
     static bool readNumeric(mpack_reader_t& reader, T& value);
+    template <typename T>
+    static bool readOptionalNumeric(mpack_reader_t& reader, std::optional<T>& value);
     static bool readBool(mpack_reader_t& reader, bool& value);
+    static bool readOptionalBool(mpack_reader_t& reader, std::optional<bool>& value);
     static bool readString(mpack_reader_t& reader, char*& value);
     bool readArray(mpack_reader_t& reader, const char* name, const MPackObjectType& type, void* address, int depth = 0);
 
-    bool writeMember(mpack_writer_t& writer, const char* name, const MPackObjectType& type, void* address,
-                     int depth = 0) const;
+    [[nodiscard]] static bool shouldWrite(const MPackObjectMember& member, const void* address);
+    static void resetOptional(const MPackObjectMember& member, void* address);
+    bool writeMember(mpack_writer_t& writer, const MPackObjectMember& member, void* address, int depth = 0) const;
     bool writeArray(mpack_writer_t& writer, const char* name, const MPackObjectType& type, void* address,
                     int depth = 0) const;
 
@@ -84,4 +90,16 @@ bool MPackObjectBase::readNumeric(mpack_reader_t& reader, T& value) {
     }
 
     return true;
+}
+
+template <typename T>
+bool MPackObjectBase::readOptionalNumeric(mpack_reader_t& reader, std::optional<T>& value) {
+    if (nextIsNil(reader)) {
+        mpack_expect_nil(&reader);
+        value.reset();
+        return ok(reader);
+    }
+
+    value.emplace();
+    return readNumeric(reader, *value);
 }

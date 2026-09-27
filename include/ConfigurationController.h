@@ -23,6 +23,10 @@ class ConfigurationController {
     void setOnReceived(ReceiveCallback callback, void* context = nullptr);
 
     bool write(const MPackObjectBase& object);
+
+    template <typename T>
+    requires requires(const T& serializable, mpack_writer_t& writer) { serializable.write(writer); }
+    bool write(const T& serializable);
     void loop();
 
   private:
@@ -72,6 +76,24 @@ bool ConfigurationController<TxSize, RxSize>::write(const MPackObjectBase& objec
     mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
 
     object.write(writer);
+    size_t len = mpack_writer_buffer_used(&writer);
+    mpack_error_t err = mpack_writer_destroy(&writer);
+    if (err != mpack_ok) {
+        return false;
+    }
+
+    return _communication.writeMessage(buffer.data(), len);
+}
+
+template <size_t TxSize, size_t RxSize>
+template <typename T>
+requires requires(const T& serializable, mpack_writer_t& writer) { serializable.write(writer); }
+bool ConfigurationController<TxSize, RxSize>::write(const T& serializable) {
+    mpack_writer_t writer;
+    std::array<uint8_t, TxSize> buffer;
+
+    mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
+    serializable.write(writer);
     size_t len = mpack_writer_buffer_used(&writer);
     mpack_error_t err = mpack_writer_destroy(&writer);
     if (err != mpack_ok) {

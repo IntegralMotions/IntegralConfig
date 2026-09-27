@@ -20,6 +20,27 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
         if (std::strcmp(type, "int") == 0) {
             return new NumberSetting<int>();
         }
+        if (std::strcmp(type, "i8") == 0) {
+            return new NumberSetting<int8_t>();
+        }
+        if (std::strcmp(type, "u8") == 0) {
+            return new NumberSetting<uint8_t>();
+        }
+        if (std::strcmp(type, "i16") == 0) {
+            return new NumberSetting<int16_t>();
+        }
+        if (std::strcmp(type, "u16") == 0) {
+            return new NumberSetting<uint16_t>();
+        }
+        if (std::strcmp(type, "u32") == 0) {
+            return new NumberSetting<uint32_t>();
+        }
+        if (std::strcmp(type, "i64") == 0) {
+            return new NumberSetting<int64_t>();
+        }
+        if (std::strcmp(type, "u64") == 0) {
+            return new NumberSetting<uint64_t>();
+        }
         if (std::strcmp(type, "float") == 0) {
             return new NumberSetting<float>();
         }
@@ -37,11 +58,10 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
     MPackObjectBase* value{};
 };
 
-class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers)
+class Group : public MPackObject<Group, 2> { // NOLINT(readability-magic-numbers)
   public:
     static void registerMembers() {
         registerMember("id", CppType::String, &Group::id);
-        registerMember("label", CppType::String, &Group::label);
         registerMember("settings", {CppType::Array, CppType::ObjectPtr}, &Group::settings);
     }
 
@@ -55,15 +75,13 @@ class Group : public MPackObject<Group, 3> { // NOLINT(readability-magic-numbers
 
   public:
     const char* id{};
-    const char* label{};
     MPackArray<Setting*> settings{};
 };
 
-class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbers)
+class Module : public MPackObject<Module, 2> { // NOLINT(readability-magic-numbers)
   public:
     static void registerMembers() {
         registerMember("id", CppType::String, &Module::id);
-        registerMember("label", CppType::String, &Module::label);
         registerMember("groups", {CppType::Array, CppType::ObjectPtr}, &Module::groups);
     }
 
@@ -74,7 +92,6 @@ class Module : public MPackObject<Module, 3> { // NOLINT(readability-magic-numbe
 
   public:
     const char* id{};
-    const char* label{};
     MPackArray<Group*> groups;
 };
 
@@ -110,4 +127,15 @@ class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbe
   public:
     DeviceInfo* deviceInfo{};
     MPackArray<Module*> modules;
+};
+
+class SuccessResult : public MPackObject<SuccessResult, 2> {
+  public:
+    static void registerMembers() {
+        registerMember("success", CppType::Bool, &SuccessResult::success);
+        registerMember("errorMessage", {CppType::String, CppType::None}, &SuccessResult::errorMessage);
+    }
+
+    bool success = false;
+    const char* errorMessage = nullptr;
 };

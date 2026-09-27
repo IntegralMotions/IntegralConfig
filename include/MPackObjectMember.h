@@ -7,4 +7,5 @@ struct MPackObjectMember {
     const char* name;
     MPackObjectType type;
     size_t offset;
+    bool optional = false;
 };

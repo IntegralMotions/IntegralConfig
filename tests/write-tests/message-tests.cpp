@@ -37,7 +37,6 @@ static Message makeReadDeviceResponse() {
 
     auto* module = new Module();
     module->id = "motor";
-    module->label = "Motor Module";
     device->modules[0] = module;
 
     // groups
@@ -46,7 +45,6 @@ static Message makeReadDeviceResponse() {
 
     auto* group = new Group();
     group->id = "main";
-    group->label = "Main Group";
     module->groups[0] = group;
 
     // settings
@@ -59,9 +57,7 @@ static Message makeReadDeviceResponse() {
         setting->type = "bool";
 
         auto* value = new BoolSetting();
-        value->address = 1;
         value->id = "enable";
-        value->label = "Enable";
         value->unit = "";
         value->value = true;
         value->readonly = false;
@@ -76,23 +72,21 @@ static Message makeReadDeviceResponse() {
         setting->type = "int";
 
         auto* value = new NumberSetting<int>();
-        value->address = 2;
         value->id = "speed";
-        value->label = "Speed";
         value->unit = "rpm";
         value->value = 1000;
-        value->min = 0;
-        value->max = 2000;
-        value->isRange = false;
+        value->limits.minimum = 0;
+        value->limits.maximum = 2000;
+        value->limits.isRange = false;
 
-        value->options.size = 2;
-        value->options.p = new MessageSettingOption<int>*[2];
-        value->options[0] = new MessageSettingOption<int>();
-        value->options[0]->value = 500;
-        value->options[0]->label = "Low speed";
-        value->options[1] = new MessageSettingOption<int>();
-        value->options[1]->value = 1500;
-        value->options[1]->label = "High speed";
+        value->limits.options.size = 2;
+        value->limits.options.p = new MessageSettingOption<int>*[2];
+        value->limits.options[0] = new MessageSettingOption<int>();
+        value->limits.options[0]->value = 500;
+        value->limits.options[0]->id = "low-speed";
+        value->limits.options[1] = new MessageSettingOption<int>();
+        value->limits.options[1]->value = 1500;
+        value->limits.options[1]->id = "high-speed";
 
         setting->value = value;
         group->settings[1] = setting;

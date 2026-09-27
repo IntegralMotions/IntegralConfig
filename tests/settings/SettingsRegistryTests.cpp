@@ -159,8 +159,8 @@ namespace IntegralMotions::Config {
             };
             definition.limits.options[0].value = 10;
             definition.limits.options[1].value = 20;
-            ASSERT_TRUE(definition.limits.options[0].label.assign("Low"));
-            ASSERT_TRUE(definition.limits.options[1].label.assign("High"));
+            ASSERT_TRUE(definition.limits.options[0].id.assign("Low"));
+            ASSERT_TRUE(definition.limits.options[1].id.assign("High"));
             ASSERT_EQ(registry.add(definition, value), SettingResult::Ok);
             EXPECT_EQ(registry.set(MemoryKey, uint16_t{10}), SettingResult::TypeMismatch);
             EXPECT_EQ(registry.set(MemoryKey, int32_t{15}), SettingResult::InvalidOption);

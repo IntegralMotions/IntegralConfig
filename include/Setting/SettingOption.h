@@ -7,12 +7,12 @@
 
 namespace IntegralMotions::Config {
 
-    inline constexpr uint8_t LabelMaxLength = 64;
+    inline constexpr uint8_t IdMaxLength = 64;
 
     template <SupportedSettingType T>
     struct SettingOption {
         T value{};
-        IntegralMotions::Containers::FixedString<LabelMaxLength> label{};
+        IntegralMotions::Containers::FixedString<IdMaxLength> id;
     };
 
 } // namespace IntegralMotions::Config

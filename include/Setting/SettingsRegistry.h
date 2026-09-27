@@ -20,6 +20,8 @@ namespace IntegralMotions::Config {
     template <size_t Capacity>
     class SettingsRegistry {
       public:
+        using VisitCallback = bool (*)(void* context, const SettingSnapshot& setting);
+
         template <SupportedSettingType T>
         SettingResult add(const SettingDefinition<T>& definition, T& value);
 
@@ -29,6 +31,7 @@ namespace IntegralMotions::Config {
         [[nodiscard]] std::optional<SettingValue> value(const SettingKey& key) const;
 
         [[nodiscard]] size_t size() const;
+        SettingResult visit(VisitCallback callback, void* context) const;
 
         void configureLongTermStore(SettingsStore<Capacity>& store);
         void configureFrequentStore(SettingsStore<Capacity>& store);
@@ -51,6 +54,7 @@ namespace IntegralMotions::Config {
             SettingResult (*read)(void* context, SettingValue& output) = nullptr;
             SettingResult (*write)(void* context, const SettingValue& candidate) = nullptr;
             void (*apply)(const void* definition, const SettingValue& value) = nullptr;
+            void (*snapshot)(const void* definition, const SettingValue& value, SettingSnapshot& output) = nullptr;
         };
 
         template <SupportedSettingType T>
@@ -67,6 +71,9 @@ namespace IntegralMotions::Config {
 
         template <SupportedSettingType T>
         static void applyDefinition(const void* definition, const SettingValue& value);
+
+        template <SupportedSettingType T>
+        static void snapshotDefinition(const void* definition, const SettingValue& value, SettingSnapshot& output);
 
         Entry* find(const SettingKey& key);
         const Entry* find(const SettingKey& key) const;
@@ -193,7 +200,7 @@ namespace IntegralMotions::Config {
             return SettingResult::InvalidDefinition;
         }
         for (uint8_t i = 0; i < limits.optionCount; ++i) {
-            if (limits.options[i].label.empty() ||
+            if (limits.options[i].id.empty() ||
                 validateLocal<T>(&definition, SettingValue{limits.options[i].value}) != SettingResult::Ok) {
                 return SettingResult::InvalidDefinition;
             }
@@ -232,6 +239,35 @@ namespace IntegralMotions::Config {
         const auto* typedValue = std::get_if<T>(&value);
         if (settingDefinition->apply && typedValue != nullptr) {
             settingDefinition->apply(*typedValue);
+        }
+    }
+
+    template <size_t Capacity>
+    template <SupportedSettingType T>
+    void SettingsRegistry<Capacity>::snapshotDefinition(const void* definition, const SettingValue& value,
+                                                        SettingSnapshot& output) {
+        const auto* settingDefinition = static_cast<const SettingDefinition<T>*>(definition);
+        const auto& limits = settingDefinition->limits;
+        output.key = settingDefinition->key;
+        output.type = settingTypeOf<T>();
+        output.moduleId = settingDefinition->moduleId.view();
+        output.groupId = settingDefinition->groupId.view();
+        output.id = settingDefinition->id.view();
+        output.unit = settingDefinition->unit.view();
+        output.value = value;
+        if (limits.minimum.has_value()) {
+            output.minimum = SettingValue{*limits.minimum};
+        }
+        if (limits.maximum.has_value()) {
+            output.maximum = SettingValue{*limits.maximum};
+        }
+        if (limits.step.has_value()) {
+            output.step = SettingValue{*limits.step};
+        }
+        output.optionCount = limits.optionCount;
+        output.readonly = settingDefinition->readonly;
+        for (uint8_t i = 0; i < limits.optionCount; ++i) {
+            output.options[i] = {.value = SettingValue{limits.options[i].value}, .id = limits.options[i].id.view()};
         }
     }
 
@@ -280,6 +316,7 @@ namespace IntegralMotions::Config {
         entry.read = &readLocal<T>;
         entry.write = &writeLocal<T>;
         entry.apply = &applyDefinition<T>;
+        entry.snapshot = &snapshotDefinition<T>;
 
         value = definition.defaultValue;
         if (entry.persistencePolicy != PersistencePolicy::Memory) {
@@ -367,5 +404,28 @@ namespace IntegralMotions::Config {
     template <size_t Capacity>
     size_t SettingsRegistry<Capacity>::size() const {
         return _size;
+    }
+
+    template <size_t Capacity>
+    SettingResult SettingsRegistry<Capacity>::visit(VisitCallback callback, void* context) const {
+        if (callback == nullptr) {
+            return SettingResult::InvalidDefinition;
+        }
+
+        for (size_t i = 0; i < _size; ++i) {
+            const auto& entry = _entries[i];
+            SettingValue value{};
+            const auto readResult = entry.read(entry.context, value);
+            if (readResult != SettingResult::Ok) {
+                return readResult;
+            }
+
+            SettingSnapshot snapshot{};
+            entry.snapshot(entry.definition, value, snapshot);
+            if (!callback(context, snapshot)) {
+                break;
+            }
+        }
+        return SettingResult::Ok;
     }
 } // namespace IntegralMotions::Config
