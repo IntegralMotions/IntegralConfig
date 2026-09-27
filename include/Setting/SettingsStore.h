@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Math/CRC.h"
+#include "Math/Crc16.h"
 #include "SettingKey.h"
 #include "SettingStoreResult.h"
 #include "SettingValue.h"
@@ -152,8 +152,8 @@ namespace IntegralMotions::Config {
                             (static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[5])) << 24U);
         const uint16_t storedCrc = static_cast<uint16_t>(std::to_integer<uint8_t>(bytes[6])) |
                                    (static_cast<uint16_t>(std::to_integer<uint8_t>(bytes[7])) << 8U);
-        if (!IntegralMotions::Math::CRC::validate(reinterpret_cast<const uint8_t*>(bytes.data()),
-                                                  bankHeaderSizeUnaligned - 2, storedCrc)) {
+        if (!IntegralMotions::Math::Crc16::validate(reinterpret_cast<const uint8_t*>(bytes.data()),
+                                                    bankHeaderSizeUnaligned - 2, storedCrc)) {
             return SettingsStoreResult::CorruptData;
         }
 
@@ -170,7 +170,7 @@ namespace IntegralMotions::Config {
         for (size_t i = 0; i < sizeof(generation); ++i) {
             bytes[2 + i] = static_cast<std::byte>(generation >> (i * 8U));
         }
-        const uint16_t crc = IntegralMotions::Math::CRC::calculate(reinterpret_cast<const uint8_t*>(bytes.data()), 6);
+        const uint16_t crc = IntegralMotions::Math::Crc16::calculate(reinterpret_cast<const uint8_t*>(bytes.data()), 6);
         bytes[6] = static_cast<std::byte>(crc & 0xFFU);
         bytes[7] = static_cast<std::byte>(crc >> 8U);
 

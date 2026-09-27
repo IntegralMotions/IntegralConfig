@@ -1,6 +1,6 @@
 #include "Setting/StoredSettingCodec.h"
 
-#include "Math/CRC.h"
+#include "Math/Crc16.h"
 
 #include <algorithm>
 #include <bit>
@@ -230,7 +230,7 @@ namespace IntegralMotions::Config {
 
         const size_t crcOffset = encodedRecordSize - crcSize;
         const auto crc =
-            IntegralMotions::Math::CRC::calculate(reinterpret_cast<const uint8_t*>(record.data()), crcOffset);
+            IntegralMotions::Math::Crc16::calculate(reinterpret_cast<const uint8_t*>(record.data()), crcOffset);
         writeLittleEndian<uint16_t>(record, crcOffset, crc);
 
         return {.result = StoredSettingResult::Ok, .size = alignedRecordSize};
@@ -252,7 +252,7 @@ namespace IntegralMotions::Config {
         const size_t crcOffset = encodedRecordSize - crcSize;
         const auto crc = readLittleEndian<uint16_t>(source, crcOffset);
 
-        if (!IntegralMotions::Math::CRC::validate(reinterpret_cast<const uint8_t*>(source.data()), crcOffset, crc)) {
+        if (!IntegralMotions::Math::Crc16::validate(reinterpret_cast<const uint8_t*>(source.data()), crcOffset, crc)) {
             return StoredSettingResult::CorruptData;
         }
 
@@ -305,7 +305,6 @@ namespace IntegralMotions::Config {
             break;
         }
 
-        
         return StoredSettingResult::Ok;
     }
 
