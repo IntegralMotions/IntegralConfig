@@ -72,7 +72,7 @@ namespace IntegralMotions::Config {
             case SettingType::U16:
                 return "u16";
             case SettingType::I32:
-                return "int";
+                return "i32";
             case SettingType::U32:
                 return "u32";
             case SettingType::I64:
@@ -80,9 +80,9 @@ namespace IntegralMotions::Config {
             case SettingType::U64:
                 return "u64";
             case SettingType::F32:
-                return "float";
+                return "f32";
             case SettingType::F64:
-                return "double";
+                return "f64";
             }
             return "unknown";
         }
@@ -284,7 +284,7 @@ namespace IntegralMotions::Config {
                 }
             }
             writeKey(writer, "isRange");
-            mpack_write_bool(&writer, numeric && setting.minimum.has_value() && setting.maximum.has_value());
+            mpack_write_bool(&writer, setting.isRange);
             writeKey(writer, "options");
             mpack_start_array(&writer, setting.optionCount);
             for (uint8_t i = 0; i < setting.optionCount; ++i) {

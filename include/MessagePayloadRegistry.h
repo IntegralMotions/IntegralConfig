@@ -1,21 +1,21 @@
 #pragma once
 
+#include "Containers/FixedString.h"
 #include "MPackObjectBase.h"
 #include "MessageType.h"
 #include <array>
 #include <cstddef>
 #include <cstring>
 
-#ifndef MAX_MESSAGE_PAYLOAD_ENTRIES
-#define MAX_MESSAGE_PAYLOAD_ENTRIES 256
-#endif
+inline constexpr size_t MaxMessagePayloadEntries = 256;
+inline constexpr size_t MaxMessageOpcodeLength = 64;
 
 class MessagePayloadRegistry {
   public:
     struct Entry {
-        MsgType messageType;
-        const char* opCode;
-        MPackObjectBase* (*createFn)();
+        MsgType messageType = MsgType::Unknown;
+        IntegralMotions::Containers::FixedString<MaxMessageOpcodeLength> opCode;
+        MPackObjectBase* (*createFn)(){};
     };
 
     template <typename T>
@@ -27,7 +27,7 @@ class MessagePayloadRegistry {
     template <typename T>
     static MPackObjectBase* createImpl();
 
-    static std::array<Entry, MAX_MESSAGE_PAYLOAD_ENTRIES> entries;
+    static std::array<Entry, MaxMessagePayloadEntries> entries;
     static std::size_t count;
 };
 
@@ -40,15 +40,22 @@ inline MPackObjectBase* MessagePayloadRegistry::createImpl() {
 
 template <typename T>
 inline bool MessagePayloadRegistry::registerType(MsgType messageType, const char* opCode) {
+    if (messageType == MsgType::Unknown || opCode == nullptr || opCode[0] == '\0') {
+        return false;
+    }
     for (std::size_t i = 0; i < count; ++i) {
-        if (entries[i].messageType == messageType && std::strcmp(entries[i].opCode, opCode) == 0) {
+        if (entries[i].messageType == messageType && entries[i].opCode.view() == opCode) {
             return entries[i].createFn == &createImpl<T>;
         }
     }
 
-    const bool canAdd = count < MAX_MESSAGE_PAYLOAD_ENTRIES;
+    const bool canAdd = count < MaxMessagePayloadEntries;
     if (canAdd) {
-        entries[count++] = Entry{messageType, opCode, &createImpl<T>};
+        Entry entry{.messageType = messageType, .createFn = &createImpl<T>};
+        if (!entry.opCode.assign(opCode)) {
+            return false;
+        }
+        entries[count++] = entry;
     }
     return canAdd;
 }

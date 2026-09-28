@@ -8,6 +8,10 @@
 
 class Message : public MPackObject<Message, 3> {
   public:
+    ~Message() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         registerMember("msgType", CppType::String, &Message::msgType);
         registerMember("opCode", CppType::String, &Message::opCode);
@@ -15,6 +19,9 @@ class Message : public MPackObject<Message, 3> {
     }
 
     [[nodiscard]] MsgType getMsgType() const {
+        if (msgType == nullptr) {
+            return MsgType::Unknown;
+        }
         if (std::strcmp(msgType, "request") == 0) {
             return MsgType::Request;
         }
@@ -28,11 +35,14 @@ class Message : public MPackObject<Message, 3> {
     }
 
     bool isOpCode(const char* value) const {
-        return std::strcmp(opCode, value) == 0;
+        return opCode != nullptr && value != nullptr && std::strcmp(opCode, value) == 0;
     }
 
   private:
     MPackObjectBase* createObject(const char* /*name*/) override {
+        if (opCode == nullptr || getMsgType() == MsgType::Unknown) {
+            return nullptr;
+        }
         return MessagePayloadRegistry::create(getMsgType(), opCode);
     }
 

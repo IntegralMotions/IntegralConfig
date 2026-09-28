@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <gtest/gtest.h>
+#include <string>
 #include <vector>
 
 #include "Configuration.h"
@@ -83,8 +84,7 @@ class ConfigurationControllerTests : public ::testing::Test {
         Group::registerMembers();
         Setting::registerMembers();
         BoolSetting::registerMembers();
-        NumberSetting<int>::registerMembers();
-        StringSetting::registerMembers();
+        NumberSetting<int32_t>::registerMembers();
 
         registerDefaultMessagePayloads();
     }
@@ -276,10 +276,10 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     // Setting map: 2 entries: type, value
     mpack_start_map(&writer, 2);
     mpack_write_cstr(&writer, "type");
-    mpack_write_cstr(&writer, "int");
+    mpack_write_cstr(&writer, "i32");
     mpack_write_cstr(&writer, "value");
 
-    // NumberSetting<int>: id, unit, value, limits
+    // NumberSetting<int32_t>: id, unit, value, limits
     mpack_start_map(&writer, 4);
     mpack_write_cstr(&writer, "id");
     mpack_write_cstr(&writer, "speed");
@@ -313,7 +313,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     mpack_finish_map(&writer);
     mpack_finish_array(&writer); // options
     mpack_finish_map(&writer);   // limits
-    mpack_finish_map(&writer);   // NumberSetting<int>
+    mpack_finish_map(&writer);   // NumberSetting<int32_t>
     mpack_finish_map(&writer);   // Setting 2
 
     ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
@@ -339,14 +339,14 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
         MsgType& type;
         size_t& optionCount;
         int& optionValue;
-        const char*& optionId;
+        std::string& optionId;
     };
 
     bool callbackCalled = false;
     MsgType receivedMessageType = MsgType::Unknown;
     size_t optionCount = 0;
     int optionValue = 0;
-    const char* optionId = nullptr;
+    std::string optionId;
 
     OptionReceiveCtx ctx{callbackCalled, receivedMessageType, optionCount, optionValue, optionId};
 
@@ -358,7 +358,7 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
 
             const auto* device = static_cast<const Device*>(message.payload);
             const auto* numberSetting =
-                static_cast<const NumberSetting<int>*>(device->modules[0]->groups[0]->settings[1]->value);
+                static_cast<const NumberSetting<int32_t>*>(device->modules[0]->groups[0]->settings[1]->value);
             ctx->optionCount = numberSetting->limits.options.size;
             ctx->optionValue = numberSetting->limits.options[1]->value;
             ctx->optionId = numberSetting->limits.options[1]->id;
@@ -371,5 +371,5 @@ TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructur
     EXPECT_EQ(receivedMessageType, MsgType::Event);
     EXPECT_EQ(optionCount, 2);
     EXPECT_EQ(optionValue, 1500);
-    EXPECT_STREQ(optionId, "high-speed");
+    EXPECT_EQ(optionId, "high-speed");
 }

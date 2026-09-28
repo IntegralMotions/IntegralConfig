@@ -80,8 +80,7 @@ int32_t speed = 0;
 SettingDefinition<int32_t> speedDefinition{
     .key = {.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 0},
     .defaultValue = 1000,
-    .limits = {.minimum = 0, .maximum = 2000, .step = 100},
-    .persistencePolicy = PersistencePolicy::LongTerm,
+    .limits = {.minimum = 0, .maximum = 2000, .step = 100, .isRange = true},
 };
 
 speedDefinition.moduleId.assign("drive");
@@ -99,11 +98,28 @@ registry.add(speedDefinition, speed);
 registry.set(speedDefinition.key, 1200);
 ```
 
+Definitions and referenced live values (`speed` above) must remain valid for the lifetime of the registry. Use
+`static const` definitions for device-lifetime settings. Configure the corresponding `SettingsStore` before adding a
+`Frequent` or `LongTerm` setting.
+
 Each option has a machine value and a stable ID. MessagePack `options` arrays use the same shape:
 
 ```text
 [{ "value": 500, "id": "low-speed" }]
 ```
+
+## MessagePack protocol
+
+Numeric setting types use explicit-width IDs: `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, `u64`, `f32`, and
+`f64`. Boolean settings use `bool`.
+
+`DeviceResponseSerializer` always emits `deviceInfo`, setting `limits`, limit `isRange`, and limit `options`.
+Empty `min`, `max`, `step`, `unit`, `readonly`, and success `errorMessage` fields are omitted. Generic object
+serialization emits `nil` for a null array pointer; use `DeviceResponseSerializer` for public device responses.
+
+Payload classes are selected while streaming the MessagePack input. In a message envelope, `msgType` and `opCode`
+must therefore appear before `payload`. Inside a setting, `type` must appear before `value`. Inputs that violate this
+ordering are rejected.
 
 ---
 

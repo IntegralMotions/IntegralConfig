@@ -51,6 +51,7 @@ namespace IntegralMotions::Config {
         std::optional<SettingValue> minimum;
         std::optional<SettingValue> maximum;
         std::optional<SettingValue> step;
+        bool isRange = false;
         std::array<SettingOptionSnapshot, MaxOptions> options{};
         uint8_t optionCount = 0;
         bool readonly = false;

@@ -26,6 +26,12 @@ namespace IntegralMotions::Config {
         SettingResult add(const SettingDefinition<T>& definition, T& value);
 
         template <SupportedSettingType T>
+        SettingResult add(SettingDefinition<T>&&, T&) = delete;
+
+        template <SupportedSettingType T>
+        SettingResult add(const SettingDefinition<T>&&, T&) = delete;
+
+        template <SupportedSettingType T>
         SettingResult set(const SettingKey& key, const T& value);
 
         [[nodiscard]] std::optional<SettingValue> value(const SettingKey& key) const;
@@ -54,7 +60,8 @@ namespace IntegralMotions::Config {
             SettingResult (*read)(void* context, SettingValue& output) = nullptr;
             SettingResult (*write)(void* context, const SettingValue& candidate) = nullptr;
             void (*apply)(const void* definition, const SettingValue& value) = nullptr;
-            void (*snapshot)(const void* definition, const SettingValue& value, SettingSnapshot& output) = nullptr;
+            void (*snapshot)(const void* definition, const SettingValue& value,
+                             SettingSnapshot& output) = nullptr;
         };
 
         template <SupportedSettingType T>
@@ -73,7 +80,8 @@ namespace IntegralMotions::Config {
         static void applyDefinition(const void* definition, const SettingValue& value);
 
         template <SupportedSettingType T>
-        static void snapshotDefinition(const void* definition, const SettingValue& value, SettingSnapshot& output);
+        static void snapshotDefinition(const void* definition, const SettingValue& value,
+                                       SettingSnapshot& output);
 
         Entry* find(const SettingKey& key);
         const Entry* find(const SettingKey& key) const;
@@ -118,8 +126,9 @@ namespace IntegralMotions::Config {
 
     template <size_t Capacity>
     template <SupportedSettingType T>
-    SettingResult SettingsRegistry<Capacity>::validateLocal(const void* definition, const SettingValue& candidate) {
-        const auto* settingDefinition = static_cast<const SettingDefinition<T>*>(definition);
+    SettingResult SettingsRegistry<Capacity>::validateLocal(const void* definition,
+                                                             const SettingValue& candidate) {
+        const auto& settingDefinition = *static_cast<const SettingDefinition<T>*>(definition);
         const auto* value = std::get_if<T>(&candidate);
         if (value == nullptr) {
             return SettingResult::TypeMismatch;
@@ -130,7 +139,7 @@ namespace IntegralMotions::Config {
                 return SettingResult::ValidationFailed;
             }
         }
-        const auto& limits = settingDefinition->limits;
+        const auto& limits = settingDefinition.limits;
         if (limits.minimum.has_value() && *value < *limits.minimum) {
             return SettingResult::BelowMinimum;
         }
@@ -177,6 +186,11 @@ namespace IntegralMotions::Config {
     template <SupportedSettingType T>
     SettingResult SettingsRegistry<Capacity>::validateDefinition(const SettingDefinition<T>& definition) {
         const auto& limits = definition.limits;
+        if constexpr (std::same_as<T, bool>) {
+            if (limits.minimum.has_value() || limits.maximum.has_value() || limits.step.has_value() || limits.isRange) {
+                return SettingResult::InvalidDefinition;
+            }
+        }
         if (limits.optionCount > MaxOptions ||
             (limits.minimum.has_value() && limits.maximum.has_value() && *limits.minimum > *limits.maximum)) {
             return SettingResult::InvalidDefinition;
@@ -235,25 +249,25 @@ namespace IntegralMotions::Config {
     template <size_t Capacity>
     template <SupportedSettingType T>
     void SettingsRegistry<Capacity>::applyDefinition(const void* definition, const SettingValue& value) {
-        const auto* settingDefinition = static_cast<const SettingDefinition<T>*>(definition);
+        const auto& settingDefinition = *static_cast<const SettingDefinition<T>*>(definition);
         const auto* typedValue = std::get_if<T>(&value);
-        if (settingDefinition->apply && typedValue != nullptr) {
-            settingDefinition->apply(*typedValue);
+        if (settingDefinition.apply && typedValue != nullptr) {
+            settingDefinition.apply(*typedValue);
         }
     }
 
     template <size_t Capacity>
     template <SupportedSettingType T>
     void SettingsRegistry<Capacity>::snapshotDefinition(const void* definition, const SettingValue& value,
-                                                        SettingSnapshot& output) {
-        const auto* settingDefinition = static_cast<const SettingDefinition<T>*>(definition);
-        const auto& limits = settingDefinition->limits;
-        output.key = settingDefinition->key;
+                                                         SettingSnapshot& output) {
+        const auto& settingDefinition = *static_cast<const SettingDefinition<T>*>(definition);
+        const auto& limits = settingDefinition.limits;
+        output.key = settingDefinition.key;
         output.type = settingTypeOf<T>();
-        output.moduleId = settingDefinition->moduleId.view();
-        output.groupId = settingDefinition->groupId.view();
-        output.id = settingDefinition->id.view();
-        output.unit = settingDefinition->unit.view();
+        output.moduleId = settingDefinition.moduleId.view();
+        output.groupId = settingDefinition.groupId.view();
+        output.id = settingDefinition.id.view();
+        output.unit = settingDefinition.unit.view();
         output.value = value;
         if (limits.minimum.has_value()) {
             output.minimum = SettingValue{*limits.minimum};
@@ -264,8 +278,9 @@ namespace IntegralMotions::Config {
         if (limits.step.has_value()) {
             output.step = SettingValue{*limits.step};
         }
+        output.isRange = limits.isRange;
         output.optionCount = limits.optionCount;
-        output.readonly = settingDefinition->readonly;
+        output.readonly = settingDefinition.readonly;
         for (uint8_t i = 0; i < limits.optionCount; ++i) {
             output.options[i] = {.value = SettingValue{limits.options[i].value}, .id = limits.options[i].id.view()};
         }

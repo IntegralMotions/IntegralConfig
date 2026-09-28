@@ -58,9 +58,9 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
     static void registerMembers() {
         using Obj = MPackObject<TDerived, SettingValueMembers + AddedMembers>;
         Obj::registerMember("id", CppType::String, &TDerived::id);
-        Obj::registerMember("unit", CppType::String, &TDerived::unit);
+        Obj::registerOmitNullOrEmptyCString("unit", &TDerived::unit);
         Obj::registerMember("value", getType<TValue>(), &TDerived::value);
-        Obj::registerMember("readonly", CppType::Bool, &TDerived::readonly);
+        Obj::registerOmitFalseBool("readonly", &TDerived::readonly);
     }
 
     template <typename T>
@@ -77,6 +77,10 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
 template <typename TValue>
 class MessageSettingOption : public MPackObject<MessageSettingOption<TValue>, 2> {
   public:
+    ~MessageSettingOption() override {
+        this->clearDecodedMembers();
+    }
+
     static void registerMembers() {
         MPackObject<MessageSettingOption<TValue>, 2>::registerMember("value", settingValueCppType<TValue>(),
                                                                      &MessageSettingOption::value);
@@ -91,6 +95,10 @@ class MessageSettingOption : public MPackObject<MessageSettingOption<TValue>, 2>
 template <typename TValue>
 class MessageSettingLimits : public MPackObject<MessageSettingLimits<TValue>, 5> {
   public:
+    ~MessageSettingLimits() override {
+        this->clearDecodedMembers();
+    }
+
     static void registerMembers() {
         using Obj = MPackObject<MessageSettingLimits<TValue>, 5>;
         Obj::registerOptionalMember("min", settingValueCppType<TValue>(), &MessageSettingLimits::minimum);
@@ -113,8 +121,35 @@ class MessageSettingLimits : public MPackObject<MessageSettingLimits<TValue>, 5>
     MPackArray<MessageSettingOption<TValue>*> options;
 };
 
+template <>
+class MessageSettingLimits<bool> : public MPackObject<MessageSettingLimits<bool>, 2> {
+  public:
+    ~MessageSettingLimits() override {
+        clearDecodedMembers();
+    }
+
+    static void registerMembers() {
+        using Obj = MPackObject<MessageSettingLimits<bool>, 2>;
+        Obj::registerMember("isRange", CppType::Bool, &MessageSettingLimits::isRange);
+        Obj::registerMember("options", {CppType::Array, CppType::ObjectPtr}, &MessageSettingLimits::options);
+    }
+
+  protected:
+    MPackObjectBase* createObject(const char* /*name*/) override {
+        return new MessageSettingOption<bool>();
+    }
+
+  public:
+    bool isRange = false;
+    MPackArray<MessageSettingOption<bool>*> options;
+};
+
 class BoolSetting : public SettingValue<BoolSetting, bool, 1> {
   public:
+    ~BoolSetting() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         using Base = SettingValue<BoolSetting, bool, 1>;
         Base::registerMembers();
@@ -124,26 +159,13 @@ class BoolSetting : public SettingValue<BoolSetting, bool, 1> {
     MessageSettingLimits<bool> limits{};
 };
 
-class StringSetting : public SettingValue<StringSetting, const char*, 1> {
-  public:
-    static void registerMembers() {
-        using Base = SettingValue<StringSetting, const char*, 1>;
-        Base::registerMembers();
-        registerMember("options", {CppType::Array, CppType::ObjectPtr}, &StringSetting::options);
-    }
-
-  protected:
-    MPackObjectBase* createObject(const char* /*name*/) override {
-        return new MessageSettingOption<const char*>();
-    }
-
-  public:
-    MPackArray<MessageSettingOption<const char*>*> options;
-};
-
 template <typename TValue>
 class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 1> {
   public:
+    ~NumberSetting() override {
+        this->clearDecodedMembers();
+    }
+
     static void registerMembers() {
         using Base = SettingValue<NumberSetting<TValue>, TValue, 1>;
         Base::registerMembers();

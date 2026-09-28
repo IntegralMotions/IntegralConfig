@@ -26,6 +26,25 @@ namespace IntegralMotions::Config {
             size_t callCount = 0;
         };
 
+        struct SnapshotRecorder {
+            static bool record(void* context, const SettingSnapshot& setting) {
+                auto& recorder = *static_cast<SnapshotRecorder*>(context);
+                recorder.snapshot = setting;
+                ++recorder.callCount;
+                return true;
+            }
+
+            SettingSnapshot snapshot{};
+            size_t callCount = 0;
+        };
+
+        template <typename Registry>
+        concept CanAddTemporaryDefinition = requires(Registry& registry, int32_t& value) {
+            registry.add(SettingDefinition<int32_t>{}, value);
+        };
+
+        static_assert(!CanAddTemporaryDefinition<SettingsRegistry<1>>);
+
         TEST(SettingsRegistry, PersistsAndRestoresFrequentValues) {
             MemoryStorageDevice<128> storage;
             SettingsStore<2> store{storage, BankA, BankB};
@@ -166,7 +185,7 @@ namespace IntegralMotions::Config {
             EXPECT_EQ(registry.set(MemoryKey, int32_t{15}), SettingResult::InvalidOption);
         }
 
-        TEST(SettingsRegistry, RequiresLabelsForDefinedOptions) {
+        TEST(SettingsRegistry, RequiresIdsForDefinedOptions) {
             SettingDefinition<int32_t> definition{
                 .key = MemoryKey,
                 .defaultValue = 10,
@@ -229,6 +248,116 @@ namespace IntegralMotions::Config {
             EXPECT_EQ(disabledRecorder.callCount, 2);
             EXPECT_EQ(restartRecorder.latestValue, 31);
             EXPECT_EQ(restartRecorder.callCount, 1);
+        }
+
+        TEST(SettingsRegistry, ReferencesLongLivedDefinitions) {
+            static const SettingDefinition<int32_t> definition = [] {
+                SettingDefinition<int32_t> value{
+                    .key = MemoryKey,
+                    .defaultValue = 10,
+                    .limits = {.minimum = 0, .maximum = 20, .step = 5},
+                };
+                value.id.assign("Static");
+                return value;
+            }();
+            SettingsRegistry<1> registry;
+            int32_t value = 0;
+            ASSERT_EQ(registry.add(definition, value), SettingResult::Ok);
+
+            ASSERT_EQ(registry.set(MemoryKey, int32_t{15}), SettingResult::Ok);
+            EXPECT_EQ(value, 15);
+
+            SnapshotRecorder snapshotRecorder;
+            ASSERT_EQ(registry.visit(&SnapshotRecorder::record, &snapshotRecorder), SettingResult::Ok);
+            ASSERT_EQ(snapshotRecorder.callCount, 1);
+            EXPECT_EQ(snapshotRecorder.snapshot.id, "Static");
+            ASSERT_TRUE(snapshotRecorder.snapshot.maximum.has_value());
+            EXPECT_EQ(std::get<int32_t>(*snapshotRecorder.snapshot.maximum), 20);
+        }
+
+        TEST(SettingsRegistry, UsesCurrentReferencedDefinition) {
+            ApplyRecorder applyRecorder;
+            SettingDefinition<int32_t> definition{
+                .key = MemoryKey,
+                .defaultValue = 10,
+                .limits = {.maximum = 20},
+                .apply = IntegralMotions::Functional::Delegate<void(const int32_t&)>::bind<&ApplyRecorder::record>(
+                    applyRecorder),
+            };
+            ASSERT_TRUE(definition.id.assign("Original"));
+
+            int32_t value = 0;
+            SettingsRegistry<1> registry;
+            ASSERT_EQ(registry.add(definition, value), SettingResult::Ok);
+
+            definition.limits.maximum = 100;
+            ASSERT_TRUE(definition.id.assign("Mutated"));
+            definition.apply = {};
+
+            EXPECT_EQ(registry.set(MemoryKey, int32_t{25}), SettingResult::Ok);
+            ASSERT_EQ(registry.set(MemoryKey, int32_t{15}), SettingResult::Ok);
+            EXPECT_EQ(applyRecorder.callCount, 0);
+
+            SnapshotRecorder snapshotRecorder;
+            ASSERT_EQ(registry.visit(&SnapshotRecorder::record, &snapshotRecorder), SettingResult::Ok);
+            EXPECT_EQ(snapshotRecorder.snapshot.id, "Mutated");
+            ASSERT_TRUE(snapshotRecorder.snapshot.maximum.has_value());
+            EXPECT_EQ(std::get<int32_t>(*snapshotRecorder.snapshot.maximum), 100);
+        }
+
+        TEST(SettingsRegistry, AllowsBoolOptionsButRejectsBoolBoundsAndRange) {
+            SettingDefinition<bool> optionsDefinition{
+                .key = MemoryKey,
+                .defaultValue = false,
+                .limits = {.optionCount = 2},
+            };
+            optionsDefinition.limits.options[0].value = false;
+            optionsDefinition.limits.options[1].value = true;
+            ASSERT_TRUE(optionsDefinition.limits.options[0].id.assign("Off"));
+            ASSERT_TRUE(optionsDefinition.limits.options[1].id.assign("On"));
+
+            bool value = false;
+            SettingsRegistry<1> registry;
+            ASSERT_EQ(registry.add(optionsDefinition, value), SettingResult::Ok);
+            EXPECT_EQ(registry.set(MemoryKey, true), SettingResult::Ok);
+            EXPECT_TRUE(value);
+
+            const SettingDefinition<bool> minimumDefinition{
+                .key = FrequentKey,
+                .limits = {.minimum = false},
+            };
+            const SettingDefinition<bool> maximumDefinition{
+                .key = FrequentKey,
+                .limits = {.maximum = true},
+            };
+            const SettingDefinition<bool> stepDefinition{
+                .key = FrequentKey,
+                .limits = {.step = true},
+            };
+            const SettingDefinition<bool> rangeDefinition{
+                .key = FrequentKey,
+                .limits = {.isRange = true},
+            };
+            EXPECT_EQ(registry.add(minimumDefinition, value), SettingResult::InvalidDefinition);
+            EXPECT_EQ(registry.add(maximumDefinition, value), SettingResult::InvalidDefinition);
+            EXPECT_EQ(registry.add(stepDefinition, value), SettingResult::InvalidDefinition);
+            EXPECT_EQ(registry.add(rangeDefinition, value), SettingResult::InvalidDefinition);
+        }
+
+        TEST(SettingsRegistry, SnapshotReportsIsRange) {
+            const SettingDefinition<int32_t> definition{
+                .key = MemoryKey,
+                .defaultValue = 10,
+                .limits = {.minimum = 0, .maximum = 20, .isRange = true},
+            };
+            int32_t value = 0;
+            SettingsRegistry<1> registry;
+            ASSERT_EQ(registry.add(definition, value), SettingResult::Ok);
+
+            SnapshotRecorder snapshotRecorder;
+            ASSERT_EQ(registry.visit(&SnapshotRecorder::record, &snapshotRecorder), SettingResult::Ok);
+            ASSERT_EQ(snapshotRecorder.callCount, 1);
+            EXPECT_TRUE(snapshotRecorder.snapshot.isRange);
         }
 
     } // namespace

@@ -21,6 +21,13 @@ class MPackObject : public MPackObjectBase {
     static void registerOptionalMember(const char* name, const MPackObjectType& type,
                                        std::optional<Member> Class::* memberPtr);
 
+    template <typename Class>
+    static void registerOmitNullOrEmptyCString(const char* name, const char* Class::* memberPtr);
+    template <typename Class>
+    static void registerOmitFalseBool(const char* name, bool Class::* memberPtr);
+    template <typename Class>
+    static void registerOmitNullCString(const char* name, const char* Class::* memberPtr);
+
     [[nodiscard]] const MPackObjectMember* getMembers() const override;
     [[nodiscard]] size_t memberCount() const override;
     [[nodiscard]] void* getMemberAddress(const MPackObjectMember& member) const override;
@@ -63,6 +70,41 @@ void MPackObject<Derived, MaxMembers>::registerOptionalMember(const char* name, 
     const auto offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
     members[memberIndex++] = {name, type, offset, true};
 }
+
+template <typename Derived, size_t MaxMembers>
+template <typename Class>
+void MPackObject<Derived, MaxMembers>::registerOmitNullOrEmptyCString(const char* name,
+                                                                      const char* Class::* memberPtr) {
+    static_assert(std::is_base_of_v<Class, Derived>, "Class must be a base of Derived");
+    if (memberIndex >= MaxMembers) {
+        return;
+    }
+    const auto offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
+    members[memberIndex++] = {name, CppType::String, offset, false, MPackOmitPolicy::NullOrEmptyCString};
+}
+
+template <typename Derived, size_t MaxMembers>
+template <typename Class>
+void MPackObject<Derived, MaxMembers>::registerOmitFalseBool(const char* name, bool Class::* memberPtr) {
+    static_assert(std::is_base_of_v<Class, Derived>, "Class must be a base of Derived");
+    if (memberIndex >= MaxMembers) {
+        return;
+    }
+    const auto offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
+    members[memberIndex++] = {name, CppType::Bool, offset, false, MPackOmitPolicy::FalseBool};
+}
+
+template <typename Derived, size_t MaxMembers>
+template <typename Class>
+void MPackObject<Derived, MaxMembers>::registerOmitNullCString(const char* name, const char* Class::* memberPtr) {
+    static_assert(std::is_base_of_v<Class, Derived>, "Class must be a base of Derived");
+    if (memberIndex >= MaxMembers) {
+        return;
+    }
+    const auto offset = reinterpret_cast<std::size_t>(&(static_cast<const Class*>(nullptr)->*memberPtr));
+    members[memberIndex++] = {name, CppType::String, offset, false, MPackOmitPolicy::NullCString};
+}
+
 template <typename Derived, size_t MaxMembers>
 const MPackObjectMember* MPackObject<Derived, MaxMembers>::getMembers() const {
     return members.data();

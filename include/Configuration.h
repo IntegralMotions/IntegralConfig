@@ -7,18 +7,22 @@
 
 class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-numbers)
   public:
+    ~Setting() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         registerMember("type", CppType::String, &Setting::type);
         registerMember("value", CppType::ObjectPtr, &Setting::value);
     }
 
-  protected:
+    protected:
     MPackObjectBase* createObject(const char* /*name*/) override {
+        if (type == nullptr) {
+            return nullptr;
+        }
         if (std::strcmp(type, "bool") == 0) {
             return new BoolSetting();
-        }
-        if (std::strcmp(type, "int") == 0) {
-            return new NumberSetting<int>();
         }
         if (std::strcmp(type, "i8") == 0) {
             return new NumberSetting<int8_t>();
@@ -32,6 +36,9 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
         if (std::strcmp(type, "u16") == 0) {
             return new NumberSetting<uint16_t>();
         }
+        if (std::strcmp(type, "i32") == 0) {
+            return new NumberSetting<int32_t>();
+        }
         if (std::strcmp(type, "u32") == 0) {
             return new NumberSetting<uint32_t>();
         }
@@ -41,14 +48,11 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
         if (std::strcmp(type, "u64") == 0) {
             return new NumberSetting<uint64_t>();
         }
-        if (std::strcmp(type, "float") == 0) {
+        if (std::strcmp(type, "f32") == 0) {
             return new NumberSetting<float>();
         }
-        if (std::strcmp(type, "double") == 0) {
+        if (std::strcmp(type, "f64") == 0) {
             return new NumberSetting<double>();
-        }
-        if (std::strcmp(type, "string") == 0) {
-            return new StringSetting();
         }
         return nullptr;
     }
@@ -60,6 +64,10 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
 
 class Group : public MPackObject<Group, 2> { // NOLINT(readability-magic-numbers)
   public:
+    ~Group() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         registerMember("id", CppType::String, &Group::id);
         registerMember("settings", {CppType::Array, CppType::ObjectPtr}, &Group::settings);
@@ -80,6 +88,10 @@ class Group : public MPackObject<Group, 2> { // NOLINT(readability-magic-numbers
 
 class Module : public MPackObject<Module, 2> { // NOLINT(readability-magic-numbers)
   public:
+    ~Module() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         registerMember("id", CppType::String, &Module::id);
         registerMember("groups", {CppType::Array, CppType::ObjectPtr}, &Module::groups);
@@ -97,6 +109,10 @@ class Module : public MPackObject<Module, 2> { // NOLINT(readability-magic-numbe
 
 class DeviceInfo : public MPackObject<DeviceInfo, 2> { // NOLINT(readability-magic-numbers)
   public:
+    ~DeviceInfo() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         registerMember("model", CppType::String, &DeviceInfo::model);
         registerMember("firmwareVersion", {CppType::String, CppType::None}, &DeviceInfo::firmwareVersion);
@@ -108,6 +124,10 @@ class DeviceInfo : public MPackObject<DeviceInfo, 2> { // NOLINT(readability-mag
 
 class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbers)
   public:
+    ~Device() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         registerMember("deviceInfo", CppType::ObjectPtr, &Device::deviceInfo);
         registerMember("modules", {CppType::Array, CppType::ObjectPtr}, &Device::modules);
@@ -131,9 +151,13 @@ class Device : public MPackObject<Device, 2> { // NOLINT(readability-magic-numbe
 
 class SuccessResult : public MPackObject<SuccessResult, 2> {
   public:
+    ~SuccessResult() override {
+        clearDecodedMembers();
+    }
+
     static void registerMembers() {
         registerMember("success", CppType::Bool, &SuccessResult::success);
-        registerMember("errorMessage", {CppType::String, CppType::None}, &SuccessResult::errorMessage);
+        registerOmitNullCString("errorMessage", &SuccessResult::errorMessage);
     }
 
     bool success = false;

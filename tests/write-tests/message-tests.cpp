@@ -69,9 +69,9 @@ static Message makeReadDeviceResponse() {
     // setting 2: int
     {
         auto* setting = new Setting();
-        setting->type = "int";
+        setting->type = "i32";
 
-        auto* value = new NumberSetting<int>();
+        auto* value = new NumberSetting<int32_t>();
         value->id = "speed";
         value->unit = "rpm";
         value->value = 1000;
@@ -80,11 +80,11 @@ static Message makeReadDeviceResponse() {
         value->limits.isRange = false;
 
         value->limits.options.size = 2;
-        value->limits.options.p = new MessageSettingOption<int>*[2];
-        value->limits.options[0] = new MessageSettingOption<int>();
+        value->limits.options.p = new MessageSettingOption<int32_t>*[2];
+        value->limits.options[0] = new MessageSettingOption<int32_t>();
         value->limits.options[0]->value = 500;
         value->limits.options[0]->id = "low-speed";
-        value->limits.options[1] = new MessageSettingOption<int>();
+        value->limits.options[1] = new MessageSettingOption<int32_t>();
         value->limits.options[1]->value = 1500;
         value->limits.options[1]->id = "high-speed";
 
