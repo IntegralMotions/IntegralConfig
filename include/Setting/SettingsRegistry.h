@@ -12,8 +12,10 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <new>
 #include <optional>
 #include <type_traits>
+#include <utility>
 
 namespace IntegralMotions::Config {
 
@@ -22,11 +24,21 @@ namespace IntegralMotions::Config {
       public:
         using VisitCallback = bool (*)(void* context, const SettingSnapshot& setting);
 
+        SettingsRegistry() = default;
+        SettingsRegistry(const SettingsRegistry&) = delete;
+        SettingsRegistry& operator=(const SettingsRegistry&) = delete;
+        SettingsRegistry(SettingsRegistry&&) = delete;
+        SettingsRegistry& operator=(SettingsRegistry&&) = delete;
+        ~SettingsRegistry();
+
         template <SupportedSettingType T>
         SettingResult add(const SettingDefinition<T>& definition, T& value);
 
         template <SupportedSettingType T>
-        SettingResult add(SettingDefinition<T>&&, T&) = delete;
+        SettingResult add(SettingDefinition<T>&, T&) = delete;
+
+        template <SupportedSettingType T>
+        SettingResult add(SettingDefinition<T>&& definition, T initialValue);
 
         template <SupportedSettingType T>
         SettingResult add(const SettingDefinition<T>&&, T&) = delete;
@@ -44,6 +56,12 @@ namespace IntegralMotions::Config {
         void applyAtStartup();
 
       private:
+        template <SupportedSettingType T>
+        struct OwnedSetting {
+            SettingDefinition<T> definition;
+            T value{};
+        };
+
         struct Entry {
             bool registered = false;
 
@@ -55,6 +73,8 @@ namespace IntegralMotions::Config {
 
             const void* definition = nullptr;
             void* context = nullptr;
+            void* ownedObject = nullptr;
+            void (*destroyOwned)(void* ownedObject) = nullptr;
 
             SettingResult (*validate)(const void* definition, const SettingValue& candidate) = nullptr;
             SettingResult (*read)(void* context, SettingValue& output) = nullptr;
@@ -82,6 +102,14 @@ namespace IntegralMotions::Config {
         template <SupportedSettingType T>
         static void snapshotDefinition(const void* definition, const SettingValue& value,
                                        SettingSnapshot& output);
+
+        template <SupportedSettingType T>
+        SettingResult addImpl(const SettingDefinition<T>& definition, T& value, bool initializeDefault);
+
+        template <SupportedSettingType T>
+        static void destroyOwned(void* ownedObject);
+
+        void clearOwned();
 
         Entry* find(const SettingKey& key);
         const Entry* find(const SettingKey& key) const;
@@ -126,8 +154,7 @@ namespace IntegralMotions::Config {
 
     template <size_t Capacity>
     template <SupportedSettingType T>
-    SettingResult SettingsRegistry<Capacity>::validateLocal(const void* definition,
-                                                             const SettingValue& candidate) {
+    SettingResult SettingsRegistry<Capacity>::validateLocal(const void* definition, const SettingValue& candidate) {
         const auto& settingDefinition = *static_cast<const SettingDefinition<T>*>(definition);
         const auto* value = std::get_if<T>(&candidate);
         if (value == nullptr) {
@@ -259,7 +286,7 @@ namespace IntegralMotions::Config {
     template <size_t Capacity>
     template <SupportedSettingType T>
     void SettingsRegistry<Capacity>::snapshotDefinition(const void* definition, const SettingValue& value,
-                                                         SettingSnapshot& output) {
+                                                        SettingSnapshot& output) {
         const auto& settingDefinition = *static_cast<const SettingDefinition<T>*>(definition);
         const auto& limits = settingDefinition.limits;
         output.key = settingDefinition.key;
@@ -306,6 +333,53 @@ namespace IntegralMotions::Config {
     template <size_t Capacity>
     template <SupportedSettingType T>
     SettingResult SettingsRegistry<Capacity>::add(const SettingDefinition<T>& definition, T& value) {
+        return addImpl(definition, value, true);
+    }
+
+    template <size_t Capacity>
+    template <SupportedSettingType T>
+    SettingResult SettingsRegistry<Capacity>::add(SettingDefinition<T>&& definition, T initialValue) {
+        auto* owned = new (std::nothrow) OwnedSetting<T>{.definition = std::move(definition), .value = initialValue};
+        if (owned == nullptr) {
+            return SettingResult::StorageError;
+        }
+        const auto result = addImpl(owned->definition, owned->value, false);
+        if (result == SettingResult::Ok) {
+            auto& entry = _entries[_size - 1];
+            entry.ownedObject = owned;
+            entry.destroyOwned = &destroyOwned<T>;
+        } else {
+            delete owned;
+        }
+        return result;
+    }
+
+    template <size_t Capacity>
+    template <SupportedSettingType T>
+    void SettingsRegistry<Capacity>::destroyOwned(void* ownedObject) {
+        delete static_cast<OwnedSetting<T>*>(ownedObject);
+    }
+
+    template <size_t Capacity>
+    void SettingsRegistry<Capacity>::clearOwned() {
+        for (auto& entry : _entries) {
+            if (entry.destroyOwned != nullptr) {
+                entry.destroyOwned(entry.ownedObject);
+                entry.ownedObject = nullptr;
+                entry.destroyOwned = nullptr;
+            }
+        }
+    }
+
+    template <size_t Capacity>
+    SettingsRegistry<Capacity>::~SettingsRegistry() {
+        clearOwned();
+    }
+
+    template <size_t Capacity>
+    template <SupportedSettingType T>
+    SettingResult SettingsRegistry<Capacity>::addImpl(const SettingDefinition<T>& definition, T& value,
+                                                       bool initializeDefault) {
         const auto definitionResult = validateDefinition(definition);
         if (definitionResult != SettingResult::Ok) {
             return definitionResult;
@@ -333,7 +407,9 @@ namespace IntegralMotions::Config {
         entry.apply = &applyDefinition<T>;
         entry.snapshot = &snapshotDefinition<T>;
 
-        value = definition.defaultValue;
+        if (initializeDefault) {
+            value = definition.defaultValue;
+        }
         if (entry.persistencePolicy != PersistencePolicy::Memory) {
             auto* store = storeFor(entry.persistencePolicy);
             if (store == nullptr) {

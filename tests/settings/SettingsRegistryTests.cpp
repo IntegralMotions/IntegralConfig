@@ -39,11 +39,18 @@ namespace IntegralMotions::Config {
         };
 
         template <typename Registry>
-        concept CanAddTemporaryDefinition = requires(Registry& registry, int32_t& value) {
+        concept CanAddMutableDefinition = requires(Registry& registry, SettingDefinition<int32_t>& definition,
+                                                   int32_t& value) {
+            registry.add(definition, value);
+        };
+
+        template <typename Registry>
+        concept CanAddOwnedDefinition = requires(Registry& registry, int32_t& value) {
             registry.add(SettingDefinition<int32_t>{}, value);
         };
 
-        static_assert(!CanAddTemporaryDefinition<SettingsRegistry<1>>);
+        static_assert(!CanAddMutableDefinition<SettingsRegistry<1>>);
+        static_assert(CanAddOwnedDefinition<SettingsRegistry<1>>);
 
         TEST(SettingsRegistry, PersistsAndRestoresFrequentValues) {
             MemoryStorageDevice<128> storage;
@@ -171,27 +178,33 @@ namespace IntegralMotions::Config {
             SettingsRegistry<2> registry;
             EXPECT_EQ(registry.add(invalidDefinition, value), SettingResult::InvalidDefinition);
 
-            SettingDefinition<int32_t> definition{
-                .key = MemoryKey,
-                .defaultValue = 10,
-                .limits = {.optionCount = 2},
-            };
-            definition.limits.options[0].value = 10;
-            definition.limits.options[1].value = 20;
-            ASSERT_TRUE(definition.limits.options[0].id.assign("Low"));
-            ASSERT_TRUE(definition.limits.options[1].id.assign("High"));
+            const auto definition = [] {
+                SettingDefinition<int32_t> value{
+                    .key = MemoryKey,
+                    .defaultValue = 10,
+                    .limits = {.optionCount = 2},
+                };
+                value.limits.options[0].value = 10;
+                value.limits.options[1].value = 20;
+                EXPECT_TRUE(value.limits.options[0].id.assign("Low"));
+                EXPECT_TRUE(value.limits.options[1].id.assign("High"));
+                return value;
+            }();
             ASSERT_EQ(registry.add(definition, value), SettingResult::Ok);
             EXPECT_EQ(registry.set(MemoryKey, uint16_t{10}), SettingResult::TypeMismatch);
             EXPECT_EQ(registry.set(MemoryKey, int32_t{15}), SettingResult::InvalidOption);
         }
 
         TEST(SettingsRegistry, RequiresIdsForDefinedOptions) {
-            SettingDefinition<int32_t> definition{
-                .key = MemoryKey,
-                .defaultValue = 10,
-                .limits = {.optionCount = 1},
-            };
-            definition.limits.options[0].value = 10;
+            const auto definition = [] {
+                SettingDefinition<int32_t> value{
+                    .key = MemoryKey,
+                    .defaultValue = 10,
+                    .limits = {.optionCount = 1},
+                };
+                value.limits.options[0].value = 10;
+                return value;
+            }();
 
             int32_t value = 0;
             SettingsRegistry<1> registry;
@@ -275,46 +288,42 @@ namespace IntegralMotions::Config {
             EXPECT_EQ(std::get<int32_t>(*snapshotRecorder.snapshot.maximum), 20);
         }
 
-        TEST(SettingsRegistry, UsesCurrentReferencedDefinition) {
-            ApplyRecorder applyRecorder;
-            SettingDefinition<int32_t> definition{
-                .key = MemoryKey,
-                .defaultValue = 10,
-                .limits = {.maximum = 20},
-                .apply = IntegralMotions::Functional::Delegate<void(const int32_t&)>::bind<&ApplyRecorder::record>(
-                    applyRecorder),
-            };
-            ASSERT_TRUE(definition.id.assign("Original"));
+        TEST(SettingsRegistry, OwnsMovedDefinitionsAndValues) {
+            SettingsRegistry<2> registry;
+            {
+                SettingDefinition<int32_t> definition{
+                    .key = MemoryKey,
+                    .defaultValue = 10,
+                    .limits = {.maximum = 20},
+                };
+                ASSERT_TRUE(definition.id.assign("Slave"));
+                ASSERT_EQ(registry.add(std::move(definition), int32_t{15}), SettingResult::Ok);
+            }
 
-            int32_t value = 0;
-            SettingsRegistry<1> registry;
-            ASSERT_EQ(registry.add(definition, value), SettingResult::Ok);
-
-            definition.limits.maximum = 100;
-            ASSERT_TRUE(definition.id.assign("Mutated"));
-            definition.apply = {};
-
-            EXPECT_EQ(registry.set(MemoryKey, int32_t{25}), SettingResult::Ok);
-            ASSERT_EQ(registry.set(MemoryKey, int32_t{15}), SettingResult::Ok);
-            EXPECT_EQ(applyRecorder.callCount, 0);
+            const auto storedValue = registry.value(MemoryKey);
+            ASSERT_TRUE(storedValue.has_value());
+            EXPECT_EQ(std::get<int32_t>(*storedValue), 15);
+            EXPECT_EQ(registry.set(MemoryKey, int32_t{25}), SettingResult::AboveMaximum);
+            ASSERT_EQ(registry.set(MemoryKey, int32_t{20}), SettingResult::Ok);
 
             SnapshotRecorder snapshotRecorder;
             ASSERT_EQ(registry.visit(&SnapshotRecorder::record, &snapshotRecorder), SettingResult::Ok);
-            EXPECT_EQ(snapshotRecorder.snapshot.id, "Mutated");
-            ASSERT_TRUE(snapshotRecorder.snapshot.maximum.has_value());
-            EXPECT_EQ(std::get<int32_t>(*snapshotRecorder.snapshot.maximum), 100);
+            EXPECT_EQ(snapshotRecorder.snapshot.id, "Slave");
         }
 
         TEST(SettingsRegistry, AllowsBoolOptionsButRejectsBoolBoundsAndRange) {
-            SettingDefinition<bool> optionsDefinition{
-                .key = MemoryKey,
-                .defaultValue = false,
-                .limits = {.optionCount = 2},
-            };
-            optionsDefinition.limits.options[0].value = false;
-            optionsDefinition.limits.options[1].value = true;
-            ASSERT_TRUE(optionsDefinition.limits.options[0].id.assign("Off"));
-            ASSERT_TRUE(optionsDefinition.limits.options[1].id.assign("On"));
+            const auto optionsDefinition = [] {
+                SettingDefinition<bool> value{
+                    .key = MemoryKey,
+                    .defaultValue = false,
+                    .limits = {.optionCount = 2},
+                };
+                value.limits.options[0].value = false;
+                value.limits.options[1].value = true;
+                EXPECT_TRUE(value.limits.options[0].id.assign("Off"));
+                EXPECT_TRUE(value.limits.options[1].id.assign("On"));
+                return value;
+            }();
 
             bool value = false;
             SettingsRegistry<1> registry;

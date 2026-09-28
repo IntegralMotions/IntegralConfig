@@ -99,7 +99,14 @@ registry.set(speedDefinition.key, 1200);
 ```
 
 Definitions and referenced live values (`speed` above) must remain valid for the lifetime of the registry. Use
-`static const` definitions for device-lifetime settings. Configure the corresponding `SettingsStore` before adding a
+`static const` definitions for device-lifetime settings. Mutable definitions are rejected as references; move a
+received definition into the registry to retain it with its current value:
+
+```cpp
+registry.add(std::move(receivedDefinition), receivedValue);
+```
+
+The registry owns and releases moved definitions and values. Configure the corresponding `SettingsStore` before adding a
 `Frequent` or `LongTerm` setting.
 
 Each option has a machine value and a stable ID. MessagePack `options` arrays use the same shape:

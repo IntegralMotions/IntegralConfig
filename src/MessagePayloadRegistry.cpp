@@ -1,6 +1,6 @@
 #include "MessagePayloadRegistry.h"
 
-std::array<MessagePayloadRegistry::Entry, MAX_MESSAGE_PAYLOAD_ENTRIES> MessagePayloadRegistry::entries{};
+std::array<MessagePayloadRegistry::Entry, MaxMessagePayloadEntries> MessagePayloadRegistry::entries{};
 
 std::size_t MessagePayloadRegistry::count = 0;
 

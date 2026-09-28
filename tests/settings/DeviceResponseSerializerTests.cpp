@@ -26,19 +26,22 @@ namespace IntegralMotions::Config {
                 .id = "enable",
                 .defaultValue = true,
             };
-            SettingDefinition<int32_t> speedDefinition{
-                .key = SpeedKey,
-                .moduleId = "motor",
-                .groupId = "main",
-                .id = "speed",
-                .unit = "rpm",
-                .defaultValue = 500,
-                .limits = {.minimum = 0, .maximum = 2000, .step = 100, .optionCount = 2},
-            };
-            ASSERT_TRUE(speedDefinition.limits.options[0].id.assign("low-speed"));
-            speedDefinition.limits.options[0].value = 500;
-            ASSERT_TRUE(speedDefinition.limits.options[1].id.assign("high-speed"));
-            speedDefinition.limits.options[1].value = 1500;
+            const auto speedDefinition = [] {
+                SettingDefinition<int32_t> value{
+                    .key = SpeedKey,
+                    .moduleId = "motor",
+                    .groupId = "main",
+                    .id = "speed",
+                    .unit = "rpm",
+                    .defaultValue = 500,
+                    .limits = {.minimum = 0, .maximum = 2000, .step = 100, .optionCount = 2},
+                };
+                EXPECT_TRUE(value.limits.options[0].id.assign("low-speed"));
+                value.limits.options[0].value = 500;
+                EXPECT_TRUE(value.limits.options[1].id.assign("high-speed"));
+                value.limits.options[1].value = 1500;
+                return value;
+            }();
 
             bool enable = false;
             int32_t speed = 0;
