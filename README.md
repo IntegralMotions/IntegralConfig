@@ -120,13 +120,31 @@ Each option has a machine value and a stable ID. MessagePack `options` arrays us
 Numeric setting types use explicit-width IDs: `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, `u64`, `f32`, and
 `f64`. Boolean settings use `bool`.
 
-`DeviceResponseSerializer` always emits `deviceInfo`, setting `limits`, limit `isRange`, and limit `options`.
+`DeviceResponseSerializer` always emits `deviceInfo`, setting `address`, setting `limits`, limit `isRange`, and limit
+`options`. `address` is the three-byte persistent `SettingKey` encoded as a MessagePack `u32`; its upper byte is zero.
 Empty `min`, `max`, `step`, `unit`, `readonly`, and success `errorMessage` fields are omitted. Generic object
 serialization emits `nil` for a null array pointer; use `DeviceResponseSerializer` for public device responses.
 
 Payload classes are selected while streaming the MessagePack input. In a message envelope, `msgType` and `opCode`
 must therefore appear before `payload`. Inside a setting, `type` must appear before `value`. Inputs that violate this
 ordering are rejected.
+
+Write one or more values with `write.settings`:
+
+```text
+{
+  "msgType": "request",
+  "opCode": "write.settings",
+  "payload": {
+    "values": [
+      { "address": 4259840, "type": "i32", "value": { "value": 1200 } }
+    ]
+  }
+}
+```
+
+The response returns one `{ address, success, errorMessage? }` result per requested value. Each value must place
+`address`, `type`, and `value` in that order.
 
 ---
 

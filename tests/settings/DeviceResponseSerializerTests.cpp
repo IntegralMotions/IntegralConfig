@@ -3,6 +3,7 @@
 #include "DeviceResponseSerializer.h"
 #include "Messages.h"
 #include "SuccessResponseSerializer.h"
+#include "WriteSettingsResponseSerializer.h"
 
 #include <array>
 #include <cstdint>
@@ -13,8 +14,8 @@
 namespace IntegralMotions::Config {
     namespace {
 
-        constexpr SettingKey EnableKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 0};
-        constexpr SettingKey SpeedKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 1};
+        constexpr SettingKey EnableKey{.id = 0, .scope = SettingScope::Motor, .instance = 0};
+        constexpr SettingKey SpeedKey{.id = 0, .scope = SettingScope::Motor, .instance = 1};
 
         TEST(DeviceResponseSerializer, WritesRegistrySettingsAsReadDeviceResponse) {
             ASSERT_TRUE(registerDefaultMessagePayloads());
@@ -78,6 +79,7 @@ namespace IntegralMotions::Config {
             EXPECT_STREQ(group->settings[0]->type, "bool");
             EXPECT_STREQ(group->settings[1]->type, "i32");
             const auto* speedValue = static_cast<const NumberSetting<int32_t>*>(group->settings[1]->value);
+            EXPECT_EQ(speedValue->address, 0x410000U);
             EXPECT_EQ(speedValue->value, 1500);
             ASSERT_TRUE(speedValue->limits.minimum.has_value());
             EXPECT_EQ(*speedValue->limits.minimum, 0);
@@ -137,6 +139,96 @@ namespace IntegralMotions::Config {
             EXPECT_EQ(result->errorMessage, nullptr);
         }
 
+        TEST(WriteSettings, DecodesCompactTypedValues) {
+            ASSERT_TRUE(registerDefaultMessagePayloads());
+
+            std::array<char, 256> bytes{};
+            mpack_writer_t writer;
+            mpack_writer_init(&writer, bytes.data(), bytes.size());
+            mpack_start_map(&writer, 3);
+            mpack_write_cstr(&writer, "msgType");
+            mpack_write_cstr(&writer, "request");
+            mpack_write_cstr(&writer, "opCode");
+            mpack_write_cstr(&writer, DefaultWriteKeys::writeSettings);
+            mpack_write_cstr(&writer, "payload");
+            mpack_start_map(&writer, 1);
+            mpack_write_cstr(&writer, "values");
+            mpack_start_array(&writer, 2);
+            mpack_start_map(&writer, 3);
+            mpack_write_cstr(&writer, "address");
+            mpack_write_u32(&writer, 0x410000U);
+            mpack_write_cstr(&writer, "type");
+            mpack_write_cstr(&writer, "i32");
+            mpack_write_cstr(&writer, "value");
+            mpack_start_map(&writer, 1);
+            mpack_write_cstr(&writer, "value");
+            mpack_write_i32(&writer, 1200);
+            mpack_finish_map(&writer);
+            mpack_finish_map(&writer);
+            mpack_start_map(&writer, 3);
+            mpack_write_cstr(&writer, "address");
+            mpack_write_u32(&writer, 0x400000U);
+            mpack_write_cstr(&writer, "type");
+            mpack_write_cstr(&writer, "bool");
+            mpack_write_cstr(&writer, "value");
+            mpack_start_map(&writer, 1);
+            mpack_write_cstr(&writer, "value");
+            mpack_write_bool(&writer, true);
+            mpack_finish_map(&writer);
+            mpack_finish_map(&writer);
+            mpack_finish_array(&writer);
+            mpack_finish_map(&writer);
+            mpack_finish_map(&writer);
+            const size_t size = mpack_writer_buffer_used(&writer);
+            ASSERT_EQ(mpack_writer_destroy(&writer), mpack_ok);
+
+            mpack_reader_t reader;
+            mpack_reader_init_data(&reader, bytes.data(), size);
+            Message message;
+            message.read(reader);
+            ASSERT_EQ(mpack_reader_destroy(&reader), mpack_ok);
+
+            ASSERT_EQ(message.getMsgType(), MsgType::Request);
+            ASSERT_TRUE(message.isOpCode(DefaultWriteKeys::writeSettings));
+            const auto* writes = static_cast<const WriteSettings*>(message.payload);
+            ASSERT_NE(writes, nullptr);
+            ASSERT_EQ(writes->values.size, 2);
+            EXPECT_EQ(writes->values[0]->address, 0x410000U);
+            EXPECT_STREQ(writes->values[0]->type, "i32");
+            EXPECT_EQ(static_cast<const NumberSetting<int32_t>*>(writes->values[0]->value)->value, 1200);
+            EXPECT_EQ(writes->values[1]->address, 0x400000U);
+            EXPECT_STREQ(writes->values[1]->type, "bool");
+            EXPECT_TRUE(static_cast<const BoolSetting*>(writes->values[1]->value)->value);
+        }
+
+        TEST(WriteSettingsResponseSerializer, WritesPerValueResults) {
+            ASSERT_TRUE(registerDefaultMessagePayloads());
+            const std::array values{
+                WriteSettingsResultEntry{.address = 0x410000U, .result = SettingResult::Ok},
+                WriteSettingsResultEntry{.address = 0x400000U, .result = SettingResult::ReadOnly},
+            };
+            std::array<char, 256> bytes{};
+            mpack_writer_t writer;
+            mpack_writer_init(&writer, bytes.data(), bytes.size());
+            WriteSettingsResponseSerializer{values}.write(writer);
+            const size_t size = mpack_writer_buffer_used(&writer);
+            ASSERT_EQ(mpack_writer_destroy(&writer), mpack_ok);
+
+            mpack_reader_t reader;
+            mpack_reader_init_data(&reader, bytes.data(), size);
+            Message message;
+            message.read(reader);
+            ASSERT_EQ(mpack_reader_destroy(&reader), mpack_ok);
+
+            const auto* result = static_cast<const WriteSettingsResult*>(message.payload);
+            ASSERT_NE(result, nullptr);
+            ASSERT_EQ(result->values.size, 2);
+            EXPECT_TRUE(result->values[0]->success);
+            EXPECT_EQ(result->values[0]->errorMessage, nullptr);
+            EXPECT_FALSE(result->values[1]->success);
+            EXPECT_STREQ(result->values[1]->errorMessage, "readonly");
+        }
+
         TEST(ProtocolModels, GenericSerializationOmitsAbsentFields) {
             NumberSetting<int32_t> setting;
             setting.id = "speed";
@@ -153,7 +245,10 @@ namespace IntegralMotions::Config {
 
             mpack_reader_t reader;
             mpack_reader_init_data(&reader, bytes.data(), size);
-            ASSERT_EQ(mpack_expect_map(&reader), 3U);
+            ASSERT_EQ(mpack_expect_map(&reader), 4U);
+            mpack_expect_cstr_match(&reader, "address");
+            EXPECT_EQ(mpack_expect_u32(&reader), 0U);
+            ASSERT_EQ(mpack_reader_error(&reader), mpack_ok);
             mpack_expect_cstr_match(&reader, "id");
             mpack_expect_cstr_match(&reader, "speed");
             ASSERT_EQ(mpack_reader_error(&reader), mpack_ok);

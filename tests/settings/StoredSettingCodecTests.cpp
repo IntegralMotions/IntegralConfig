@@ -9,7 +9,7 @@ namespace IntegralMotions::Config {
     namespace {
 
         constexpr SettingKey TestKey{
-            .id = SettingId::Unknown,
+            .id = 0,
             .scope = SettingScope::Motor,
             .instance = 63,
         };

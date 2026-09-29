@@ -8,7 +8,7 @@
 #include <optional>
 #include <type_traits>
 
-constexpr size_t SettingValueMembers = 4;
+constexpr size_t SettingValueMembers = 5;
 
 template <typename T>
 CppType settingValueCppType() {
@@ -57,6 +57,7 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
   public:
     static void registerMembers() {
         using Obj = MPackObject<TDerived, SettingValueMembers + AddedMembers>;
+        Obj::registerMember("address", CppType::U32, &TDerived::address);
         Obj::registerMember("id", CppType::String, &TDerived::id);
         Obj::registerOmitNullOrEmptyCString("unit", &TDerived::unit);
         Obj::registerMember("value", getType<TValue>(), &TDerived::value);
@@ -70,6 +71,7 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
 
     const char* id = nullptr;
     const char* unit = nullptr;
+    uint32_t address = 0;
     TValue value;
     bool readonly = false;
 };

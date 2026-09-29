@@ -2,6 +2,7 @@
 
 #include "DefaultMessagePayloads.h"
 #include "Setting/SettingsRegistry.h"
+#include "Setting/StoredSettingCodec.h"
 
 #include <array>
 #include <concepts>
@@ -118,6 +119,16 @@ namespace IntegralMotions::Config {
                     }
                 },
                 value);
+        }
+
+        static SettingAddress addressOf(const SettingKey& key) {
+            std::array<std::byte, StoredSettingCodec::keySize> keyBytes{};
+            if (!StoredSettingCodec::packKey(key, keyBytes)) {
+                return 0;
+            }
+            return static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[0])) |
+                   (static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[1])) << 8U) |
+                   (static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[2])) << 16U);
         }
 
         size_t moduleCount() const {
@@ -250,8 +261,10 @@ namespace IntegralMotions::Config {
             writeKey(writer, typeName(setting.type));
             writeKey(writer, "value");
             const bool numeric = setting.type != SettingType::Bool;
-            const size_t settingMemberCount = 3 + !setting.unit.empty() + setting.readonly;
+            const size_t settingMemberCount = 4 + !setting.unit.empty() + setting.readonly;
             mpack_start_map(&writer, settingMemberCount);
+            writeKey(writer, "address");
+            mpack_write_u32(&writer, addressOf(setting.key));
             writeKey(writer, "id");
             writeString(writer, setting.id);
             if (!setting.unit.empty()) {

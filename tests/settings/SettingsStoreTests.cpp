@@ -14,8 +14,8 @@ namespace IntegralMotions::Config {
 
         constexpr StorageRegion BankA{.offset = 0, .size = 64};
         constexpr StorageRegion BankB{.offset = 64, .size = 64};
-        constexpr SettingKey SpeedKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 0};
-        constexpr SettingKey CurrentKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 1};
+        constexpr SettingKey SpeedKey{.id = 0, .scope = SettingScope::Motor, .instance = 0};
+        constexpr SettingKey CurrentKey{.id = 0, .scope = SettingScope::Motor, .instance = 1};
 
         template <size_t Capacity>
         class FailingStorageDevice final : public StorageDevice {

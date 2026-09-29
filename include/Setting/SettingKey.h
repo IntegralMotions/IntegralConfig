@@ -1,6 +1,5 @@
 #pragma once
 
-#include "SettingId.h"
 #include <cstdint>
 
 namespace IntegralMotions::Config {
@@ -10,8 +9,11 @@ namespace IntegralMotions::Config {
         Motor,
     };
 
+    using SettingAddress = uint32_t;
+    using SettingId = uint16_t;
+
     struct SettingKey {
-        SettingId id = SettingId::Unknown;
+        SettingId id = 0;
         SettingScope scope = SettingScope::Board;
         uint8_t instance = 0; // Max 64 instances
 

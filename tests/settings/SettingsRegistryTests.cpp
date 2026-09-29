@@ -12,9 +12,9 @@ namespace IntegralMotions::Config {
 
         constexpr StorageRegion BankA{.offset = 0, .size = 64};
         constexpr StorageRegion BankB{.offset = 64, .size = 64};
-        constexpr SettingKey FrequentKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 0};
-        constexpr SettingKey MemoryKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 1};
-        constexpr SettingKey RestartKey{.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 2};
+        constexpr SettingKey FrequentKey{.id = 0, .scope = SettingScope::Motor, .instance = 0};
+        constexpr SettingKey MemoryKey{.id = 0, .scope = SettingScope::Motor, .instance = 1};
+        constexpr SettingKey RestartKey{.id = 0, .scope = SettingScope::Motor, .instance = 2};
 
         struct ApplyRecorder {
             void record(const int32_t& value) {
