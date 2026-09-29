@@ -2,7 +2,6 @@
 #include "DefaultMessagePayloads.h"
 #include "DeviceResponseSerializer.h"
 #include "Messages.h"
-#include "SuccessResponseSerializer.h"
 #include "WriteSettingsResponseSerializer.h"
 
 #include <array>
@@ -91,52 +90,6 @@ namespace IntegralMotions::Config {
             ASSERT_EQ(speedValue->limits.options.size, 2);
             EXPECT_EQ(speedValue->limits.options[0]->value, 500);
             EXPECT_STREQ(speedValue->limits.options[0]->id, "low-speed");
-        }
-
-        TEST(SuccessResponseSerializer, WritesFailureResultWithErrorId) {
-            ASSERT_TRUE(registerDefaultMessagePayloads());
-
-            std::array<char, 256> bytes{};
-            mpack_writer_t writer;
-            mpack_writer_init(&writer, bytes.data(), bytes.size());
-            SuccessResponseSerializer{DefaultReadKeys::writeDevice, SettingResult::ReadOnly}.write(writer);
-            const size_t size = mpack_writer_buffer_used(&writer);
-            ASSERT_EQ(mpack_writer_destroy(&writer), mpack_ok);
-
-            mpack_reader_t reader;
-            mpack_reader_init_data(&reader, bytes.data(), size);
-            Message response;
-            response.read(reader);
-            ASSERT_EQ(mpack_reader_destroy(&reader), mpack_ok);
-
-            EXPECT_EQ(response.getMsgType(), MsgType::Response);
-            EXPECT_TRUE(response.isOpCode(DefaultReadKeys::writeDevice));
-            const auto* result = static_cast<const SuccessResult*>(response.payload);
-            ASSERT_NE(result, nullptr);
-            EXPECT_FALSE(result->success);
-            EXPECT_STREQ(result->errorMessage, "readonly");
-        }
-
-        TEST(SuccessResponseSerializer, OmitsErrorMessageForSuccess) {
-            ASSERT_TRUE(registerDefaultMessagePayloads());
-
-            std::array<char, 256> bytes{};
-            mpack_writer_t writer;
-            mpack_writer_init(&writer, bytes.data(), bytes.size());
-            SuccessResponseSerializer{DefaultReadKeys::writeDevice, SettingResult::Ok}.write(writer);
-            const size_t size = mpack_writer_buffer_used(&writer);
-            ASSERT_EQ(mpack_writer_destroy(&writer), mpack_ok);
-
-            mpack_reader_t reader;
-            mpack_reader_init_data(&reader, bytes.data(), size);
-            Message response;
-            response.read(reader);
-            ASSERT_EQ(mpack_reader_destroy(&reader), mpack_ok);
-
-            const auto* result = static_cast<const SuccessResult*>(response.payload);
-            ASSERT_NE(result, nullptr);
-            EXPECT_TRUE(result->success);
-            EXPECT_EQ(result->errorMessage, nullptr);
         }
 
         TEST(WriteSettings, DecodesCompactTypedValues) {

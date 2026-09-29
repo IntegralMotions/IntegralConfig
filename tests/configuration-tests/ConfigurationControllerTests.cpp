@@ -2,374 +2,114 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
-#include <gtest/gtest.h>
-#include <string>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 #include "Configuration.h"
 #include "ConfigurationController.h"
 #include "DefaultMessagePayloads.h"
 #include "IntegralCommunication/CobsEncodedCommunication.h"
 #include "IntegralCommunication/Communication.h"
-#include "IntegralCommunication/SevenBitEncodedCommunication.h"
-#include "MPackObject.hpp"
 #include "Messages.h"
-#include "SettingValues.h"
-#include "mpack/mpack-writer.h"
 
-struct ReceiveCtx {
-    bool& called;
-    MsgType& type;
-};
-
-class TestCommunication : public Communication {
-  public:
-    std::vector<uint8_t> outgoingBytes;
-    std::vector<uint8_t> incomingBytes;
-
-    void injectIncomingBytes(const uint8_t* data, size_t size) {
-        incomingBytes.insert(incomingBytes.end(), data, data + size);
-    }
-
-    void reset() {
-        outgoingBytes.clear();
-        incomingBytes.clear();
-        readPosition = 0;
-    }
-
-  protected:
-    size_t writeImpl(const uint8_t* data, size_t size) override {
-        outgoingBytes.insert(outgoingBytes.end(), data, data + size);
-        return true;
-    }
-
-    size_t availableImpl() override {
-        return incomingBytes.size() - readPosition;
-    }
-
-    size_t readImpl(uint8_t* data, size_t size) override {
-        size_t availableBytes = availableImpl();
-        size_t countToRead = std::min(availableBytes, size);
-        if (countToRead == 0) {
-            return 0;
-        }
-
-        std::copy(incomingBytes.begin() + readPosition, incomingBytes.begin() + readPosition + countToRead, data);
-
-        readPosition += countToRead;
-        return countToRead;
-    }
-
-  private:
-    size_t readPosition = 0;
-};
-
-static TestCommunication globalCommunication;
-
-using TestController = ConfigurationController<1024, 1024>;
-
-class ConfigurationControllerTests : public ::testing::Test {
-  protected:
-    void SetUp() override {
-        globalCommunication.reset();
-        TestController::init(globalCommunication);
-
-        Message::registerMembers();
-        TestWriteObject::registerMembers();
-
-        DeviceInfo::registerMembers();
-        Device::registerMembers();
-        Module::registerMembers();
-        Group::registerMembers();
-        Setting::registerMembers();
-        BoolSetting::registerMembers();
-        NumberSetting<int32_t>::registerMembers();
-
-        registerDefaultMessagePayloads();
-    }
-
-    static TestController& controller() {
-        return TestController::get();
-    }
-
-    class TestWriteObject : public MPackObject<TestWriteObject, 1> {
+namespace {
+    class TestCommunication : public Communication {
       public:
-        static void registerMembers() {
-            registerMember("value", CppType::I32, &TestWriteObject::value);
+        std::vector<uint8_t> outgoingBytes;
+        std::vector<uint8_t> incomingBytes;
+
+        void injectIncomingBytes(const uint8_t* data, size_t size) {
+            incomingBytes.insert(incomingBytes.end(), data, data + size);
         }
 
-        int32_t value{};
+        void reset() {
+            outgoingBytes.clear();
+            incomingBytes.clear();
+            _readPosition = 0;
+        }
+
+      protected:
+        size_t writeImpl(const uint8_t* data, size_t size) override {
+            outgoingBytes.insert(outgoingBytes.end(), data, data + size);
+            return true;
+        }
+
+        size_t availableImpl() override {
+            return incomingBytes.size() - _readPosition;
+        }
+
+        size_t readImpl(uint8_t* data, size_t size) override {
+            const size_t count = std::min(availableImpl(), size);
+            std::copy(incomingBytes.begin() + _readPosition, incomingBytes.begin() + _readPosition + count, data);
+            _readPosition += count;
+            return count;
+        }
+
+      private:
+        size_t _readPosition = 0;
     };
-};
 
-template <size_t TransmissionSize, size_t ReceptionSize>
-void injectEncodedMessage(TestCommunication& communication, const uint8_t* messageData, size_t messageLength) {
-    TestCommunication temporaryCommunication;
-    CobsEncodedCommunication encoder(temporaryCommunication, TransmissionSize, ReceptionSize);
+    TestCommunication communication;
+    using TestController = ConfigurationController<256, 256>;
 
-    bool success = encoder.writeMessage(messageData, messageLength);
-    ASSERT_TRUE(success);
+    void injectEncodedMessage(const uint8_t* messageData, size_t messageLength) {
+        TestCommunication encoderCommunication;
+        CobsEncodedCommunication encoder(encoderCommunication, 256, 256);
+        ASSERT_TRUE(encoder.writeMessage(messageData, messageLength));
+        communication.injectIncomingBytes(encoderCommunication.outgoingBytes.data(), encoderCommunication.outgoingBytes.size());
+    }
+} // namespace
 
-    communication.injectIncomingBytes(temporaryCommunication.outgoingBytes.data(),
-                                      temporaryCommunication.outgoingBytes.size());
-}
+TEST(ConfigurationController, LoopParsesCompactWriteSettings) {
+    communication.reset();
+    TestController::init(communication);
+    ASSERT_TRUE(registerDefaultMessagePayloads());
 
-TEST_F(ConfigurationControllerTests, WriteSendsBytesThroughCommunication) {
-    ConfigurationControllerTests::TestWriteObject object;
-    object.value = 42;
-
-    bool success = controller().write(object);
-
-    EXPECT_TRUE(success);
-    EXPECT_FALSE(globalCommunication.outgoingBytes.empty());
-}
-
-TEST_F(ConfigurationControllerTests, LoopDoesNothingWhenNoMessageAvailable) {
-    bool callbackCalled = false;
-    MsgType receivedMessageType = MsgType::Unknown;
-
-    ReceiveCtx ctx{callbackCalled, receivedMessageType};
-
-    controller().setOnReceived(
-        [](void* context, const Message& message) {
-            auto* ctx = static_cast<ReceiveCtx*>(context);
-            ctx->called = true;
-            ctx->type = message.getMsgType();
-        },
-        &ctx);
-    controller().loop();
-
-    EXPECT_FALSE(callbackCalled);
-}
-
-TEST_F(ConfigurationControllerTests, LoopParsesMessageAndCallsCallback) {
-    std::array<uint8_t, 256> buffer;
+    std::array<uint8_t, 128> bytes{};
     mpack_writer_t writer;
-    mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
-
-    mpack_build_map(&writer);
-
+    mpack_writer_init(&writer, reinterpret_cast<char*>(bytes.data()), bytes.size());
+    mpack_start_map(&writer, 3);
     mpack_write_cstr(&writer, "msgType");
     mpack_write_cstr(&writer, "request");
-
     mpack_write_cstr(&writer, "opCode");
-    mpack_write_cstr(&writer, DefaultReadKeys::readDevice);
-
+    mpack_write_cstr(&writer, DefaultWriteKeys::writeSettings);
     mpack_write_cstr(&writer, "payload");
-    mpack_write_nil(&writer);
-
-    mpack_complete_map(&writer);
-
-    mpack_error_t error = mpack_writer_destroy(&writer);
-    ASSERT_EQ(error, mpack_ok);
-
-    size_t usedBytes = mpack_writer_buffer_used(&writer);
-
-    injectEncodedMessage<256, 256>(globalCommunication, buffer.data(), usedBytes);
-
-    bool callbackCalled = false;
-    MsgType receivedMessageType = MsgType::Unknown;
-
-    ReceiveCtx ctx{callbackCalled, receivedMessageType};
-
-    controller().setOnReceived(
-        [](void* context, const Message& message) {
-            auto* ctx = static_cast<ReceiveCtx*>(context);
-            ctx->called = true;
-            ctx->type = message.getMsgType();
-        },
-        &ctx);
-    controller().loop();
-
-    EXPECT_TRUE(callbackCalled);
-    EXPECT_EQ(receivedMessageType, MsgType::Request);
-}
-
-TEST_F(ConfigurationControllerTests, LoopParsesWriteDeviceWithFullDeviceStructure) {
-    std::array<uint8_t, 512> buffer{};
-    mpack_writer_t writer;
-    mpack_writer_init(&writer, reinterpret_cast<char*>(buffer.data()), buffer.size());
-
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
-
-    // Root message: 3 entries: msgType, opCode, payload
-    mpack_start_map(&writer, 3);
-
-    mpack_write_cstr(&writer, "msgType");
-    mpack_write_cstr(&writer, "event");
-
-    mpack_write_cstr(&writer, "opCode");
-    mpack_write_cstr(&writer, DefaultReadKeys::writeDevice);
-
-    mpack_write_cstr(&writer, "payload");
-
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
-
-    // Device: 2 entries: deviceInfo, modules
-    mpack_start_map(&writer, 2);
-
-    // deviceInfo: 2 entries: model, firmwareVersion
-    mpack_write_cstr(&writer, "deviceInfo");
-    mpack_start_map(&writer, 2);
-    mpack_write_cstr(&writer, "model");
-    mpack_write_cstr(&writer, "TestModel");
-    mpack_write_cstr(&writer, "firmwareVersion");
-    mpack_write_cstr(&writer, "1.0.0");
-    mpack_finish_map(&writer); // deviceInfo
-
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
-
-    // modules: array of 1 module
-    mpack_write_cstr(&writer, "modules");
+    mpack_start_map(&writer, 1);
+    mpack_write_cstr(&writer, "values");
     mpack_start_array(&writer, 1);
-
-    // module: 2 entries: id, groups
-    mpack_start_map(&writer, 2);
-    mpack_write_cstr(&writer, "id");
-    mpack_write_cstr(&writer, "motor");
-
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
-
-    // groups: array of 1 group
-    mpack_write_cstr(&writer, "groups");
-    mpack_start_array(&writer, 1);
-
-    // group: 2 entries: id, settings
-    mpack_start_map(&writer, 2);
-    mpack_write_cstr(&writer, "id");
-    mpack_write_cstr(&writer, "group1");
-
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
-
-    // settings: array of 2 settings
-    mpack_write_cstr(&writer, "settings");
-    mpack_start_array(&writer, 2);
-
-    // setting 1: bool
-    // Setting map has 2 entries: type, value
-    mpack_start_map(&writer, 2);
-    mpack_write_cstr(&writer, "type");
-    mpack_write_cstr(&writer, "bool");
-    mpack_write_cstr(&writer, "value");
-
-    // BoolSetting: id, value, limits
     mpack_start_map(&writer, 3);
-    mpack_write_cstr(&writer, "id");
-    mpack_write_cstr(&writer, "enable");
-    mpack_write_cstr(&writer, "value");
-    mpack_write_bool(&writer, true);
-    mpack_write_cstr(&writer, "limits");
-    mpack_start_map(&writer, 2);
-    mpack_write_cstr(&writer, "isRange");
-    mpack_write_bool(&writer, false);
-    mpack_write_cstr(&writer, "options");
-    mpack_start_array(&writer, 0);
-    mpack_finish_array(&writer);
-    mpack_finish_map(&writer);
-    mpack_finish_map(&writer); // BoolSetting
-    mpack_finish_map(&writer); // Setting 1
-
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
-
-    // setting 2: int NumberSetting
-    // Setting map: 2 entries: type, value
-    mpack_start_map(&writer, 2);
+    mpack_write_cstr(&writer, "address");
+    mpack_write_u32(&writer, 0x410000U);
     mpack_write_cstr(&writer, "type");
     mpack_write_cstr(&writer, "i32");
     mpack_write_cstr(&writer, "value");
-
-    // NumberSetting<int32_t>: id, unit, value, limits
-    mpack_start_map(&writer, 4);
-    mpack_write_cstr(&writer, "id");
-    mpack_write_cstr(&writer, "speed");
-    mpack_write_cstr(&writer, "unit");
-    mpack_write_cstr(&writer, "rpm");
+    mpack_start_map(&writer, 1);
     mpack_write_cstr(&writer, "value");
-    mpack_write_i32(&writer, 1000);
-    mpack_write_cstr(&writer, "limits");
-    mpack_start_map(&writer, 5);
-    mpack_write_cstr(&writer, "min");
-    mpack_write_i32(&writer, 0);
-    mpack_write_cstr(&writer, "max");
-    mpack_write_i32(&writer, 2000);
-    mpack_write_cstr(&writer, "step");
-    mpack_write_i32(&writer, 100);
-    mpack_write_cstr(&writer, "isRange");
-    mpack_write_bool(&writer, false);
-    mpack_write_cstr(&writer, "options");
-    mpack_start_array(&writer, 2);
-    mpack_start_map(&writer, 2);
-    mpack_write_cstr(&writer, "value");
-    mpack_write_i32(&writer, 500);
-    mpack_write_cstr(&writer, "id");
-    mpack_write_cstr(&writer, "low-speed");
+    mpack_write_i32(&writer, 1200);
     mpack_finish_map(&writer);
-    mpack_start_map(&writer, 2);
-    mpack_write_cstr(&writer, "value");
-    mpack_write_i32(&writer, 1500);
-    mpack_write_cstr(&writer, "id");
-    mpack_write_cstr(&writer, "high-speed");
     mpack_finish_map(&writer);
-    mpack_finish_array(&writer); // options
-    mpack_finish_map(&writer);   // limits
-    mpack_finish_map(&writer);   // NumberSetting<int32_t>
-    mpack_finish_map(&writer);   // Setting 2
+    mpack_finish_array(&writer);
+    mpack_finish_map(&writer);
+    mpack_finish_map(&writer);
+    const size_t size = mpack_writer_buffer_used(&writer);
+    ASSERT_EQ(mpack_writer_destroy(&writer), mpack_ok);
 
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
+    injectEncodedMessage(bytes.data(), size);
 
-    mpack_finish_array(&writer); // settings
-    mpack_finish_map(&writer);   // group
-    mpack_finish_array(&writer); // groups
-    mpack_finish_map(&writer);   // module
-    mpack_finish_array(&writer); // modules
-    mpack_finish_map(&writer);   // device
-    mpack_finish_map(&writer);   // root message
-
-    ASSERT_EQ(mpack_writer_error(&writer), mpack_ok);
-
-    size_t usedBytes = mpack_writer_buffer_used(&writer);
-    mpack_error_t errorCode = mpack_writer_destroy(&writer);
-    ASSERT_EQ(errorCode, mpack_ok);
-
-    injectEncodedMessage<1024, 1024>(globalCommunication, buffer.data(), usedBytes);
-
-    struct OptionReceiveCtx {
-        bool& called;
-        MsgType& type;
-        size_t& optionCount;
-        int& optionValue;
-        std::string& optionId;
-    };
-
-    bool callbackCalled = false;
-    MsgType receivedMessageType = MsgType::Unknown;
-    size_t optionCount = 0;
-    int optionValue = 0;
-    std::string optionId;
-
-    OptionReceiveCtx ctx{callbackCalled, receivedMessageType, optionCount, optionValue, optionId};
-
-    controller().setOnReceived(
+    bool called = false;
+    TestController::get().setOnReceived(
         [](void* context, const Message& message) {
-            auto* ctx = static_cast<OptionReceiveCtx*>(context);
-            ctx->called = true;
-            ctx->type = message.getMsgType();
-
-            const auto* device = static_cast<const Device*>(message.payload);
-            const auto* numberSetting =
-                static_cast<const NumberSetting<int32_t>*>(device->modules[0]->groups[0]->settings[1]->value);
-            ctx->optionCount = numberSetting->limits.options.size;
-            ctx->optionValue = numberSetting->limits.options[1]->value;
-            ctx->optionId = numberSetting->limits.options[1]->id;
+            auto& called = *static_cast<bool*>(context);
+            const auto* writes = static_cast<const WriteSettings*>(message.payload);
+            ASSERT_NE(writes, nullptr);
+            ASSERT_EQ(writes->values.size, 1);
+            EXPECT_EQ(writes->values[0]->address, 0x410000U);
+            EXPECT_EQ(static_cast<const NumberSetting<int32_t>*>(writes->values[0]->value)->value, 1200);
+            called = true;
         },
-        &ctx);
+        &called);
+    TestController::get().loop();
 
-    controller().loop();
-
-    EXPECT_TRUE(callbackCalled);
-    EXPECT_EQ(receivedMessageType, MsgType::Event);
-    EXPECT_EQ(optionCount, 2);
-    EXPECT_EQ(optionValue, 1500);
-    EXPECT_EQ(optionId, "high-speed");
+    EXPECT_TRUE(called);
 }

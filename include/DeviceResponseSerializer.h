@@ -32,7 +32,7 @@ namespace IntegralMotions::Config {
             writeKey(writer, "opCode");
             mpack_write_cstr(&writer, DefaultReadKeys::readDevice);
             writeKey(writer, "payload");
-            writeDevice(writer);
+            writeReadDevicePayload(writer);
             mpack_finish_map(&writer);
         }
 
@@ -175,7 +175,7 @@ namespace IntegralMotions::Config {
             return context.count;
         }
 
-        void writeDevice(mpack_writer_t& writer) const {
+        void writeReadDevicePayload(mpack_writer_t& writer) const {
             mpack_start_map(&writer, 2);
             writeKey(writer, "deviceInfo");
             mpack_start_map(&writer, 2);
