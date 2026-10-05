@@ -40,14 +40,11 @@ namespace IntegralMotions::Config {
 
         template <typename Registry>
         concept CanAddMutableDefinition = requires(Registry& registry, SettingDefinition<int32_t>& definition,
-                                                   int32_t& value) {
-            registry.add(definition, value);
-        };
+                                                   int32_t& value) { registry.add(definition, value); };
 
         template <typename Registry>
-        concept CanAddOwnedDefinition = requires(Registry& registry, int32_t& value) {
-            registry.add(SettingDefinition<int32_t>{}, value);
-        };
+        concept CanAddOwnedDefinition =
+            requires(Registry& registry, int32_t& value) { registry.add(SettingDefinition<int32_t>{}, value); };
 
         static_assert(!CanAddMutableDefinition<SettingsRegistry<1>>);
         static_assert(CanAddOwnedDefinition<SettingsRegistry<1>>);
@@ -55,7 +52,7 @@ namespace IntegralMotions::Config {
         TEST(SettingsRegistry, PersistsAndRestoresFrequentValues) {
             MemoryStorageDevice<128> storage;
             SettingsStore<2> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
 
             const SettingDefinition<int32_t> definition{
                 .key = FrequentKey,
@@ -80,7 +77,7 @@ namespace IntegralMotions::Config {
         TEST(SettingsRegistry, KeepsDefaultForInvalidPersistedValue) {
             MemoryStorageDevice<128> storage;
             SettingsStore<2> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
             ASSERT_EQ(store.store(FrequentKey, SettingValue{int32_t{200}}), SettingsStoreResult::Ok);
 
             const SettingDefinition<int32_t> definition{
@@ -99,7 +96,7 @@ namespace IntegralMotions::Config {
         TEST(SettingsRegistry, PersistsLongTermValuesToLongTermStore) {
             MemoryStorageDevice<128> storage;
             SettingsStore<2> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
 
             const SettingDefinition<int32_t> definition{
                 .key = FrequentKey,

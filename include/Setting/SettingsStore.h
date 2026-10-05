@@ -48,15 +48,25 @@ namespace IntegralMotions::Config {
             size_t recordSize = 0;
         };
 
+        struct BankState {
+            BankHeader header{};
+            std::array<IndexEntry, MaxSettings> indices{};
+            size_t nextWriteOffset = 0;
+            SettingsStoreResult result = SettingsStoreResult::CorruptData;
+        };
+
         [[nodiscard]] size_t alignment() const;
         [[nodiscard]] size_t bankHeaderSize() const;
         [[nodiscard]] bool validRegions() const;
         [[nodiscard]] StorageRegion inactiveBank() const;
 
         SettingsStoreResult readBankHeader(StorageRegion bank, BankHeader& header) const;
+        SettingsStoreResult inspectBank(StorageRegion bank, BankState& state) const;
         SettingsStoreResult writeBankHeader(StorageRegion bank, uint32_t generation);
         SettingsStoreResult clearBank(StorageRegion bank);
         SettingsStoreResult scanActiveBank();
+        SettingsStoreResult scanBank(StorageRegion bank, std::array<IndexEntry, MaxSettings>& indices,
+                                     size_t& nextWriteOffset) const;
         SettingsStoreResult compact();
         SettingsStoreResult append(const SettingKey& key, const SettingValue& value);
         SettingsStoreResult updateIndex(const SettingKey& key, size_t recordOffset, size_t recordSize);
@@ -67,6 +77,7 @@ namespace IntegralMotions::Config {
 
         static SettingsStoreResult mapCodecResult(StoredSettingResult result);
         static bool generationIsNewer(uint32_t lhs, uint32_t rhs);
+        static bool hasIndexedSettings(const std::array<IndexEntry, MaxSettings>& indices);
 
         StorageDevice& _storage;
         StorageRegion _bankA;
@@ -140,6 +151,30 @@ namespace IntegralMotions::Config {
         }
 
         if (std::to_integer<uint8_t>(bytes[0]) != bankMagic) {
+            const size_t chunkSize = maximumIoSize - (maximumIoSize % _storage.geometry().readAlignment);
+            if (chunkSize == 0) {
+                return SettingsStoreResult::InvalidArgument;
+            }
+            bool blank = true;
+            size_t offset = bank.offset;
+            size_t remaining = bank.size;
+            while (remaining != 0) {
+                const size_t size = std::min(chunkSize, remaining);
+                auto chunk = std::span<std::byte>{bytes.data(), size};
+                if (_storage.read(offset, chunk) != StorageResult::Ok) {
+                    return SettingsStoreResult::StorageError;
+                }
+                if (std::any_of(chunk.begin(), chunk.end(),
+                                [this](std::byte value) { return value != _storage.geometry().erasedValue; })) {
+                    blank = false;
+                    break;
+                }
+                offset += size;
+                remaining -= size;
+            }
+            if (blank) {
+                return SettingsStoreResult::Blank;
+            }
             return SettingsStoreResult::CorruptData;
         }
         if (std::to_integer<uint8_t>(bytes[1]) != bankVersion) {
@@ -158,6 +193,16 @@ namespace IntegralMotions::Config {
         }
 
         return SettingsStoreResult::Ok;
+    }
+
+    template <size_t MaxSettings>
+    SettingsStoreResult SettingsStore<MaxSettings>::inspectBank(StorageRegion bank, BankState& state) const {
+        state = {};
+        state.result = readBankHeader(bank, state.header);
+        if (state.result == SettingsStoreResult::Ok) {
+            state.result = scanBank(bank, state.indices, state.nextWriteOffset);
+        }
+        return state.result;
     }
 
     template <size_t MaxSettings>
@@ -222,50 +267,108 @@ namespace IntegralMotions::Config {
             return SettingsStoreResult::InvalidArgument;
         }
 
-        BankHeader headerA{};
-        BankHeader headerB{};
-        auto resultA = readBankHeader(_bankA, headerA);
-        if (resultA != SettingsStoreResult::Ok && resultA != SettingsStoreResult::CorruptData) {
+        BankState stateA{};
+        BankState stateB{};
+        const auto resultA = inspectBank(_bankA, stateA);
+        const auto resultB = inspectBank(_bankB, stateB);
+        if (resultA == SettingsStoreResult::StorageError || resultB == SettingsStoreResult::StorageError) {
+            return SettingsStoreResult::StorageError;
+        }
+        if (resultA != SettingsStoreResult::Ok && resultA != SettingsStoreResult::Blank &&
+            resultA != SettingsStoreResult::CorruptData) {
             return resultA;
         }
-        const auto resultB = readBankHeader(_bankB, headerB);
-        if (resultB != SettingsStoreResult::Ok && resultB != SettingsStoreResult::CorruptData) {
+        if (resultB != SettingsStoreResult::Ok && resultB != SettingsStoreResult::Blank &&
+            resultB != SettingsStoreResult::CorruptData) {
             return resultB;
         }
+
         const bool validA = resultA == SettingsStoreResult::Ok;
         const bool validB = resultB == SettingsStoreResult::Ok;
+        if (validA || validB) {
+            const bool selectA =
+                validA && (!validB || generationIsNewer(stateA.header.generation, stateB.header.generation));
+            const auto& selected = selectA ? stateA : stateB;
+            const StorageRegion damaged = selectA ? _bankB : _bankA;
+            const auto damagedResult = selectA ? resultB : resultA;
 
-        if (!validA && !validB) {
-            auto result = clearBank(_bankA);
-            if (result != SettingsStoreResult::Ok) {
-                return result;
+            _activeBank = selectA ? _bankA : _bankB;
+            _generation = selected.header.generation;
+            _indices = selected.indices;
+            _nextWriteOffset = selected.nextWriteOffset;
+
+            if (damagedResult == SettingsStoreResult::CorruptData) {
+                const auto clearResult = clearBank(damaged);
+                if (clearResult != SettingsStoreResult::Ok) {
+                    return clearResult;
+                }
+                _open = true;
+                return SettingsStoreResult::Recovered;
             }
-            result = writeBankHeader(_bankA, 0);
+            _open = true;
+            return SettingsStoreResult::Ok;
+        }
+
+        if (resultA == SettingsStoreResult::Blank && resultB == SettingsStoreResult::Blank) {
+            const auto result = writeBankHeader(_bankA, 0);
             if (result != SettingsStoreResult::Ok) {
                 return result;
             }
             _activeBank = _bankA;
             _generation = 0;
-        } else if (validA && (!validB || generationIsNewer(headerA.generation, headerB.generation))) {
-            _activeBank = _bankA;
-            _generation = headerA.generation;
-        } else {
-            _activeBank = _bankB;
-            _generation = headerB.generation;
+            _indices = {};
+            _nextWriteOffset = _bankA.offset + bankHeaderSize();
+            _open = true;
+            return SettingsStoreResult::Blank;
         }
 
-        const auto result = scanActiveBank();
-        if (result == SettingsStoreResult::Ok) {
-            _open = true;
+        // A damaged header can leave intact, CRC-validated records. Only rebuild from one
+        // source bank; two damaged populated banks have no trustworthy ordering.
+        BankState salvagedA{};
+        BankState salvagedB{};
+        const auto salvageResultA = resultA == SettingsStoreResult::CorruptData
+                                        ? scanBank(_bankA, salvagedA.indices, salvagedA.nextWriteOffset)
+                                        : SettingsStoreResult::CorruptData;
+        const auto salvageResultB = resultB == SettingsStoreResult::CorruptData
+                                        ? scanBank(_bankB, salvagedB.indices, salvagedB.nextWriteOffset)
+                                        : SettingsStoreResult::CorruptData;
+        if (salvageResultA == SettingsStoreResult::StorageError ||
+            salvageResultB == SettingsStoreResult::StorageError) {
+            return SettingsStoreResult::StorageError;
         }
-        return result;
+        const bool canSalvageA = salvageResultA == SettingsStoreResult::Ok && hasIndexedSettings(salvagedA.indices);
+        const bool canSalvageB = salvageResultB == SettingsStoreResult::Ok && hasIndexedSettings(salvagedB.indices);
+        if (canSalvageA == canSalvageB) {
+            return SettingsStoreResult::CorruptData;
+        }
+
+        const bool selectA = canSalvageA;
+        const auto& salvaged = selectA ? salvagedA : salvagedB;
+        _activeBank = selectA ? _bankA : _bankB;
+        _generation = 0;
+        _indices = salvaged.indices;
+        _nextWriteOffset = salvaged.nextWriteOffset;
+        const auto result = compact();
+        if (result != SettingsStoreResult::Ok) {
+            _open = false;
+            return result;
+        }
+        _open = true;
+        return SettingsStoreResult::Recovered;
     }
 
     template <size_t MaxSettings>
     SettingsStoreResult SettingsStore<MaxSettings>::scanActiveBank() {
-        _indices = {};
-        _nextWriteOffset = _activeBank.offset + bankHeaderSize();
-        const size_t bankEnd = _activeBank.offset + _activeBank.size;
+        return scanBank(_activeBank, _indices, _nextWriteOffset);
+    }
+
+    template <size_t MaxSettings>
+    SettingsStoreResult SettingsStore<MaxSettings>::scanBank(StorageRegion bank,
+                                                             std::array<IndexEntry, MaxSettings>& indices,
+                                                             size_t& nextWriteOffset) const {
+        indices = {};
+        nextWriteOffset = bank.offset + bankHeaderSize();
+        const size_t bankEnd = bank.offset + bank.size;
         const size_t readAlignment = _storage.geometry().readAlignment;
         const size_t prefixRemainder = StoredSettingCodec::headerSize % readAlignment;
         const size_t prefixSize = prefixRemainder == 0
@@ -276,9 +379,9 @@ namespace IntegralMotions::Config {
         }
 
         std::array<std::byte, maximumIoSize> bytes{};
-        while (_nextWriteOffset + prefixSize <= bankEnd) {
+        while (nextWriteOffset + prefixSize <= bankEnd) {
             auto prefix = std::span<std::byte>{bytes.data(), prefixSize};
-            if (_storage.read(_nextWriteOffset, prefix) != StorageResult::Ok) {
+            if (_storage.read(nextWriteOffset, prefix) != StorageResult::Ok) {
                 return SettingsStoreResult::StorageError;
             }
 
@@ -301,11 +404,11 @@ namespace IntegralMotions::Config {
             }
 
             const size_t recordSize = StoredSettingCodec::storedSize(type, alignment());
-            if (recordSize == 0 || recordSize > maximumIoSize || recordSize > bankEnd - _nextWriteOffset) {
+            if (recordSize == 0 || recordSize > maximumIoSize || recordSize > bankEnd - nextWriteOffset) {
                 return SettingsStoreResult::CorruptData;
             }
             auto record = std::span<std::byte>{bytes.data(), recordSize};
-            if (_storage.read(_nextWriteOffset, record) != StorageResult::Ok) {
+            if (_storage.read(nextWriteOffset, record) != StorageResult::Ok) {
                 return SettingsStoreResult::StorageError;
             }
 
@@ -313,14 +416,20 @@ namespace IntegralMotions::Config {
             SettingValue value{};
             const auto decodeResult = StoredSettingCodec::decode(record, key, value);
             if (decodeResult == StoredSettingResult::Ok) {
-                const auto indexResult = updateIndex(key, _nextWriteOffset, recordSize);
-                if (indexResult != SettingsStoreResult::Ok) {
-                    return indexResult;
+                auto* index = std::find_if(indices.begin(), indices.end(),
+                                           [&key](const IndexEntry& entry) { return entry.used && entry.key == key; });
+                if (index == indices.end()) {
+                    index = std::find_if(indices.begin(), indices.end(),
+                                         [](const IndexEntry& entry) { return !entry.used; });
+                    if (index == indices.end()) {
+                        return SettingsStoreResult::NoSpace;
+                    }
                 }
+                *index = {.used = true, .key = key, .recordOffset = nextWriteOffset, .recordSize = recordSize};
             } else if (decodeResult != StoredSettingResult::CorruptData) {
                 return mapCodecResult(decodeResult);
             }
-            _nextWriteOffset += recordSize;
+            nextWriteOffset += recordSize;
         }
         return SettingsStoreResult::Ok;
     }
@@ -516,6 +625,11 @@ namespace IntegralMotions::Config {
     template <size_t MaxSettings>
     bool SettingsStore<MaxSettings>::generationIsNewer(uint32_t lhs, uint32_t rhs) {
         return static_cast<int32_t>(lhs - rhs) > 0;
+    }
+
+    template <size_t MaxSettings>
+    bool SettingsStore<MaxSettings>::hasIndexedSettings(const std::array<IndexEntry, MaxSettings>& indices) {
+        return std::any_of(indices.begin(), indices.end(), [](const IndexEntry& entry) { return entry.used; });
     }
 
 } // namespace IntegralMotions::Config

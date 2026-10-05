@@ -50,12 +50,18 @@ namespace IntegralMotions::Config {
       private:
         static const char* errorId(SettingResult result) {
             switch (result) {
-            case SettingResult::NotFound: return "not-found";
-            case SettingResult::ReadOnly: return "readonly";
-            case SettingResult::TypeMismatch: return "type-mismatch";
-            case SettingResult::InvalidOption: return "invalid-option";
-            case SettingResult::StorageError: return "storage-error";
-            default: return "validation-failed";
+            case SettingResult::NotFound:
+                return "not-found";
+            case SettingResult::ReadOnly:
+                return "readonly";
+            case SettingResult::TypeMismatch:
+                return "type-mismatch";
+            case SettingResult::InvalidOption:
+                return "invalid-option";
+            case SettingResult::StorageError:
+                return "storage-error";
+            default:
+                return "validation-failed";
             }
         }
 

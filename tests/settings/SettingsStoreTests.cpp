@@ -31,8 +31,12 @@ namespace IntegralMotions::Config {
                 _mutationsUntilFailure = std::numeric_limits<size_t>::max();
             }
 
+            void failReads() {
+                _failReads = true;
+            }
+
             StorageResult read(size_t offset, std::span<std::byte> destination) override {
-                return _storage.read(offset, destination);
+                return _failReads ? StorageResult::IoError : _storage.read(offset, destination);
             }
 
             StorageResult write(size_t offset, std::span<const std::byte> source) override {
@@ -61,12 +65,13 @@ namespace IntegralMotions::Config {
 
             MemoryStorageDevice<Capacity>& _storage;
             size_t _mutationsUntilFailure = std::numeric_limits<size_t>::max();
+            bool _failReads = false;
         };
 
         TEST(SettingsStore, StoresLoadsAndRebuildsIndexAtBoot) {
             MemoryStorageDevice<128> storage;
             SettingsStore<4> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
 
             EXPECT_EQ(store.store(SpeedKey, SettingValue{int32_t{1000}}), SettingsStoreResult::Ok);
             EXPECT_EQ(store.store(CurrentKey, SettingValue{uint16_t{25}}), SettingsStoreResult::Ok);
@@ -87,7 +92,7 @@ namespace IntegralMotions::Config {
         TEST(SettingsStore, CompactsLatestValuesIntoInactiveBank) {
             MemoryStorageDevice<128> storage;
             SettingsStore<4> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
             ASSERT_EQ(store.store(SpeedKey, SettingValue{int32_t{1000}}), SettingsStoreResult::Ok);
             ASSERT_EQ(store.store(CurrentKey, SettingValue{int32_t{20}}), SettingsStoreResult::Ok);
 
@@ -107,7 +112,7 @@ namespace IntegralMotions::Config {
         TEST(SettingsStore, SkipsInterruptedRecordUsingStoredType) {
             MemoryStorageDevice<128> storage;
             SettingsStore<4> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
             ASSERT_EQ(store.store(SpeedKey, SettingValue{int32_t{1000}}), SettingsStoreResult::Ok);
 
             // Bank header is 8 bytes and an I32 record is 11 bytes at byte alignment.
@@ -140,7 +145,7 @@ namespace IntegralMotions::Config {
             };
             MemoryStorageDevice<128> storage{geometry};
             SettingsStore<2> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
 
             for (int32_t speed = 1000; speed <= 1600; speed += 100) {
                 ASSERT_EQ(store.store(SpeedKey, SettingValue{speed}), SettingsStoreResult::Ok);
@@ -165,7 +170,7 @@ namespace IntegralMotions::Config {
         TEST(SettingsStore, RecoversFromCorruptedNewerBankHeader) {
             MemoryStorageDevice<128> storage;
             SettingsStore<1> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
             for (int32_t speed = 1000; speed <= 1500; speed += 100) {
                 ASSERT_EQ(store.store(SpeedKey, SettingValue{speed}), SettingsStoreResult::Ok);
             }
@@ -174,10 +179,73 @@ namespace IntegralMotions::Config {
             ASSERT_EQ(storage.write(BankB.offset, corruptedMagic), StorageResult::Ok);
 
             SettingsStore<1> reopened{storage, BankA, BankB};
-            ASSERT_EQ(reopened.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(reopened.open(), SettingsStoreResult::Recovered);
             SettingValue value{};
             ASSERT_EQ(reopened.load(SpeedKey, value), SettingsStoreResult::Ok);
             EXPECT_EQ(std::get<int32_t>(value), 1400);
+        }
+
+        TEST(SettingsStore, FallsBackWhenNewerBankRecordsAreCorrupt) {
+            MemoryStorageDevice<128> storage;
+            SettingsStore<1> store{storage, BankA, BankB};
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
+            for (int32_t speed = 1000; speed <= 1500; speed += 100) {
+                ASSERT_EQ(store.store(SpeedKey, SettingValue{speed}), SettingsStoreResult::Ok);
+            }
+
+            const std::array corruptedMagic{std::byte{0}};
+            ASSERT_EQ(storage.write(BankB.offset + 8, corruptedMagic), StorageResult::Ok);
+
+            SettingsStore<1> reopened{storage, BankA, BankB};
+            ASSERT_EQ(reopened.open(), SettingsStoreResult::Recovered);
+            SettingValue value{};
+            ASSERT_EQ(reopened.load(SpeedKey, value), SettingsStoreResult::Ok);
+            EXPECT_EQ(std::get<int32_t>(value), 1400);
+        }
+
+        TEST(SettingsStore, SalvagesRecordsFromOneDamagedBank) {
+            MemoryStorageDevice<128> storage;
+            SettingsStore<1> store{storage, BankA, BankB};
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
+            ASSERT_EQ(store.store(SpeedKey, SettingValue{int32_t{1200}}), SettingsStoreResult::Ok);
+
+            const std::array corruptedMagic{std::byte{0}};
+            ASSERT_EQ(storage.write(BankA.offset, corruptedMagic), StorageResult::Ok);
+
+            SettingsStore<1> reopened{storage, BankA, BankB};
+            ASSERT_EQ(reopened.open(), SettingsStoreResult::Recovered);
+            SettingValue value{};
+            ASSERT_EQ(reopened.load(SpeedKey, value), SettingsStoreResult::Ok);
+            EXPECT_EQ(std::get<int32_t>(value), 1200);
+        }
+
+        TEST(SettingsStore, PreservesConflictingDamagedBanks) {
+            MemoryStorageDevice<128> storage;
+            SettingsStore<1> store{storage, BankA, BankB};
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
+            for (int32_t speed = 1000; speed <= 1500; speed += 100) {
+                ASSERT_EQ(store.store(SpeedKey, SettingValue{speed}), SettingsStoreResult::Ok);
+            }
+
+            const std::array corruptedMagic{std::byte{0}};
+            ASSERT_EQ(storage.write(BankA.offset, corruptedMagic), StorageResult::Ok);
+            ASSERT_EQ(storage.write(BankB.offset, corruptedMagic), StorageResult::Ok);
+
+            SettingsStore<1> reopened{storage, BankA, BankB};
+            EXPECT_EQ(reopened.open(), SettingsStoreResult::CorruptData);
+            SettingValue value{};
+            EXPECT_EQ(reopened.load(SpeedKey, value), SettingsStoreResult::NotOpen);
+        }
+
+        TEST(SettingsStore, DoesNotOpenWhenBankReadFails) {
+            MemoryStorageDevice<128> backingStorage;
+            FailingStorageDevice<128> storage{backingStorage};
+            storage.failReads();
+
+            SettingsStore<1> store{storage, BankA, BankB};
+            EXPECT_EQ(store.open(), SettingsStoreResult::StorageError);
+            SettingValue value{};
+            EXPECT_EQ(store.load(SpeedKey, value), SettingsStoreResult::NotOpen);
         }
 
         TEST(SettingsStore, SupportsAlignedStorageGeometry) {
@@ -190,7 +258,7 @@ namespace IntegralMotions::Config {
             };
             MemoryStorageDevice<128> storage{geometry};
             SettingsStore<2> store{storage, BankA, BankB};
-            ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+            ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
             ASSERT_EQ(store.store(SpeedKey, SettingValue{int32_t{1200}}), SettingsStoreResult::Ok);
 
             SettingValue value{};
@@ -209,7 +277,7 @@ namespace IntegralMotions::Config {
                 MemoryStorageDevice<128> backingStorage;
                 FailingStorageDevice<128> storage{backingStorage};
                 SettingsStore<1> store{storage, BankA, BankB};
-                ASSERT_EQ(store.open(), SettingsStoreResult::Ok);
+                ASSERT_EQ(store.open(), SettingsStoreResult::Blank);
                 for (int32_t speed = 1000; speed <= 1400; speed += 100) {
                     ASSERT_EQ(store.store(SpeedKey, SettingValue{speed}), SettingsStoreResult::Ok);
                 }
@@ -219,7 +287,8 @@ namespace IntegralMotions::Config {
                 storage.clearFailure();
 
                 SettingsStore<1> reopened{storage, BankA, BankB};
-                ASSERT_EQ(reopened.open(), SettingsStoreResult::Ok);
+                const auto openResult = reopened.open();
+                ASSERT_TRUE(openResult == SettingsStoreResult::Ok || openResult == SettingsStoreResult::Recovered);
                 SettingValue value{};
                 ASSERT_EQ(reopened.load(SpeedKey, value), SettingsStoreResult::Ok);
                 EXPECT_EQ(std::get<int32_t>(value), 1400) << "failure point " << failurePoint;
