@@ -165,19 +165,26 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
         case CppType::I8:
             return readOptionalNumeric<int8_t>(reader, *static_cast<std::optional<int8_t>*>(getMemberAddress(member)));
         case CppType::U8:
-            return readOptionalNumeric<uint8_t>(reader, *static_cast<std::optional<uint8_t>*>(getMemberAddress(member)));
+            return readOptionalNumeric<uint8_t>(reader,
+                                                *static_cast<std::optional<uint8_t>*>(getMemberAddress(member)));
         case CppType::I16:
-            return readOptionalNumeric<int16_t>(reader, *static_cast<std::optional<int16_t>*>(getMemberAddress(member)));
+            return readOptionalNumeric<int16_t>(reader,
+                                                *static_cast<std::optional<int16_t>*>(getMemberAddress(member)));
         case CppType::U16:
-            return readOptionalNumeric<uint16_t>(reader, *static_cast<std::optional<uint16_t>*>(getMemberAddress(member)));
+            return readOptionalNumeric<uint16_t>(reader,
+                                                 *static_cast<std::optional<uint16_t>*>(getMemberAddress(member)));
         case CppType::I32:
-            return readOptionalNumeric<int32_t>(reader, *static_cast<std::optional<int32_t>*>(getMemberAddress(member)));
+            return readOptionalNumeric<int32_t>(reader,
+                                                *static_cast<std::optional<int32_t>*>(getMemberAddress(member)));
         case CppType::U32:
-            return readOptionalNumeric<uint32_t>(reader, *static_cast<std::optional<uint32_t>*>(getMemberAddress(member)));
+            return readOptionalNumeric<uint32_t>(reader,
+                                                 *static_cast<std::optional<uint32_t>*>(getMemberAddress(member)));
         case CppType::I64:
-            return readOptionalNumeric<int64_t>(reader, *static_cast<std::optional<int64_t>*>(getMemberAddress(member)));
+            return readOptionalNumeric<int64_t>(reader,
+                                                *static_cast<std::optional<int64_t>*>(getMemberAddress(member)));
         case CppType::U64:
-            return readOptionalNumeric<uint64_t>(reader, *static_cast<std::optional<uint64_t>*>(getMemberAddress(member)));
+            return readOptionalNumeric<uint64_t>(reader,
+                                                 *static_cast<std::optional<uint64_t>*>(getMemberAddress(member)));
         case CppType::F32:
             return readOptionalNumeric<float>(reader, *static_cast<std::optional<float>*>(getMemberAddress(member)));
         case CppType::F64:
@@ -560,30 +567,44 @@ bool MPackObjectBase::readArray(mpack_reader_t& reader, const char* name, const 
 bool MPackObjectBase::shouldWrite(mpack_writer_t& writer, const MPackObjectMember& member, const void* address) {
     if (!member.optional) {
         switch (member.omit) {
-        case MPackOmitPolicy::None: return true;
+        case MPackOmitPolicy::None:
+            return true;
         case MPackOmitPolicy::NullOrEmptyCString: {
             const char* value = *static_cast<const char* const*>(address);
             return value != nullptr && value[0] != '\0';
         }
-        case MPackOmitPolicy::FalseBool: return *static_cast<const bool*>(address);
-        case MPackOmitPolicy::NullCString: return *static_cast<const char* const*>(address) != nullptr;
+        case MPackOmitPolicy::FalseBool:
+            return *static_cast<const bool*>(address);
+        case MPackOmitPolicy::NullCString:
+            return *static_cast<const char* const*>(address) != nullptr;
         }
         mpack_writer_flag_error(&writer, mpack_error_type);
         return false;
     }
 
     switch (member.type.type) {
-    case CppType::I8: return static_cast<const std::optional<int8_t>*>(address)->has_value();
-    case CppType::U8: return static_cast<const std::optional<uint8_t>*>(address)->has_value();
-    case CppType::I16: return static_cast<const std::optional<int16_t>*>(address)->has_value();
-    case CppType::U16: return static_cast<const std::optional<uint16_t>*>(address)->has_value();
-    case CppType::I32: return static_cast<const std::optional<int32_t>*>(address)->has_value();
-    case CppType::U32: return static_cast<const std::optional<uint32_t>*>(address)->has_value();
-    case CppType::I64: return static_cast<const std::optional<int64_t>*>(address)->has_value();
-    case CppType::U64: return static_cast<const std::optional<uint64_t>*>(address)->has_value();
-    case CppType::F32: return static_cast<const std::optional<float>*>(address)->has_value();
-    case CppType::F64: return static_cast<const std::optional<double>*>(address)->has_value();
-    case CppType::Bool: return static_cast<const std::optional<bool>*>(address)->has_value();
+    case CppType::I8:
+        return static_cast<const std::optional<int8_t>*>(address)->has_value();
+    case CppType::U8:
+        return static_cast<const std::optional<uint8_t>*>(address)->has_value();
+    case CppType::I16:
+        return static_cast<const std::optional<int16_t>*>(address)->has_value();
+    case CppType::U16:
+        return static_cast<const std::optional<uint16_t>*>(address)->has_value();
+    case CppType::I32:
+        return static_cast<const std::optional<int32_t>*>(address)->has_value();
+    case CppType::U32:
+        return static_cast<const std::optional<uint32_t>*>(address)->has_value();
+    case CppType::I64:
+        return static_cast<const std::optional<int64_t>*>(address)->has_value();
+    case CppType::U64:
+        return static_cast<const std::optional<uint64_t>*>(address)->has_value();
+    case CppType::F32:
+        return static_cast<const std::optional<float>*>(address)->has_value();
+    case CppType::F64:
+        return static_cast<const std::optional<double>*>(address)->has_value();
+    case CppType::Bool:
+        return static_cast<const std::optional<bool>*>(address)->has_value();
     default:
         mpack_writer_flag_error(&writer, mpack_error_type);
         return false;
@@ -612,8 +633,11 @@ void MPackObjectBase::releaseDecodedMember(size_t index) {
         delete *static_cast<MPackObjectBase**>(address);
         *static_cast<MPackObjectBase**>(address) = nullptr;
         break;
-    case CppType::Array: releaseArray(member.type, address); break;
-    default: break;
+    case CppType::Array:
+        releaseArray(member.type, address);
+        break;
+    default:
+        break;
     }
     _decodedMembers &= ~(uint64_t{1} << index);
 }
@@ -631,17 +655,39 @@ void MPackObjectBase::releaseArray(const MPackObjectType& type, void* address) {
     }
 
     switch (innerType->type) {
-    case CppType::I8: delete[] static_cast<int8_t*>(array->p); break;
-    case CppType::U8: delete[] static_cast<uint8_t*>(array->p); break;
-    case CppType::I16: delete[] static_cast<int16_t*>(array->p); break;
-    case CppType::U16: delete[] static_cast<uint16_t*>(array->p); break;
-    case CppType::I32: delete[] static_cast<int32_t*>(array->p); break;
-    case CppType::U32: delete[] static_cast<uint32_t*>(array->p); break;
-    case CppType::I64: delete[] static_cast<int64_t*>(array->p); break;
-    case CppType::U64: delete[] static_cast<uint64_t*>(array->p); break;
-    case CppType::F32: delete[] static_cast<float*>(array->p); break;
-    case CppType::F64: delete[] static_cast<double*>(array->p); break;
-    case CppType::Bool: delete[] static_cast<bool*>(array->p); break;
+    case CppType::I8:
+        delete[] static_cast<int8_t*>(array->p);
+        break;
+    case CppType::U8:
+        delete[] static_cast<uint8_t*>(array->p);
+        break;
+    case CppType::I16:
+        delete[] static_cast<int16_t*>(array->p);
+        break;
+    case CppType::U16:
+        delete[] static_cast<uint16_t*>(array->p);
+        break;
+    case CppType::I32:
+        delete[] static_cast<int32_t*>(array->p);
+        break;
+    case CppType::U32:
+        delete[] static_cast<uint32_t*>(array->p);
+        break;
+    case CppType::I64:
+        delete[] static_cast<int64_t*>(array->p);
+        break;
+    case CppType::U64:
+        delete[] static_cast<uint64_t*>(array->p);
+        break;
+    case CppType::F32:
+        delete[] static_cast<float*>(array->p);
+        break;
+    case CppType::F64:
+        delete[] static_cast<double*>(array->p);
+        break;
+    case CppType::Bool:
+        delete[] static_cast<bool*>(array->p);
+        break;
     case CppType::String: {
         auto* values = static_cast<char**>(array->p);
         for (size_t i = 0; i < array->size; ++i) {
@@ -663,7 +709,8 @@ void MPackObjectBase::releaseArray(const MPackObjectType& type, void* address) {
         }
         delete[] values;
     } break;
-    default: break;
+    default:
+        break;
     }
     array->size = 0;
     array->p = nullptr;
@@ -673,55 +720,113 @@ void MPackObjectBase::resetReadState(const MPackObjectMember& member, void* addr
     if (!member.optional) {
         switch (member.omit) {
         case MPackOmitPolicy::NullOrEmptyCString:
-        case MPackOmitPolicy::NullCString: *static_cast<const char**>(address) = nullptr; break;
-        case MPackOmitPolicy::FalseBool: *static_cast<bool*>(address) = false; break;
-        case MPackOmitPolicy::None: break;
+        case MPackOmitPolicy::NullCString:
+            *static_cast<const char**>(address) = nullptr;
+            break;
+        case MPackOmitPolicy::FalseBool:
+            *static_cast<bool*>(address) = false;
+            break;
+        case MPackOmitPolicy::None:
+            break;
         }
 
         if (member.omit == MPackOmitPolicy::None) {
             switch (member.type.type) {
-            case CppType::String: *static_cast<const char**>(address) = nullptr; break;
-            case CppType::ObjectPtr: *static_cast<MPackObjectBase**>(address) = nullptr; break;
-            default: break;
+            case CppType::String:
+                *static_cast<const char**>(address) = nullptr;
+                break;
+            case CppType::ObjectPtr:
+                *static_cast<MPackObjectBase**>(address) = nullptr;
+                break;
+            default:
+                break;
             }
         }
         return;
     }
 
     switch (member.type.type) {
-    case CppType::I8: static_cast<std::optional<int8_t>*>(address)->reset(); break;
-    case CppType::U8: static_cast<std::optional<uint8_t>*>(address)->reset(); break;
-    case CppType::I16: static_cast<std::optional<int16_t>*>(address)->reset(); break;
-    case CppType::U16: static_cast<std::optional<uint16_t>*>(address)->reset(); break;
-    case CppType::I32: static_cast<std::optional<int32_t>*>(address)->reset(); break;
-    case CppType::U32: static_cast<std::optional<uint32_t>*>(address)->reset(); break;
-    case CppType::I64: static_cast<std::optional<int64_t>*>(address)->reset(); break;
-    case CppType::U64: static_cast<std::optional<uint64_t>*>(address)->reset(); break;
-    case CppType::F32: static_cast<std::optional<float>*>(address)->reset(); break;
-    case CppType::F64: static_cast<std::optional<double>*>(address)->reset(); break;
-    case CppType::Bool: static_cast<std::optional<bool>*>(address)->reset(); break;
-    default: break;
+    case CppType::I8:
+        static_cast<std::optional<int8_t>*>(address)->reset();
+        break;
+    case CppType::U8:
+        static_cast<std::optional<uint8_t>*>(address)->reset();
+        break;
+    case CppType::I16:
+        static_cast<std::optional<int16_t>*>(address)->reset();
+        break;
+    case CppType::U16:
+        static_cast<std::optional<uint16_t>*>(address)->reset();
+        break;
+    case CppType::I32:
+        static_cast<std::optional<int32_t>*>(address)->reset();
+        break;
+    case CppType::U32:
+        static_cast<std::optional<uint32_t>*>(address)->reset();
+        break;
+    case CppType::I64:
+        static_cast<std::optional<int64_t>*>(address)->reset();
+        break;
+    case CppType::U64:
+        static_cast<std::optional<uint64_t>*>(address)->reset();
+        break;
+    case CppType::F32:
+        static_cast<std::optional<float>*>(address)->reset();
+        break;
+    case CppType::F64:
+        static_cast<std::optional<double>*>(address)->reset();
+        break;
+    case CppType::Bool:
+        static_cast<std::optional<bool>*>(address)->reset();
+        break;
+    default:
+        break;
     }
 }
 
-bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMember& member, void* address, int depth) const {
+bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMember& member, void* address,
+                                  int depth) const {
     mpack_write_cstr(&writer, member.name);
     const auto& type = member.type;
 
     if (member.optional) {
         switch (type.type) {
-        case CppType::I8: mpack_write_i8(&writer, **static_cast<std::optional<int8_t>*>(address)); return ok(writer);
-        case CppType::U8: mpack_write_u8(&writer, **static_cast<std::optional<uint8_t>*>(address)); return ok(writer);
-        case CppType::I16: mpack_write_i16(&writer, **static_cast<std::optional<int16_t>*>(address)); return ok(writer);
-        case CppType::U16: mpack_write_u16(&writer, **static_cast<std::optional<uint16_t>*>(address)); return ok(writer);
-        case CppType::I32: mpack_write_i32(&writer, **static_cast<std::optional<int32_t>*>(address)); return ok(writer);
-        case CppType::U32: mpack_write_u32(&writer, **static_cast<std::optional<uint32_t>*>(address)); return ok(writer);
-        case CppType::I64: mpack_write_i64(&writer, **static_cast<std::optional<int64_t>*>(address)); return ok(writer);
-        case CppType::U64: mpack_write_u64(&writer, **static_cast<std::optional<uint64_t>*>(address)); return ok(writer);
-        case CppType::F32: mpack_write_float(&writer, **static_cast<std::optional<float>*>(address)); return ok(writer);
-        case CppType::F64: mpack_write_double(&writer, **static_cast<std::optional<double>*>(address)); return ok(writer);
-        case CppType::Bool: mpack_write_bool(&writer, **static_cast<std::optional<bool>*>(address)); return ok(writer);
-        default: mpack_writer_flag_error(&writer, mpack_error_type); return false;
+        case CppType::I8:
+            mpack_write_i8(&writer, **static_cast<std::optional<int8_t>*>(address));
+            return ok(writer);
+        case CppType::U8:
+            mpack_write_u8(&writer, **static_cast<std::optional<uint8_t>*>(address));
+            return ok(writer);
+        case CppType::I16:
+            mpack_write_i16(&writer, **static_cast<std::optional<int16_t>*>(address));
+            return ok(writer);
+        case CppType::U16:
+            mpack_write_u16(&writer, **static_cast<std::optional<uint16_t>*>(address));
+            return ok(writer);
+        case CppType::I32:
+            mpack_write_i32(&writer, **static_cast<std::optional<int32_t>*>(address));
+            return ok(writer);
+        case CppType::U32:
+            mpack_write_u32(&writer, **static_cast<std::optional<uint32_t>*>(address));
+            return ok(writer);
+        case CppType::I64:
+            mpack_write_i64(&writer, **static_cast<std::optional<int64_t>*>(address));
+            return ok(writer);
+        case CppType::U64:
+            mpack_write_u64(&writer, **static_cast<std::optional<uint64_t>*>(address));
+            return ok(writer);
+        case CppType::F32:
+            mpack_write_float(&writer, **static_cast<std::optional<float>*>(address));
+            return ok(writer);
+        case CppType::F64:
+            mpack_write_double(&writer, **static_cast<std::optional<double>*>(address));
+            return ok(writer);
+        case CppType::Bool:
+            mpack_write_bool(&writer, **static_cast<std::optional<bool>*>(address));
+            return ok(writer);
+        default:
+            mpack_writer_flag_error(&writer, mpack_error_type);
+            return false;
         }
     }
 

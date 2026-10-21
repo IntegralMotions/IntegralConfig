@@ -80,8 +80,7 @@ namespace IntegralMotions::Config {
             SettingResult (*read)(void* context, SettingValue& output) = nullptr;
             SettingResult (*write)(void* context, const SettingValue& candidate) = nullptr;
             void (*apply)(const void* definition, const SettingValue& value) = nullptr;
-            void (*snapshot)(const void* definition, const SettingValue& value,
-                             SettingSnapshot& output) = nullptr;
+            void (*snapshot)(const void* definition, const SettingValue& value, SettingSnapshot& output) = nullptr;
         };
 
         template <SupportedSettingType T>
@@ -100,8 +99,7 @@ namespace IntegralMotions::Config {
         static void applyDefinition(const void* definition, const SettingValue& value);
 
         template <SupportedSettingType T>
-        static void snapshotDefinition(const void* definition, const SettingValue& value,
-                                       SettingSnapshot& output);
+        static void snapshotDefinition(const void* definition, const SettingValue& value, SettingSnapshot& output);
 
         template <SupportedSettingType T>
         SettingResult addImpl(const SettingDefinition<T>& definition, T& value, bool initializeDefault);
@@ -379,7 +377,7 @@ namespace IntegralMotions::Config {
     template <size_t Capacity>
     template <SupportedSettingType T>
     SettingResult SettingsRegistry<Capacity>::addImpl(const SettingDefinition<T>& definition, T& value,
-                                                       bool initializeDefault) {
+                                                      bool initializeDefault) {
         const auto definitionResult = validateDefinition(definition);
         if (definitionResult != SettingResult::Ok) {
             return definitionResult;
