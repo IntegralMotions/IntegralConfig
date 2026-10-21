@@ -56,7 +56,7 @@ class Setting : public MPackObject<Setting, 2> { // NOLINT(readability-magic-num
         registerMember("value", CppType::ObjectPtr, &Setting::value);
     }
 
-    protected:
+  protected:
     MPackObjectBase* createObject(const char* /*name*/) override {
         return createSettingValue(type);
     }

@@ -9,7 +9,8 @@ namespace IntegralMotions::Config {
 
     class SuccessResponseSerializer {
       public:
-        SuccessResponseSerializer(const char* operation, SettingResult result) : _operation(operation), _result(result) {}
+        SuccessResponseSerializer(const char* operation, SettingResult result)
+            : _operation(operation), _result(result) {}
 
         void write(mpack_writer_t& writer) const {
             mpack_start_map(&writer, 3);
@@ -32,12 +33,18 @@ namespace IntegralMotions::Config {
       private:
         static const char* errorId(SettingResult result) {
             switch (result) {
-            case SettingResult::NotFound: return "not-found";
-            case SettingResult::ReadOnly: return "readonly";
-            case SettingResult::TypeMismatch: return "type-mismatch";
-            case SettingResult::InvalidOption: return "invalid-option";
-            case SettingResult::StorageError: return "storage-error";
-            default: return "validation-failed";
+            case SettingResult::NotFound:
+                return "not-found";
+            case SettingResult::ReadOnly:
+                return "readonly";
+            case SettingResult::TypeMismatch:
+                return "type-mismatch";
+            case SettingResult::InvalidOption:
+                return "invalid-option";
+            case SettingResult::StorageError:
+                return "storage-error";
+            default:
+                return "validation-failed";
             }
         }
 

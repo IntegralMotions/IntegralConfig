@@ -25,7 +25,7 @@ class ConfigurationController {
     bool write(const MPackObjectBase& object);
 
     template <typename T>
-    requires requires(const T& serializable, mpack_writer_t& writer) { serializable.write(writer); }
+        requires requires(const T& serializable, mpack_writer_t& writer) { serializable.write(writer); }
     bool write(const T& serializable);
     void loop();
 
@@ -87,7 +87,7 @@ bool ConfigurationController<TxSize, RxSize>::write(const MPackObjectBase& objec
 
 template <size_t TxSize, size_t RxSize>
 template <typename T>
-requires requires(const T& serializable, mpack_writer_t& writer) { serializable.write(writer); }
+    requires requires(const T& serializable, mpack_writer_t& writer) { serializable.write(writer); }
 bool ConfigurationController<TxSize, RxSize>::write(const T& serializable) {
     mpack_writer_t writer;
     std::array<uint8_t, TxSize> buffer;

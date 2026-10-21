@@ -86,8 +86,7 @@ class MessageSettingOption : public MPackObject<MessageSettingOption<TValue>, 2>
     static void registerMembers() {
         MPackObject<MessageSettingOption<TValue>, 2>::registerMember("value", settingValueCppType<TValue>(),
                                                                      &MessageSettingOption::value);
-        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("id", CppType::String,
-                                                                      &MessageSettingOption::id);
+        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("id", CppType::String, &MessageSettingOption::id);
     }
 
     TValue value{};

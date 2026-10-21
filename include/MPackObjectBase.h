@@ -52,8 +52,7 @@ class MPackObjectBase {
     static bool readString(mpack_reader_t& reader, char*& value);
     bool readArray(mpack_reader_t& reader, const char* name, const MPackObjectType& type, void* address, int depth = 0);
 
-    [[nodiscard]] static bool shouldWrite(mpack_writer_t& writer, const MPackObjectMember& member,
-                                          const void* address);
+    [[nodiscard]] static bool shouldWrite(mpack_writer_t& writer, const MPackObjectMember& member, const void* address);
     static void resetReadState(const MPackObjectMember& member, void* address);
     void releaseDecodedMember(size_t index);
     static void releaseArray(const MPackObjectType& type, void* address);
@@ -117,16 +116,26 @@ bool MPackObjectBase::readNumeric(mpack_reader_t& reader, T& value) {
             }
             break;
         }
-        default: break;
+        default:
+            break;
         }
     } else {
         long double source{};
         switch (header.type) {
-        case mpack_type_int: source = static_cast<long double>(mpack_tag_int_value(&header.tag)); break;
-        case mpack_type_uint: source = static_cast<long double>(mpack_tag_uint_value(&header.tag)); break;
-        case mpack_type_float: source = static_cast<long double>(mpack_tag_float_value(&header.tag)); break;
-        case mpack_type_double: source = static_cast<long double>(mpack_tag_double_value(&header.tag)); break;
-        default: break;
+        case mpack_type_int:
+            source = static_cast<long double>(mpack_tag_int_value(&header.tag));
+            break;
+        case mpack_type_uint:
+            source = static_cast<long double>(mpack_tag_uint_value(&header.tag));
+            break;
+        case mpack_type_float:
+            source = static_cast<long double>(mpack_tag_float_value(&header.tag));
+            break;
+        case mpack_type_double:
+            source = static_cast<long double>(mpack_tag_double_value(&header.tag));
+            break;
+        default:
+            break;
         }
         valid = std::isfinite(source) && source >= -static_cast<long double>(std::numeric_limits<T>::max()) &&
                 source <= static_cast<long double>(std::numeric_limits<T>::max());

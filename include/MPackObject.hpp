@@ -60,7 +60,7 @@ void MPackObject<Derived, MaxMembers>::registerMember(const char* name, const MP
 template <typename Derived, size_t MaxMembers>
 template <typename Class, typename Member>
 void MPackObject<Derived, MaxMembers>::registerOptionalMember(const char* name, const MPackObjectType& type,
-                                                               std::optional<Member> Class::* memberPtr) {
+                                                              std::optional<Member> Class::* memberPtr) {
     static_assert(std::is_base_of_v<Class, Derived>, "Class must be a base of Derived");
 
     if (memberIndex >= MaxMembers) {
