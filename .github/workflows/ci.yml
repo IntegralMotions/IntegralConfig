@@ -15,7 +15,7 @@ jobs:
   ci:
     uses: IntegralMotions/CppTooling/.github/workflows/cpp-ci.yml@fix/header-aware-tidy
     with:
-      ignore_tidy: 'build/**|mpack/**'
+      ignore_tidy: 'tests/**|build/**|mpack/**'
       ignore_format: 'tests/**|build/**|mpack/**'
       tidy_extensions: 'c,cc,cpp,cxx'
     secrets: inherit
