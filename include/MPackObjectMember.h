@@ -1,8 +1,10 @@
 #pragma once
+
 #include "MPackObjectType.h"
 #include <cstddef>
+#include <cstdint>
 
-enum class MPackOmitPolicy {
+enum class MPackOmitPolicy : uint8_t {
     None,
     NullOrEmptyCString,
     FalseBool,

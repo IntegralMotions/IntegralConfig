@@ -7,6 +7,8 @@
 #include "StoredSettingResult.h"
 #include <cstddef>
 #include <span>
+
+
 namespace IntegralMotions::Config {
 
     class StoredSettingCodec {

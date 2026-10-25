@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DefaultMessagePayloads.h"
 #include "Setting/SettingResult.h"
 
 #include <mpack/mpack.h>

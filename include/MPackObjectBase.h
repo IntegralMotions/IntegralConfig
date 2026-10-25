@@ -66,6 +66,7 @@ class MPackObjectBase {
 };
 
 template <typename T>
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool MPackObjectBase::readNumeric(mpack_reader_t& reader, T& value) {
     MPackHeader header{};
     if (!readHeader(reader, header)) {

@@ -10,4 +10,4 @@ namespace IntegralMotions::Config {
         OnRestart,
     };
 
-}
+} // namespace IntegralMotions::Config

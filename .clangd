@@ -1,0 +1,11 @@
+CompileFlags:
+  CompilationDatabase: build
+
+---
+If:
+  PathMatch: ^include/.*\.(h|hpp|hh|hxx)$
+CompileFlags:
+  Add:
+    - -I/Users/jos/ws/IntegralConfig/include
+    - -I/Users/jos/ws/IntegralConfig/build/_deps/integralcoreutilities-src/include
+    - -I/Users/jos/ws/IntegralConfig/build/_deps/integralcommunication-src/include

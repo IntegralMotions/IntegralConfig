@@ -42,8 +42,17 @@ file(GLOB_RECURSE INTEGRALCONFIG_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[ch]xx
 )
 
+file(GLOB_RECURSE INTEGRALCONFIG_HEADERS CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp
+)
+
 add_library(IntegralConfig ${INTEGRALCONFIG_SOURCES})
 add_library(IntegralConfig::IntegralConfig ALIAS IntegralConfig)
+
+target_sources(IntegralConfig PRIVATE
+    ${INTEGRALCONFIG_HEADERS}
+)
 
 target_include_directories(IntegralConfig
     PUBLIC

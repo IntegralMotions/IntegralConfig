@@ -152,6 +152,7 @@ namespace IntegralMotions::Config {
 
     template <size_t Capacity>
     template <SupportedSettingType T>
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     SettingResult SettingsRegistry<Capacity>::validateLocal(const void* definition, const SettingValue& candidate) {
         const auto& settingDefinition = *static_cast<const SettingDefinition<T>*>(definition);
         const auto* value = std::get_if<T>(&candidate);
@@ -209,6 +210,7 @@ namespace IntegralMotions::Config {
 
     template <size_t Capacity>
     template <SupportedSettingType T>
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     SettingResult SettingsRegistry<Capacity>::validateDefinition(const SettingDefinition<T>& definition) {
         const auto& limits = definition.limits;
         if constexpr (std::same_as<T, bool>) {
@@ -228,9 +230,7 @@ namespace IntegralMotions::Config {
             }
         }
         if (limits.step.has_value()) {
-            if constexpr (std::same_as<T, bool>) {
-                return SettingResult::InvalidDefinition;
-            } else if (*limits.step <= T{}) {
+            if (std::same_as<T, bool> || *limits.step <= T{}) {
                 return SettingResult::InvalidDefinition;
             }
         }

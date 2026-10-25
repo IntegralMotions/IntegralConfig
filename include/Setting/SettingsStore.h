@@ -36,6 +36,17 @@ namespace IntegralMotions::Config {
         static constexpr uint8_t bankVersion = 0;
         static constexpr size_t bankHeaderSizeUnaligned = 8;
         static constexpr size_t maximumIoSize = 256;
+        static constexpr size_t secondByteOffset = 8;
+        static constexpr size_t thirdByteOffset = 16;
+        static constexpr size_t fourthByteOffset = 24;
+        static constexpr size_t generationFirstByteIndex = 2;
+        static constexpr size_t generationSecondByteIndex = 3;
+        static constexpr size_t generationThirdByteIndex = 4;
+        static constexpr size_t generationFourthByteIndex = 5;
+        static constexpr size_t crcFirstByteIndex = 6;
+        static constexpr size_t crcSecondByteIndex = 7;
+        static constexpr size_t bitsInByte = 8;
+        static constexpr size_t firstByteMask = 0xFFU;
 
         struct BankHeader {
             uint32_t generation = 0;
@@ -181,10 +192,11 @@ namespace IntegralMotions::Config {
             return SettingsStoreResult::UnsupportedVersion;
         }
 
-        header.generation = static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[2])) |
-                            (static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[3])) << 8U) |
-                            (static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[4])) << 16U) |
-                            (static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[5])) << 24U);
+        header.generation =
+            static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[generationFirstByteIndex])) |
+            (static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[generationSecondByteIndex])) << secondByteOffset) |
+            (static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[generationThirdByteIndex])) << thirdByteOffset) |
+            (static_cast<uint32_t>(std::to_integer<uint8_t>(bytes[generationFourthByteIndex])) << fourthByteOffset);
         const uint16_t storedCrc = static_cast<uint16_t>(std::to_integer<uint8_t>(bytes[6])) |
                                    (static_cast<uint16_t>(std::to_integer<uint8_t>(bytes[7])) << 8U);
         if (!IntegralMotions::Math::Crc16::validate(reinterpret_cast<const uint8_t*>(bytes.data()),
@@ -213,11 +225,11 @@ namespace IntegralMotions::Config {
         bytes[0] = static_cast<std::byte>(bankMagic);
         bytes[1] = static_cast<std::byte>(bankVersion);
         for (size_t i = 0; i < sizeof(generation); ++i) {
-            bytes[2 + i] = static_cast<std::byte>(generation >> (i * 8U));
+            bytes[2 + i] = static_cast<std::byte>(generation >> (i * bitsInByte));
         }
         const uint16_t crc = IntegralMotions::Math::Crc16::calculate(reinterpret_cast<const uint8_t*>(bytes.data()), 6);
-        bytes[6] = static_cast<std::byte>(crc & 0xFFU);
-        bytes[7] = static_cast<std::byte>(crc >> 8U);
+        bytes[crcFirstByteIndex] = static_cast<std::byte>(crc & firstByteMask);
+        bytes[crcSecondByteIndex] = static_cast<std::byte>(crc >> secondByteOffset);
 
         if (_storage.write(bank.offset, std::span<const std::byte>{bytes.data(), storedHeaderSize}) !=
                 StorageResult::Ok ||
@@ -260,6 +272,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t MaxSettings>
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     SettingsStoreResult SettingsStore<MaxSettings>::open() {
         _open = false;
         _indices = {};
@@ -363,6 +376,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t MaxSettings>
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     SettingsStoreResult SettingsStore<MaxSettings>::scanBank(StorageRegion bank,
                                                              std::array<IndexEntry, MaxSettings>& indices,
                                                              size_t& nextWriteOffset) const {

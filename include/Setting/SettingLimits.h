@@ -2,7 +2,6 @@
 
 #include "SettingOption.h"
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>

@@ -2,7 +2,6 @@
 
 #include "Containers/FixedString.h"
 #include "SupportedSettingType.h"
-
 #include <cstdint>
 
 namespace IntegralMotions::Config {

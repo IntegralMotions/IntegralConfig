@@ -2,7 +2,6 @@
 
 #include "MPackArray.h"
 #include "MPackObject.hpp"
-#include "Setting/SupportedSettingType.h"
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -76,32 +75,37 @@ class SettingValue : public MPackObject<TDerived, SettingValueMembers + AddedMem
     bool readonly = false;
 };
 
+const uint8_t MessageSettingOptionMembers = 2;
+
 template <typename TValue>
-class MessageSettingOption : public MPackObject<MessageSettingOption<TValue>, 2> {
+class MessageSettingOption : public MPackObject<MessageSettingOption<TValue>, MessageSettingOptionMembers> {
   public:
     ~MessageSettingOption() override {
         this->clearDecodedMembers();
     }
 
     static void registerMembers() {
-        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("value", settingValueCppType<TValue>(),
-                                                                     &MessageSettingOption::value);
-        MPackObject<MessageSettingOption<TValue>, 2>::registerMember("id", CppType::String, &MessageSettingOption::id);
+        MPackObject<MessageSettingOption<TValue>, MessageSettingOptionMembers>::registerMember(
+            "value", settingValueCppType<TValue>(), &MessageSettingOption::value);
+        MPackObject<MessageSettingOption<TValue>, MessageSettingOptionMembers>::registerMember(
+            "id", CppType::String, &MessageSettingOption::id);
     }
 
     TValue value{};
     const char* id{};
 };
 
+const uint8_t MessageSettingLimitsMembers = 5;
+
 template <typename TValue>
-class MessageSettingLimits : public MPackObject<MessageSettingLimits<TValue>, 5> {
+class MessageSettingLimits : public MPackObject<MessageSettingLimits<TValue>, MessageSettingLimitsMembers> {
   public:
     ~MessageSettingLimits() override {
         this->clearDecodedMembers();
     }
 
     static void registerMembers() {
-        using Obj = MPackObject<MessageSettingLimits<TValue>, 5>;
+        using Obj = MPackObject<MessageSettingLimits<TValue>, MessageSettingLimitsMembers>;
         Obj::registerOptionalMember("min", settingValueCppType<TValue>(), &MessageSettingLimits::minimum);
         Obj::registerOptionalMember("max", settingValueCppType<TValue>(), &MessageSettingLimits::maximum);
         Obj::registerOptionalMember("step", settingValueCppType<TValue>(), &MessageSettingLimits::step);
@@ -122,15 +126,17 @@ class MessageSettingLimits : public MPackObject<MessageSettingLimits<TValue>, 5>
     MPackArray<MessageSettingOption<TValue>*> options;
 };
 
+const uint8_t MessageSettingLimitsBoolMembers = 2;
+
 template <>
-class MessageSettingLimits<bool> : public MPackObject<MessageSettingLimits<bool>, 2> {
+class MessageSettingLimits<bool> : public MPackObject<MessageSettingLimits<bool>, MessageSettingLimitsBoolMembers> {
   public:
     ~MessageSettingLimits() override {
         clearDecodedMembers();
     }
 
     static void registerMembers() {
-        using Obj = MPackObject<MessageSettingLimits<bool>, 2>;
+        using Obj = MPackObject<MessageSettingLimits<bool>, MessageSettingLimitsBoolMembers>;
         Obj::registerMember("isRange", CppType::Bool, &MessageSettingLimits::isRange);
         Obj::registerMember("options", {CppType::Array, CppType::ObjectPtr}, &MessageSettingLimits::options);
     }
@@ -173,6 +179,5 @@ class NumberSetting : public SettingValue<NumberSetting<TValue>, TValue, 1> {
         Base::registerMember("limits", CppType::Object, &NumberSetting::limits);
     }
 
-  public:
     MessageSettingLimits<TValue> limits{};
 };

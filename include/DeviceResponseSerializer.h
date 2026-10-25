@@ -6,6 +6,7 @@
 
 #include <array>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <mpack/mpack.h>
 #include <string_view>
@@ -37,6 +38,9 @@ namespace IntegralMotions::Config {
         }
 
       private:
+        static constexpr size_t secondByteOffset = 8;
+        static constexpr size_t thirdByteOffset = 16;
+
         struct SeenNames {
             std::array<std::string_view, Capacity> names{};
             size_t size = 0;
@@ -127,11 +131,11 @@ namespace IntegralMotions::Config {
                 return 0;
             }
             return static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[0])) |
-                   (static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[1])) << 8U) |
-                   (static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[2])) << 16U);
+                   (static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[1])) << secondByteOffset) |
+                   (static_cast<SettingAddress>(std::to_integer<uint8_t>(keyBytes[2])) << thirdByteOffset);
         }
 
-        size_t moduleCount() const {
+        [[nodiscard]] size_t moduleCount() const {
             SeenNames seen;
             _registry.visit(
                 [](void* context, const SettingSnapshot& setting) {
@@ -142,7 +146,7 @@ namespace IntegralMotions::Config {
             return seen.size;
         }
 
-        size_t groupCount(std::string_view moduleId) const {
+        [[nodiscard]] size_t groupCount(std::string_view moduleId) const {
             struct Context {
                 std::string_view moduleId;
                 SeenNames seen;
@@ -189,7 +193,7 @@ namespace IntegralMotions::Config {
             mpack_start_array(&writer, moduleCount());
             struct Context {
                 const DeviceResponseSerializer* serializer;
-                mpack_writer_t* writer;
+                mpack_writer_t* writer{};
                 SeenNames seen;
             } context{.serializer = this, .writer = &writer};
             _registry.visit(
@@ -213,7 +217,7 @@ namespace IntegralMotions::Config {
             mpack_start_array(&writer, groupCount(module.moduleId));
             struct Context {
                 const DeviceResponseSerializer* serializer;
-                mpack_writer_t* writer;
+                mpack_writer_t* writer{};
                 std::string_view moduleId;
                 SeenNames seen;
             } context{.serializer = this, .writer = &writer, .moduleId = module.moduleId};
@@ -261,7 +265,8 @@ namespace IntegralMotions::Config {
             writeKey(writer, typeName(setting.type));
             writeKey(writer, "value");
             const bool numeric = setting.type != SettingType::Bool;
-            const size_t settingMemberCount = 4 + !setting.unit.empty() + setting.readonly;
+            const size_t settingMemberCount =
+                4 + static_cast<int>(setting.unit.empty()) + static_cast<int>(setting.readonly);
             mpack_start_map(&writer, settingMemberCount);
             writeKey(writer, "address");
             mpack_write_u32(&writer, addressOf(setting.key));
@@ -278,9 +283,9 @@ namespace IntegralMotions::Config {
                 mpack_write_bool(&writer, true);
             }
             writeKey(writer, "limits");
-            const size_t limitMemberCount = 2 + (numeric && setting.minimum.has_value()) +
-                                            (numeric && setting.maximum.has_value()) +
-                                            (numeric && setting.step.has_value());
+            const size_t limitMemberCount = 2 + static_cast<int>(numeric && setting.minimum.has_value()) +
+                                            static_cast<int>(numeric && setting.maximum.has_value()) +
+                                            static_cast<int>(numeric && setting.step.has_value());
             mpack_start_map(&writer, limitMemberCount);
             if (numeric) {
                 if (setting.minimum.has_value()) {

@@ -11,5 +11,4 @@ namespace IntegralMotions::Config {
         CorruptData,
         UnsupportedVersion,
     };
-
-}
+} // namespace IntegralMotions::Config
