@@ -312,7 +312,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t Capacity>
-    const typename SettingsRegistry<Capacity>::Entry* SettingsRegistry<Capacity>::find(const SettingKey& key) const {
+    const SettingsRegistry<Capacity>::Entry* SettingsRegistry<Capacity>::find(const SettingKey& key) const {
         for (size_t i = 0; i < _size; ++i) {
             if (_entries[i].key == key) {
                 return &_entries[i];
@@ -323,7 +323,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t Capacity>
-    typename SettingsRegistry<Capacity>::Entry* SettingsRegistry<Capacity>::find(const SettingKey& key) {
+    SettingsRegistry<Capacity>::Entry* SettingsRegistry<Capacity>::find(const SettingKey& key) {
         const auto* entry = static_cast<const SettingsRegistry<Capacity>&>(*this).find(key);
         return const_cast<Entry*>(entry);
     }

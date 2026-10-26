@@ -593,7 +593,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t MaxSettings>
-    typename SettingsStore<MaxSettings>::IndexEntry* SettingsStore<MaxSettings>::findFreeIndex() {
+    SettingsStore<MaxSettings>::IndexEntry* SettingsStore<MaxSettings>::findFreeIndex() {
         for (auto& index : _indices) {
             if (!index.used) {
                 return &index;
@@ -603,8 +603,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t MaxSettings>
-    const typename SettingsStore<MaxSettings>::IndexEntry*
-    SettingsStore<MaxSettings>::findIndex(const SettingKey& key) const {
+    const SettingsStore<MaxSettings>::IndexEntry* SettingsStore<MaxSettings>::findIndex(const SettingKey& key) const {
         for (const auto& index : _indices) {
             if (index.used && index.key == key) {
                 return &index;
@@ -614,7 +613,7 @@ namespace IntegralMotions::Config {
     }
 
     template <size_t MaxSettings>
-    typename SettingsStore<MaxSettings>::IndexEntry* SettingsStore<MaxSettings>::findIndex(const SettingKey& key) {
+    SettingsStore<MaxSettings>::IndexEntry* SettingsStore<MaxSettings>::findIndex(const SettingKey& key) {
         const auto* index = static_cast<const SettingsStore<MaxSettings>&>(*this).findIndex(key);
         return const_cast<IndexEntry*>(index);
     }

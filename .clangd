@@ -1,3 +1,7 @@
+Diagnostics:
+  ClangTidy:
+    FastCheckFilter: None
+
 CompileFlags:
   CompilationDatabase: build
 
@@ -9,3 +13,4 @@ CompileFlags:
     - -I/Users/jos/ws/IntegralConfig/include
     - -I/Users/jos/ws/IntegralConfig/build/_deps/integralcoreutilities-src/include
     - -I/Users/jos/ws/IntegralConfig/build/_deps/integralcommunication-src/include
+
