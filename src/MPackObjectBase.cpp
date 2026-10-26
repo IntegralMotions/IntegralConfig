@@ -791,40 +791,37 @@ bool MPackObjectBase::writeMember(mpack_writer_t& writer, const MPackObjectMembe
     const auto& type = member.type;
 
     if (member.optional) {
+        const auto writeOptional = [&writer](const auto& value, auto writeValue) {
+            if (!value.has_value()) {
+                mpack_writer_flag_error(&writer, mpack_error_data);
+                return false;
+            }
+            writeValue(&writer, *value);
+            return ok(writer);
+        };
         switch (type.type) {
         case CppType::I8:
-            mpack_write_i8(&writer, **static_cast<std::optional<int8_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<int8_t>*>(address), mpack_write_i8);
         case CppType::U8:
-            mpack_write_u8(&writer, **static_cast<std::optional<uint8_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<uint8_t>*>(address), mpack_write_u8);
         case CppType::I16:
-            mpack_write_i16(&writer, **static_cast<std::optional<int16_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<int16_t>*>(address), mpack_write_i16);
         case CppType::U16:
-            mpack_write_u16(&writer, **static_cast<std::optional<uint16_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<uint16_t>*>(address), mpack_write_u16);
         case CppType::I32:
-            mpack_write_i32(&writer, **static_cast<std::optional<int32_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<int32_t>*>(address), mpack_write_i32);
         case CppType::U32:
-            mpack_write_u32(&writer, **static_cast<std::optional<uint32_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<uint32_t>*>(address), mpack_write_u32);
         case CppType::I64:
-            mpack_write_i64(&writer, **static_cast<std::optional<int64_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<int64_t>*>(address), mpack_write_i64);
         case CppType::U64:
-            mpack_write_u64(&writer, **static_cast<std::optional<uint64_t>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<uint64_t>*>(address), mpack_write_u64);
         case CppType::F32:
-            mpack_write_float(&writer, **static_cast<std::optional<float>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<float>*>(address), mpack_write_float);
         case CppType::F64:
-            mpack_write_double(&writer, **static_cast<std::optional<double>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<double>*>(address), mpack_write_double);
         case CppType::Bool:
-            mpack_write_bool(&writer, **static_cast<std::optional<bool>*>(address));
-            return ok(writer);
+            return writeOptional(*static_cast<const std::optional<bool>*>(address), mpack_write_bool);
         default:
             mpack_writer_flag_error(&writer, mpack_error_type);
             return false;

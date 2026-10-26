@@ -9,8 +9,17 @@ CompileFlags:
 If:
   PathMatch: ^include/.*\.(h|hpp|hh|hxx)$
 CompileFlags:
+  # Relative paths are resolved from the borrowed compile command's directory.
   Add:
-    - -I/Users/jos/ws/IntegralConfig/include
-    - -I/Users/jos/ws/IntegralConfig/build/_deps/integralcoreutilities-src/include
-    - -I/Users/jos/ws/IntegralConfig/build/_deps/integralcommunication-src/include
-
+    # Commands in build/.
+    - -I../include
+    - -I_deps/integralcoreutilities-src/include
+    - -I_deps/integralcommunication-src/include
+    # Commands in build/_deps/<dependency>-build/.
+    - -I../../../include
+    - -I../integralcoreutilities-src/include
+    - -I../integralcommunication-src/include
+    # Commands in build/_deps/googletest-build/googletest/.
+    - -I../../../../include
+    - -I../../integralcoreutilities-src/include
+    - -I../../integralcommunication-src/include
