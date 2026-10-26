@@ -1,0 +1,25 @@
+Diagnostics:
+  ClangTidy:
+    FastCheckFilter: None
+
+CompileFlags:
+  CompilationDatabase: build
+
+---
+If:
+  PathMatch: ^include/.*\.(h|hpp|hh|hxx)$
+CompileFlags:
+  # Relative paths are resolved from the borrowed compile command's directory.
+  Add:
+    # Commands in build/.
+    - -I../include
+    - -I_deps/integralcoreutilities-src/include
+    - -I_deps/integralcommunication-src/include
+    # Commands in build/_deps/<dependency>-build/.
+    - -I../../../include
+    - -I../integralcoreutilities-src/include
+    - -I../integralcommunication-src/include
+    # Commands in build/_deps/googletest-build/googletest/.
+    - -I../../../../include
+    - -I../../integralcoreutilities-src/include
+    - -I../../integralcommunication-src/include

@@ -13,7 +13,7 @@ This library is designed to be **platform-independent**, supporting:
 
 ## ✨ Features
 - Encode/decode configuration data to/from byte arrays
-- Cross-platform (C++17) – works on STM32, Arduino, Linux, Windows, macOS
+- Cross-platform (C++20) – works on STM32, Arduino, Linux, Windows, macOS
 - Web configuration support via the Integral Motion Configurator
 - Lightweight (no STL heap usage if disabled)
 - Header-only or minimal `src/` implementation
@@ -64,6 +64,88 @@ cmake --build build
 ctest --test-dir build -V
 ```
 
+## Typed settings
+
+Settings declare their persistence policy. `Memory` values are RAM-only; `Frequent` and `LongTerm` values are written
+immediately to their configured `SettingsStore`.
+
+```cpp
+#include "Setting/SettingDefinition.h"
+#include "Setting/SettingsRegistry.h"
+
+using namespace IntegralMotions::Config;
+
+int32_t speed = 0;
+
+SettingDefinition<int32_t> speedDefinition{
+    .key = {.id = SettingId::Unknown, .scope = SettingScope::Motor, .instance = 0},
+    .defaultValue = 1000,
+    .limits = {.minimum = 0, .maximum = 2000, .step = 100, .isRange = true},
+};
+
+speedDefinition.moduleId.assign("drive");
+speedDefinition.groupId.assign("motion");
+speedDefinition.id.assign("speed");
+speedDefinition.unit.assign("rpm");
+speedDefinition.limits.options[0].value = 500;
+speedDefinition.limits.options[0].id.assign("low-speed");
+speedDefinition.limits.options[1].value = 1500;
+speedDefinition.limits.options[1].id.assign("high-speed");
+speedDefinition.limits.optionCount = 2;
+
+SettingsRegistry<32> registry;
+registry.add(speedDefinition, speed);
+registry.set(speedDefinition.key, 1200);
+```
+
+Definitions and referenced live values (`speed` above) must remain valid for the lifetime of the registry. Use
+`static const` definitions for device-lifetime settings. Mutable definitions are rejected as references; move a
+received definition into the registry to retain it with its current value:
+
+```cpp
+registry.add(std::move(receivedDefinition), receivedValue);
+```
+
+The registry owns and releases moved definitions and values. Configure the corresponding `SettingsStore` before adding a
+`Frequent` or `LongTerm` setting.
+
+Each option has a machine value and a stable ID. MessagePack `options` arrays use the same shape:
+
+```text
+[{ "value": 500, "id": "low-speed" }]
+```
+
+## MessagePack protocol
+
+Numeric setting types use explicit-width IDs: `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, `u64`, `f32`, and
+`f64`. Boolean settings use `bool`.
+
+`DeviceResponseSerializer` always emits `deviceInfo`, setting `address`, setting `limits`, limit `isRange`, and limit
+`options`. `address` is the three-byte persistent `SettingKey` encoded as a MessagePack `u32`; its upper byte is zero.
+Empty `min`, `max`, `step`, `unit`, `readonly`, and success `errorMessage` fields are omitted. Generic object
+serialization emits `nil` for a null array pointer; use `DeviceResponseSerializer` for public device responses.
+
+Payload classes are selected while streaming the MessagePack input. In a message envelope, `msgType` and `opCode`
+must therefore appear before `payload`. Inside a setting, `type` must appear before `value`. Inputs that violate this
+ordering are rejected.
+
+Write one or more values with `write.settings`:
+
+```text
+{
+  "msgType": "request",
+  "opCode": "write.settings",
+  "payload": {
+    "values": [
+      { "address": 4259840, "type": "i32", "value": { "value": 1200 } }
+    ]
+  }
+}
+```
+
+The response returns one `{ address, success, errorMessage? }` result per requested value. Each value must place
+`address`, `type`, and `value` in that order.
+
 ---
 
 ## 🔌 PlatformIO / Arduino
@@ -77,7 +159,7 @@ lib_deps = https://github.com/IntegralMotion/IntegralConfig.git
 ## 💡 STM32CubeIDE Integration
 1. Add as a git submodule under `external/IntegralConfig`
 2. In CubeIDE: link the `include/` and `src/` folders
-3. Add include path and standard flags (`-std=c++17`, `-ffunction-sections`, `-Os`)
+3. Add include path and standard flags (`-std=c++20`, `-ffunction-sections`, `-Os`)
 
 ---
 

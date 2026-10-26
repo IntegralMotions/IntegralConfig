@@ -5,7 +5,7 @@ project(IntegralConfig
     LANGUAGES C CXX
 )
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -21,6 +21,14 @@ option(INTEGRAL_BUILD_DEPENDENCY_TESTS "Build tests for IntegralMotions dependen
 include(FetchContent)
 
 FetchContent_Declare(
+    IntegralCoreUtilities
+    GIT_REPOSITORY https://github.com/IntegralMotions/IntegralCoreUtilities.git
+    GIT_TAG        v0.2.2
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(IntegralCoreUtilities)
+
+FetchContent_Declare(
     IntegralCommunication
     GIT_REPOSITORY https://github.com/IntegralMotions/IntegralCommunication.git
     GIT_TAG        v1.2.0
@@ -34,8 +42,17 @@ file(GLOB_RECURSE INTEGRALCONFIG_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.[ch]xx
 )
 
+file(GLOB_RECURSE INTEGRALCONFIG_HEADERS CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp
+)
+
 add_library(IntegralConfig ${INTEGRALCONFIG_SOURCES})
 add_library(IntegralConfig::IntegralConfig ALIAS IntegralConfig)
+
+target_sources(IntegralConfig PRIVATE
+    ${INTEGRALCONFIG_HEADERS}
+)
 
 target_include_directories(IntegralConfig
     PUBLIC
@@ -43,10 +60,11 @@ target_include_directories(IntegralConfig
         $<INSTALL_INTERFACE:include>
 )
 
-target_compile_features(IntegralConfig PUBLIC cxx_std_17)
+target_compile_features(IntegralConfig PUBLIC cxx_std_20)
 
 target_link_libraries(IntegralConfig
     PUBLIC
+        IntegralCoreUtilities::IntegralCoreUtilities
         IntegralCommunication::IntegralCommunication
 )
 
