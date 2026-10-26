@@ -266,7 +266,7 @@ namespace IntegralMotions::Config {
             writeKey(writer, "value");
             const bool numeric = setting.type != SettingType::Bool;
             const size_t settingMemberCount =
-                4 + static_cast<int>(setting.unit.empty()) + static_cast<int>(setting.readonly);
+                4 + static_cast<int>(!setting.unit.empty()) + static_cast<int>(setting.readonly);
             mpack_start_map(&writer, settingMemberCount);
             writeKey(writer, "address");
             mpack_write_u32(&writer, addressOf(setting.key));
