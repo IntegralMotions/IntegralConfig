@@ -150,6 +150,7 @@ bool MPackObjectBase::readHeader(mpack_reader_t& reader, MPackHeader& header) {
     return true;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int depth) {
     MPackObjectMember member;
     size_t index = 0;
@@ -224,7 +225,7 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
         if (!readString(reader, *static_cast<char**>(this->getMemberAddress(member)))) {
             return false;
         }
-        if (index < 64) {
+        if (index < decodedMemberCapacity) {
             _decodedMembers |= uint64_t{1} << index;
         }
         return true;
@@ -254,7 +255,7 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
         if (*obj == nullptr) {
             *obj = createObject(name);
             if (*obj != nullptr) {
-                if (index < 64) {
+                if (index < decodedMemberCapacity) {
                     _decodedMembers |= uint64_t{1} << index;
                 }
             }
@@ -268,7 +269,7 @@ bool MPackObjectBase::readValue(mpack_reader_t& reader, const char* name, int de
         return ok(reader);
     }
     case CppType::Array:
-        if (index < 64) {
+        if (index < decodedMemberCapacity) {
             _decodedMembers |= uint64_t{1} << index;
         }
         return readArray(reader, member.name, member.type, getMemberAddress(member), depth + 1);
@@ -612,13 +613,13 @@ bool MPackObjectBase::shouldWrite(mpack_writer_t& writer, const MPackObjectMembe
 }
 
 void MPackObjectBase::clearDecodedMembers() {
-    for (size_t i = 0; i < memberCount() && i < 64; ++i) {
+    for (size_t i = 0; i < memberCount() && i < decodedMemberCapacity; ++i) {
         releaseDecodedMember(i);
     }
 }
 
 void MPackObjectBase::releaseDecodedMember(size_t index) {
-    if (index >= 64 || (_decodedMembers & (uint64_t{1} << index)) == 0) {
+    if (index >= decodedMemberCapacity || (_decodedMembers & (uint64_t{1} << index)) == 0) {
         return;
     }
 

@@ -35,6 +35,8 @@ class MPackObjectBase {
     void clearDecodedMembers();
 
   private:
+    static constexpr size_t decodedMemberCapacity = std::numeric_limits<uint64_t>::digits;
+
     bool getMember(const char* name, MPackObjectMember& member, size_t& index) const;
     static bool nextIsNil(mpack_reader_t& reader);
 
